@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GameManaged Condition="'$(GameManaged)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Risk of Rain 2\Risk of Rain 2_Data\Managed</GameManaged>
+    <DependencyDirectory Condition="'$(DependencyDirectory)' == ''">$(MSBuildThisFileDirectory).build\deps</DependencyDirectory>
+    <AssemblyName>ArenaPvP</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src\*.cs" />
+    <EmbeddedResource Include="assets\arena-mode.png" LogicalName="ArenaPvP.ModeIcon.png" />
+    <Reference Include="$(GameManaged)\*.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\bepinex\BepInExPack\BepInEx\core\BepInEx.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\bepinex\BepInExPack\BepInEx\core\0Harmony.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\R2API_Core\plugins\R2API.Core\R2API.Core.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\R2API_Difficulty\plugins\R2API.Difficulty\R2API.Difficulty.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\R2API_Language\plugins\R2API.Language\R2API.Language.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\R2API_Teams\plugins\R2API.Teams\R2API.Teams.dll"><Private>false</Private></Reference>
+    <Reference Include="$(DependencyDirectory)\Risk_Of_Options\plugins\RiskOfOptions\RiskOfOptions.dll"><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,23 @@
+# Local build output and downloaded dependencies
+.build/
+dist/
+bin/
+obj/
+
+# IDE and machine-local files
+.vs/
+.idea/
+*.user
+*.suo
+*.log
+*.pdb
+
+# Distribute compiled builds through Releases
+*.dll
+*.exe
+*.zip
+*.nupkg
+
+# Local secrets
+.env
+.env.*

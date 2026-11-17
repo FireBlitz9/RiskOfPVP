@@ -1,0 +1,16 @@
+{
+  "name": "RiskOfPVP",
+  "version_number": "1.1.11",
+  "website_url": "",
+  "description": "Free-for-all PvP: enemy-free arenas, item drafts or personal XP, timed level caps, configurable rewards, respawns and score limits. RiskOfOptions support.",
+  "dependencies": [
+    "bbepis-BepInExPack-5.4.2122",
+    "RiskofThunder-RoR2BepInExPack-1.49.0",
+    "RiskofThunder-HookGenPatcher-1.2.9",
+    "RiskofThunder-R2API_Core-5.3.0",
+    "RiskofThunder-R2API_Difficulty-1.1.2",
+    "RiskofThunder-R2API_Language-1.1.0",
+    "Rune580-Risk_Of_Options-2.8.6",
+    "RiskofThunder-R2API_Teams-1.0.3"
+  ]
+}
