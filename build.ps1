@@ -47,15 +47,10 @@ if ($RunTests) {
     New-Item -ItemType Directory -Force -Path $testDirectory | Out-Null
     $testExe = Join-Path $testDirectory 'ArenaRules.Tests.exe'
     $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
-    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\FrameWork.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs')
+    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\DeferredMenuStartup.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Rules tests failed.' }
-    $typeScanExe = Join-Path $testDirectory 'IncrementalTypeScan.Tests.exe'
-    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $typeScanExe) (Join-Path $PSScriptRoot 'src\FrameWork.cs') (Join-Path $PSScriptRoot 'src\IncrementalTypeScan.cs') (Join-Path $PSScriptRoot 'tests\IncrementalTypeScanTests.cs')
-    if ($LASTEXITCODE -ne 0) { throw 'Incremental type-scan test compilation failed.' }
-    & $typeScanExe
-    if ($LASTEXITCODE -ne 0) { throw 'Incremental type-scan tests failed.' }
     $poolExe = Join-Path $testDirectory 'ItemPool.Tests.exe'
     & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $poolExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\ItemPool.cs') (Join-Path $PSScriptRoot 'tests\ItemPoolTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Production ItemPool test compilation failed.' }

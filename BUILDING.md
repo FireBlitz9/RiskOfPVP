@@ -15,7 +15,7 @@ The package script checks dependency pins and the DLL/manifest version match, th
 
 ## Development checks
 
-`-RunTests` runs deterministic gameplay-rule tests, tests against the actual reward-pool source with a catalog adapter, BepInEx settings migration/transport tests, incremental reflection-scan tests and a metadata audit of native game hooks. Optional Aerolt/UniverseLib/DropIn contract auditing is in `tests/AeroltContractAudit.cs` and requires separate copies of those optional DLLs.
+`-RunTests` runs deterministic gameplay-rule tests, tests against the actual reward-pool source with a catalog adapter, BepInEx settings migration/transport tests, deferred optional-menu lifecycle tests and a metadata audit of native game hooks. Optional public Aerolt menu/DropIn contract auditing is in `tests/AeroltContractAudit.cs` and requires separate copies of those optional DLLs.
 
 These checks do not run Unity or replace multiplayer playtesting. Test changes in a separate mod-manager profile. Only one RiskOfPVP/RiskOfArena plugin copy should be enabled, and every player must use the same version.
 
@@ -24,3 +24,5 @@ These checks do not run Unity or replace multiplayer playtesting. Test changes i
 When preparing a new release, update all three version strings in `src/Plugin.cs`, `manifest.json`, and the relevant changelog entry together. Keep upstream dependency versions unchanged unless their references and compatibility are deliberately updated. Attach playable ZIPs to GitHub Releases rather than committing compiled files.
 
 The package is named RiskOfPVP. The runtime plugin GUID `com.fireb.arenapvp`, in-game name RiskOfArena and saved configuration identity are retained for existing players.
+
+The optional contract audit reads the Aerolt and DropIn DLLs as metadata; it does not load them into the game or execute their code. Arena does not modify UniverseLib or load DLLs to install the adapter.

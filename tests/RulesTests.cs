@@ -79,34 +79,40 @@ internal static class RulesTests
         Check(bank.TryConsume(4, 101, false, out used, tierOf), "a valid same-tier claim still succeeds after rejected claims");
     }
 
-    private static System.Collections.Generic.IEnumerator<Action> MeasuredWork(Action moved, Action executed, Action disposed)
+    private static void DeferredAeroltMenu()
     {
-        try { for (int i = 0; i < 5; i++) { moved(); yield return executed; } }
-        finally { disposed(); }
-    }
-    private static void BackgroundFrameWork()
-    {
-        double time = 0; int moved = 0, executed = 0, disposed = 0;
-        var work = new FrameWork(MeasuredWork(() => moved++, () => { executed++; time += 0.001; }, () => disposed++));
-        Action<Action> run = step => step();
-        Check(work.RunSlice(false, () => time, 0.002, run) == 0 && moved == 0 && executed == 0,
-            "spawn/scene gating does not even advance the deferred initialization iterator");
-        Check(work.RunSlice(true, () => time, 0, run) == 0 && moved == 0, "zero budget cannot advance background work");
-        Check(work.RunSlice(true, () => time, 0.002, run) == 2 && executed == 2, "reflection work yields once the frame budget is spent");
-        Check(work.RunSlice(false, () => time, 0.002, run) == 0 && executed == 2, "a new scene load pauses unfinished work without dropping it");
-        Check(work.RunSlice(true, () => time, 0.002, run, 1) == 1 && executed == 3, "step cap also bounds very cheap work");
-        work.RunSlice(true, () => time, 1, run);
-        Check(executed == 5 && moved == 5 && disposed == 1, "resumed steps run once and dispose the completed scan");
-        Check(work.RunSlice(true, () => time, 1, run) == 0 && executed == 5, "completed scans never repeat");
-        work.Dispose(); Check(disposed == 1, "cleanup is idempotent");
-        int later = 0;
-        var slow = new List<Action> { () => time += 0.05, () => later++ };
-        work = new FrameWork(slow.GetEnumerator());
-        Check(work.RunSlice(true, () => time, 0.002, run) == 1 && later == 0, "an indivisible slow load cannot consume more work in the same frame");
-        work.RunSlice(true, () => time, 1, run); Check(later == 1, "work after a slow operation resumes on a later frame");
-        var idle = new List<Action> { null, () => later++ }; work = new FrameWork(idle.GetEnumerator());
-        Check(work.RunSlice(true, () => time, 1, run) == 0 && later == 1, "an idle sentinel yields instead of spinning through the frame");
-        work.RunSlice(true, () => time, 1, run); Check(later == 2, "an assembly arriving after idle can resume processing");
+        var menu = new DeferredMenuStartup();
+        Check(!menu.Waiting && !menu.Request(true), "an unselected optional integration cannot start a menu");
+        Check(menu.OnRunStarting(false, false) && !menu.Waiting, "ordinary modes retain native Aerolt startup");
+        Check(menu.OnRunStarting(true, true) && !menu.Waiting, "already-ready Aerolt retains native startup and hotkeys");
+        Check(!menu.OnRunStarting(true, false) && menu.Waiting, "Arena defers only cold optional menu startup");
+        bool unsolicited = false;
+        for (int i = 0; i < 10000; i++) unsolicited |= menu.Request(false) || menu.Complete(false);
+        Check(!unsolicited && menu.Waiting, "spawning and arbitrarily many idle frames never request bootstrap");
+        Check(!menu.OnRunStarting(true, false) && menu.Waiting, "replaying before first use still does no initialization");
+        Check(menu.Request(true), "first deliberate menu keypress requests native bootstrap");
+        Check(!menu.Request(false), "holding/releasing without another key-down never duplicates bootstrap");
+        Check(!menu.OnRunStarting(true, false), "replay during native initialization never registers another callback");
+        Check(!menu.OnRunStarting(false, false), "a run transition cannot duplicate our in-flight native request");
+        Check(!menu.Complete(false) && menu.Waiting, "native readiness is never forced");
+        Check(menu.Complete(true) && !menu.Waiting, "native completion opens the explicitly requested menu once");
+        Check(!menu.Complete(true) && !menu.Request(true), "completion is idempotent and hands hotkeys back to Aerolt");
+        Check(menu.OnRunStarting(true, true), "later ready runs remain entirely native");
+
+        menu.OnRunStarting(true, false); menu.Request(true);
+        Check(!menu.Request(true), "a second press can cancel opening without restarting initialization");
+        Check(!menu.Complete(true) && !menu.Waiting, "cancelling an open request does not cancel or rewrite native initialization");
+        menu.OnRunStarting(true, false); menu.Request(true); menu.Request(true);
+        Check(!menu.Request(true) && menu.Complete(true), "a third press requeues opening without a second bootstrap");
+        menu.OnRunStarting(true, false);
+        Check(menu.OnRunStarting(false, false) && !menu.Waiting, "leaving Arena before first use restores ordinary native startup");
+        menu.OnRunStarting(true, false);
+        Check(!menu.Complete(true) && !menu.Waiting, "externally initialized Aerolt never opens without the user's request");
+        menu.OnRunStarting(true, false); menu.Request(true);
+        Check(menu.OnRunStarting(true, true) && menu.Complete(true), "readiness during a replay preserves the pending deliberate open");
+        menu.OnRunStarting(true, false); menu.Request(true); menu.Reset();
+        Check(!menu.Waiting && !menu.Complete(true) && !menu.Request(true), "failure/destruction clears only our own request state");
+        Check(menu.OnRunStarting(false, false), "a cleared adapter does not block ordinary native callbacks");
     }
 
     private static void LateArrivals()
@@ -535,7 +541,7 @@ internal static class RulesTests
             EquipmentRewards();
             BlacklistsAndCaps();
             NativeItemExperience();
-            BackgroundFrameWork();
+            DeferredAeroltMenu();
             LateArrivals();
             Check(ArenaRules.IsUserPresent(true, true, false), "the sole local host counts without a remote client connection");
             Check(ArenaRules.IsUserPresent(true, true, true), "a normally connected local host counts once");

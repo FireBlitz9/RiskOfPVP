@@ -15,34 +15,30 @@ internal static class AeroltContractAudit
         try
         {
             using (var aerolt = AssemblyDefinition.ReadAssembly(args[0]))
-            using (var universe = AssemblyDefinition.ReadAssembly(args[1]))
             {
                 var load = aerolt.MainModule.GetType("Aerolt.Load");
                 Check((string)load.Fields.Single(f => f.Name == "Version").Constant == "4.3.1", "Unsupported Aerolt version");
                 var callback = load.Methods.Single(m => m.Name == "OnRunStart");
                 Check(callback.IsStatic && callback.ReturnType.FullName == "System.Void" && callback.Parameters.Count == 1 && callback.Parameters[0].ParameterType.FullName == "RoR2.Run", "Aerolt callback signature changed");
-                Check(Calls(callback, "Aerolt.UI.AeroltUniverseUI", "Bootstrap"), "Aerolt's cold initialization no longer calls Bootstrap");
-                var bootstrap = aerolt.MainModule.GetType("Aerolt.UI.AeroltUniverseUI").Methods.Single(m => m.Name == "Bootstrap");
-                Check(Calls(bootstrap, "UniverseLib.Universe", "Init"), "Aerolt Bootstrap no longer initializes UniverseLib");
-                Check(universe.Name.Version == new Version(1, 5, 1, 0), "Unsupported UniverseLib version");
-                var reflection = universe.MainModule.GetType("UniverseLib.ReflectionUtility");
-                var init = reflection.Methods.Single(m => m.Name == "Init");
-                Check(init.IsStatic && init.Parameters.Count == 0 && init.ReturnType.FullName == "System.Void", "Reflection entry point changed");
-                Check(Calls(init, "UniverseLib.ReflectionPatches", "Init") && Calls(init, "UniverseLib.ReflectionUtility", "Initialize"), "Native reflection init sequence changed");
-                Check(reflection.Properties.Single(p => p.Name == "Instance").SetMethod != null && reflection.Methods.Any(m => m.IsConstructor && m.Parameters.Count == 0 && m.IsPublic), "Reflection instance initialization contract changed");
-                Check(reflection.Fields.Single(f => f.Name == "Initializing").FieldType.FullName == "System.Boolean", "Native ready gate changed");
-                Check(reflection.Fields.Single(f => f.Name == "AllTypes").FieldType.FullName == "System.Collections.Generic.SortedDictionary`2<System.String,System.Type>", "Type cache changed");
-                Check(reflection.Fields.Single(f => f.Name == "AllNamespaces").FieldType.FullName == "System.Collections.Generic.List`1<System.String>", "Namespace list changed");
-                Check(reflection.Fields.Single(f => f.Name == "uniqueNamespaces").FieldType.FullName == "System.Collections.Generic.HashSet`1<System.String>", "Namespace deduplication changed");
-                Check(reflection.Fields.Single(f => f.Name == "OnTypeLoaded").FieldType.FullName == "System.Action`1<System.Type>", "Type notification changed");
-                var setup = universe.MainModule.GetType("UniverseLib.Universe").NestedTypes.Single(t => t.Name.StartsWith("<SetupCoroutine>"));
-                Check(setup.Methods.Single(m => m.Name == "MoveNext").Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "Initializing"), "Native UI must wait for reflection readiness");
-                var texture = universe.MainModule.GetType("UniverseLib.Runtime.Mono.MonoTextureHelper").NestedTypes.Single(t => t.Name.StartsWith("<InitCoro>"));
-                Check(texture.Methods.Single(m => m.Name == "MoveNext").Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "Initializing"), "Native texture setup must wait for reflection readiness");
-                Check(reflection.Methods.Any(m => m.Name == "ForceLoadManagedAssemblies") && reflection.Methods.Any(m => m.Name == "CacheTypes"), "Measured cold scan path changed");
+                Check(Calls(callback, "Aerolt.UI.AeroltUniverseUI", "Bootstrap"), "Aerolt's cold callback no longer starts only its menu");
+                var ui = aerolt.MainModule.GetType("Aerolt.UI.AeroltUniverseUI");
+                var ready = ui.Properties.Single(p => p.Name == "IsReady");
+                Check(ready.PropertyType.FullName == "System.Boolean" && ready.GetMethod.IsPublic && ready.GetMethod.IsStatic, "Public menu readiness API changed");
+                var bootstrap = ui.Methods.Single(m => m.Name == "Bootstrap");
+                Check(bootstrap.IsPublic && bootstrap.IsStatic && bootstrap.ReturnType.FullName == "System.Void" && bootstrap.Parameters.Count == 0, "Public menu bootstrap API changed");
+                var visible = ui.Methods.Single(m => m.Name == "SetVisible");
+                Check(visible.IsPublic && visible.IsStatic && visible.ReturnType.FullName == "System.Void" && visible.Parameters.Count == 1 && visible.Parameters[0].ParameterType.FullName == "System.Boolean", "Public idempotent menu visibility API changed");
+                var keys = load.Fields.Single(f => f.Name == "KeyBinds");
+                var dictionary = keys.FieldType as GenericInstanceType;
+                Check(keys.IsPublic && keys.IsStatic && dictionary != null && dictionary.ElementType.FullName == "System.Collections.Generic.Dictionary`2", "Public keybind dictionary contract changed");
+                var key = aerolt.MainModule.GetType(dictionary.GenericArguments[0].FullName);
+                Check(key.IsEnum && key.Fields.Any(f => f.Name == "OpenMenu" && f.HasConstant), "Native OpenMenu binding identifier changed");
+                var pressed = load.Methods.Single(m => m.Name == "GetKeyPressed");
+                Check(pressed.IsPublic && pressed.IsStatic && pressed.ReturnType.FullName == "System.Boolean" && pressed.Parameters.Count == 1 && pressed.Parameters[0].ParameterType.FullName == dictionary.GenericArguments[1].FullName, "Public configured-key query contract changed");
+                Check(Calls(pressed, "UnityEngine.Input", "GetKeyDown"), "Menu activation must use a fresh configured key-down, not a held key");
             }
-            if (args.Length > 2)
-                using (var dropin = AssemblyDefinition.ReadAssembly(args[2]))
+            if (args.Length > 1)
+                using (var dropin = AssemblyDefinition.ReadAssembly(args[1]))
                 {
                     var type = dropin.MainModule.GetType("DropInMultiplayer.DropInMultiplayer");
                     var plugin = type.CustomAttributes.Single(a => a.AttributeType.FullName == "BepInEx.BepInPlugin");
@@ -53,7 +49,7 @@ internal static class AeroltContractAudit
                     var spawn = type.Methods.Single(m => m.Name == "SpawnNewPlayerWithBody");
                     Check(Calls(spawn, "RoR2.Run", "OnUserAdded") && Calls(spawn, "RoR2.CharacterMaster", "SpawnBody") && Calls(spawn, "DropInMultiplayer.DropInMultiplayer", "GiveCatchUpItems"), "Native admission/spawn/catch-up sequence changed");
                 }
-            Console.WriteLine("PASS: " + checks + " optional Aerolt/UniverseLib/DropIn compatibility contract checks."); return 0;
+            Console.WriteLine("PASS: " + checks + " optional public Aerolt menu/DropIn compatibility contract checks."); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine("FAILED: " + error); return 1; }
     }

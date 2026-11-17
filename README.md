@@ -75,7 +75,7 @@ Double-tap W requires two presses and releases. Holding W when a menu opens will
 
 RiskOfOptions and R2API Teams are required and included in the dependency list. Aerolt, DropIn, LookingGlass and larger-lobby mods are optional. DropIn supplies mid-game joining; Arena supplies catch-up rewards and team balancing. Teams and KOTH support expanded rosters; FFA has a finite combat-team limit.
 
-The startup integration targets Aerolt 4.3.1 with UniverseLib 1.5.1. DropIn integration was checked against DropinMultiplayer 4.2.1. Custom items need valid catalog entries; custom tier behavior can vary. Mods replacing teams, respawns or progression may need compatibility work. Split-screen reward selection is not supported.
+In Arena, Aerolt 4.3.1 initializes its menu only after you press its configured menu key. Aerolt handles its own initialization; Arena does not load its DLLs or modify UniverseLib. Aerolt's native first-time initialization can still pause when you open the menu. Other gamemodes retain normal Aerolt startup. DropIn integration was checked against DropinMultiplayer 4.2.1. Custom items need valid catalog entries; custom tier behavior can vary. Mods replacing teams, respawns or progression may need compatibility work. Split-screen reward selection is not supported.
 
 Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The latest Aerolt startup change and large-lobby combinations still need fresh multiplayer testing.
 

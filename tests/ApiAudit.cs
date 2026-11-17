@@ -459,37 +459,44 @@ internal static class ApiAudit
                 if (plugin.MainModule.AssemblyReferences.Any(a => a.Name.IndexOf("Aerolt", StringComparison.OrdinalIgnoreCase) >= 0 || a.Name.IndexOf("UniverseLib", StringComparison.OrdinalIgnoreCase) >= 0)
                     || plugin.MainModule.GetTypeReferences().Any(t => t.Namespace.StartsWith("Aerolt", StringComparison.Ordinal) || t.Namespace.StartsWith("UniverseLib", StringComparison.Ordinal)))
                     throw new Exception("Aerolt compatibility must never introduce a required external assembly reference.");
+                var allCalls = plugin.MainModule.GetTypes().SelectMany(t => t.Methods).Where(m => m.HasBody)
+                    .SelectMany(m => m.Body.Instructions).Select(i => i.Operand as MethodReference).Where(m => m != null).ToArray();
+                if (allCalls.Any(m => m.DeclaringType.FullName == "System.Reflection.Assembly"
+                    && new[] { "Load", "LoadFile", "LoadFrom", "UnsafeLoadFrom", "ReflectionOnlyLoad", "ReflectionOnlyLoadFrom" }.Contains(m.Name)))
+                    throw new Exception("Arena must never explicitly load a managed assembly.");
+                if (allCalls.Any(m => m.DeclaringType.FullName == "System.AppDomain" && new[] { "GetAssemblies", "add_AssemblyLoad" }.Contains(m.Name))
+                    || allCalls.Any(m => m.DeclaringType.FullName == "System.Runtime.CompilerServices.RuntimeHelpers" && m.Name == "RunClassConstructor"))
+                    throw new Exception("Arena must not scan the process assembly set or force class initialization.");
                 var aeroltCompatibility = plugin.MainModule.GetType("ArenaPvP.ArenaAeroltCompatibility");
-                var optionalGate = aeroltCompatibility.Methods.Single(m => m.Name == "InitializeReflection");
-                var optionalBegin = aeroltCompatibility.Methods.Single(m => m.Name == "Begin");
+                var optionalGate = aeroltCompatibility.Methods.Single(m => m.Name == "BeforeRunStart");
                 if (!optionalGate.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "get_Active")
-                    || !optionalGate.Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "aeroltScope")
-                    || optionalBegin.Body.Instructions.Any(i => i.Operand is MethodReference && new[] { "GetTypes", "GetAssemblies", "LoadFile", "ForceLoadManagedAssemblies" }.Contains(((MethodReference)i.Operand).Name)))
-                    throw new Exception("Optional reflection initialization must be Arena/Aerolt scoped and schedule heavy work outside the spawn callback.");
+                    || !optionalGate.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "OnRunStarting"))
+                    throw new Exception("Optional Aerolt menu deferral must be Arena scoped.");
+                var adapterInstructions = aeroltCompatibility.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).ToArray();
+                var adapterCalls = adapterInstructions.Select(i => i.Operand as MethodReference).Where(m => m != null).ToArray();
+                if (adapterCalls.Any(m => new[] { "GetTypes", "GetExportedTypes", "GetAssemblies", "ResolveType", "GetFiles", "EnumerateFiles", "SetValue", "CreateInstance", "WaitForCompletion", "Sleep" }.Contains(m.Name))
+                    || adapterInstructions.Any(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Ldstr && ((string)i.Operand).StartsWith("UniverseLib.", StringComparison.Ordinal))
+                    || plugin.MainModule.GetType("ArenaPvP.IncrementalTypeScan") != null || plugin.MainModule.GetType("ArenaPvP.FrameWork") != null)
+                    throw new Exception("Optional Aerolt integration must not scan DLLs/types, instantiate reflected classes or inspect/write UniverseLib state.");
                 var optionalUpdate = aeroltCompatibility.Methods.Single(m => m.Name == "Update");
-                foreach (string call in new[] { "get_IsSceneLoadingAsynchronously", "GetBody", "RunSlice" })
-                    if (!optionalUpdate.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == call))
-                        throw new Exception("Background reflection must wait for scene/body readiness and use a frame budget: " + call);
-                if (aeroltCompatibility.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).Any(i => i.Operand is MethodReference
-                    && new[] { "SetClientReady", "ServerChangeScene", "set_isReady", "Sleep", "WaitForCompletion" }.Contains(((MethodReference)i.Operand).Name)))
-                    throw new Exception("Aerolt compatibility must not force readiness, load scenes or synchronously wait.");
-                var typeScan = plugin.MainModule.GetType("ArenaPvP.IncrementalTypeScan").Methods.Single(m => m.Name == "Step");
-                var optionalMethods = plugin.MainModule.GetTypes().Where(t => t.FullName.StartsWith(aeroltCompatibility.FullName, StringComparison.Ordinal)
-                    || t.FullName.StartsWith("ArenaPvP.IncrementalTypeScan", StringComparison.Ordinal)).SelectMany(t => t.Methods).Where(m => m.HasBody).ToArray();
-                if (!typeScan.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "ResolveType")
-                    || optionalMethods.SelectMany(m => m.Body.Instructions).Any(i => i.Operand is MethodReference
-                        && new[] { "GetTypes", "GetExportedTypes" }.Contains(((MethodReference)i.Operand).Name)))
-                    throw new Exception("Optional startup must resolve individual types, never enumerate an entire runtime assembly/module in one step.");
-                using (var mono = AssemblyDefinition.ReadAssembly(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(args[0]), "mscorlib.dll")))
-                {
-                    var runtimeModule = mono.MainModule.GetType("System.Reflection.RuntimeModule");
-                    var end = runtimeModule.Methods.Single(m => m.Name == "resolve_token_exception");
-                    var emitResolve = mono.MainModule.GetType("System.Reflection.Emit.ModuleBuilder").Methods.Single(m => m.Name == "ResolveType");
-                    if (!end.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == "System.ArgumentOutOfRangeException")
-                        || !emitResolve.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == runtimeModule.FullName && ((MethodReference)i.Operand).Name == "ResolveType"))
-                        throw new Exception("Installed Mono regular/dynamic type-token resolution or end-of-table contract changed.");
-                }
-                Console.WriteLine("PASS: dependency-free optional Aerolt scope, readiness/frame budget, individual type-token resolution and installed Mono contracts audited.");
+                foreach (string method in new[] { "get_Waiting", "Complete", "Request" })
+                    if (!optionalUpdate.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == method))
+                        throw new Exception("Only a pending deliberate menu request may bootstrap/open Aerolt: " + method);
+                var optionalInstall = aeroltCompatibility.Methods.Single(m => m.Name == "Install");
+                if (optionalInstall.Body.Instructions.Any(i => i.Operand is MethodReference
+                    && new[] { "GetValue", "Invoke", "CreateInstance" }.Contains(((MethodReference)i.Operand).Name)))
+                    throw new Exception("Installing the optional adapter must validate metadata without reading external static values or executing external initialization.");
+                foreach (string member in new[] { "OnRunStart", "IsReady", "Bootstrap", "SetVisible", "KeyBinds", "OpenMenu", "GetKeyPressed" })
+                    if (!optionalInstall.Body.Instructions.Any(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Ldstr && (string)i.Operand == member))
+                        throw new Exception("Aerolt adapter lost its checked public menu/keybind contract: " + member);
+                var updateInstructions = optionalUpdate.Body.Instructions.ToArray();
+                int requestAt = Array.FindIndex(updateInstructions, i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "Request");
+                var requestBranch = updateInstructions.Skip(requestAt + 1).First(i => i.OpCode.Code != Mono.Cecil.Cil.Code.Nop);
+                var bootstrapField = updateInstructions.Single(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Ldfld && i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "bootstrap");
+                if (requestBranch.OpCode.FlowControl != Mono.Cecil.Cil.FlowControl.Cond_Branch
+                    || !(requestBranch.Operand is Mono.Cecil.Cil.Instruction) || ((Mono.Cecil.Cil.Instruction)requestBranch.Operand).Offset <= bootstrapField.Offset)
+                    throw new Exception("Native bootstrap must be skipped when the deliberate-menu request returns false.");
+                Console.WriteLine("PASS: assembly-wide explicit-load ban; optional Arena menu deferral, configured-key request and no UniverseLib/cache/type-scan access audited.");
                 if (plugin.MainModule.AssemblyReferences.Any(a => a.Name.IndexOf("DropIn", StringComparison.OrdinalIgnoreCase) >= 0)
                     || plugin.MainModule.GetTypeReferences().Any(t => t.Namespace.StartsWith("DropInMultiplayer", StringComparison.Ordinal)))
                     throw new Exception("DropIn must remain an optional reflection-only integration.");

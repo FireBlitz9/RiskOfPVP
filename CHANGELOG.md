@@ -1,3 +1,9 @@
+# 1.1.12
+
+- Removed managed-DLL loading, whole-process assembly scans and UniverseLib cache patches.
+- In Arena, Aerolt now initializes its menu through its own API only when its configured menu key is pressed. The first deliberate open may still pause during Aerolt's native initialization.
+- Removed obsolete reflection-scanning helpers. PvP rules, item rewards, bots and DropIn support are unchanged.
+
 # 1.1.11
 
 - Rewrote the README with a short overview, features, setup and controls.
