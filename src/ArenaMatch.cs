@@ -402,12 +402,9 @@ namespace ArenaPvP
             if (available.Length == 0 && !(Rules.AllowLevel && player.Level < Cap)) { WarnEmpty(); return false; }
             if (player.IsBot)
             {
-                int item = BotBuildRules.WantsLevel(player.BotRewards, player.Level, Cap, Rules.AllowLevel) ? -1 : ArenaBotBuilds.Choose(player, available, Rules.Selection);
-                if (item < 0)
-                { if (!Rules.AllowLevel || player.Level >= Cap) return false; player.Level++; player.BotRewards++; ApplyLevel(player); }
-                else if (!GrantPickup(player, item)) return false;
-                if (gatesRespawn) player.ChoiceComplete = true;
-                return true;
+                // Roll on the host now; score/grant later inside the common bot
+                // budget. A timer burst cannot run every adaptive build at once.
+                return player.Rewards.Enqueue(new RewardOffer { Id=++offerSequence,Items=choices,GatesRespawn=gatesRespawn,Catchup=catchup });
             }
             uint offerId = ++offerSequence;
             bool queued = player.Rewards.Enqueue(new RewardOffer { Id = offerId, Items = choices, GatesRespawn = gatesRespawn, Catchup = catchup });
@@ -416,6 +413,28 @@ namespace ArenaPvP
                     + ", essence=" + (choices.Length > 0 ? ItemPool.Category(choices[0]).ToString() : "XP only")
                     + ", configured W/G/R/V/L/E/B/S=" + Rules.WeightedEssences.Describe() + ", banked=" + player.Rewards.Count + ".");
             return queued;
+        }
+
+        internal bool SpendBotReward(ArenaPlayer player)
+        {
+            if(!Plugin.Active || !NetworkServer.active || Finished || Rules==null || pool==null || !player.IsBot || !player.Connected || !player.Master)return false;
+            var offer=player.Rewards.First;if(offer==null)return false;
+            var choices=AvailableChoices(player,offer.Items);
+            bool mayLevel=Rules.AllowLevel && player.Level<Cap;
+            int item=BotBuildRules.WantsLevel(player.BotRewards,player.Level,Cap,mayLevel) ? -1 : ArenaBotBuilds.Choose(player,choices,Rules.Selection);
+            if(item<0 && !mayLevel)
+            {
+                // Keep the credit, let other banked classes be considered, and
+                // never trap a dead bot behind an impossible AI choice.
+                if(player.Dead && player.ChoiceRequired)player.ChoiceComplete=true;
+                offer.GatesRespawn=false;player.Rewards.DeferBotOffer(offer.Id);return false;
+            }
+            RewardOffer used;
+            if(!player.Rewards.TryConsume(offer.Id,item,mayLevel,out used,ItemPool.ExactTier,id=>pool.CanGrant(id,player.Master.inventory,-1,player.SurvivorKey)))return false;
+            if(item<0) { player.Level++;player.BotRewards++;ApplyLevel(player); }
+            else GrantPickup(player,item);
+            if(used.GatesRespawn)player.ChoiceComplete=true;
+            return true;
         }
 
         internal bool GiveScrapReward(ArenaPlayer player, int tier)

@@ -13,7 +13,7 @@ namespace ArenaPvP
         private readonly ConfigEntry<int> schema;
         private readonly HashSet<ConfigDefinition> saved = new HashSet<ConfigDefinition>();
         private readonly HashSet<ConfigDefinition> legacy = new HashSet<ConfigDefinition>();
-        internal bool Needed { get { return schema.Value < 3; } }
+        internal bool Needed { get { return schema.Value < 4; } }
         internal int OriginalSchema { get; private set; }
         internal ArenaConfigMigration(ConfigFile file)
         {
@@ -72,7 +72,7 @@ namespace ArenaPvP
         {
             if (!Needed) return;
             foreach (var definition in legacy) file.Remove(definition);
-            schema.Value = 3;
+            schema.Value = 4;
         }
     }
 }

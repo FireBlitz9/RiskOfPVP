@@ -160,7 +160,7 @@ internal static class SettingsTests
         Check(!config.AutoOpen.Value && !config.ShowNametags.Value && config.MatchEntries.All(e => e.Definition.Section != SettingsLayout.Controls), "local preferences migrate without entering host rule snapshots");
         var registered = RiskOfOptions.ModSettingsManager.Options;
         Check(registered.Select(o => o.Category).Distinct().SequenceEqual(new[] { "General", "FFA", "Teams", "KOTH", "Controls" }), "visible categories have the requested names and insertion order without numeric prefixes");
-        Check(registered.Where(o => o.Category == "General" && o is ArenaSettingsHeading).Select(o => o.Name).SequenceEqual(new[] { "Lobby", "Combat", "Protection", "Blacklist" }), "General uses precisely the requested section order");
+        Check(registered.Where(o => o.Category == "General" && o is ArenaSettingsHeading).Select(o => o.Name).SequenceEqual(new[] { "Lobby", "Combat", "Protection", "Blacklist", "Bots" }), "General ends with the shared Bots section after the requested lobby/combat/protection/blacklist sections");
         foreach (string category in new[] { "FFA", "Teams", "KOTH" })
         {
             Check(registered.Where(o => o.Category == category && o is ArenaSettingsHeading).Select(o => o.Name).Take(3).SequenceEqual(new[] { "Rewards", "Scrapper", "Levelling" }), category + " starts with Rewards, Scrapper and Levelling");
@@ -172,13 +172,25 @@ internal static class SettingsTests
         Check(grace != null && grace.min == .25f && grace.max == 2f && grace.increment == .05f, "RiskOfOptions exposes the exact requested grace range and step");
         config.AntiBurstSeconds.Value = 1.333f; Check(config.AntiBurstSeconds.Value == 1.35f, "manual grace input also normalizes to an accessible step");
         var captured = new MatchSettings(config, ArenaMode.FFA);
+        Check(config.BotIntelligence.Value==1 && captured.BotIntelligence==BotIntelligence.Medium, "existing bot behavior remains the Medium default");
+        var intelligence=registered.Single(o=>o.Entry==config.BotIntelligence).Config as RiskOfOptions.OptionConfigs.IntSliderConfig;
+        Check(intelligence!=null && intelligence.min==0 && intelligence.max==4, "bot intelligence is a five-position slider including Ultra");
+        Check(!config.MatchEntries.Any(e=>e.Definition.Section!="General" && e.Definition.Key.Contains("decision interval")), "decision interval is shared rather than repeated in every mode");
         Check(!captured.OnStart && !captured.OnKill && !captured.OnTimer && captured.OnDeath && captured.DamageScale == .8f, "the actual host capture derives reward events from amount sliders and shares General rules");
         config.Profile(ArenaMode.Teams).DeathRewards.Value = 7;
         Check(config.Profile(ArenaMode.FFA).DeathRewards.Value == 1 && config.Profile(ArenaMode.KOTH).DeathRewards.Value == 1, "mode reward profiles remain independent");
-        config.VoidProtection.Value = false; config.DamageScale.Value = .65f; captured.RefreshCombat(config);
+        config.VoidProtection.Value = false; config.DamageScale.Value = .65f; config.BotIntelligence.Value=4;config.BotThinkSeconds.Value=.2f;config.BotChase.Value=true;captured.RefreshCombat(config);
+        Check(captured.BotIntelligence==BotIntelligence.Ultra && captured.BotThinkSeconds==.2f && captured.BotChase, "all active bot tuning comes from live host rules");
         Check(!captured.VoidProtection && captured.DamageScale == .65f && captured.OnDeath, "live General combat refresh leaves captured reward clocks intact");
         file.Save(); config = new ArenaConfig(Open(path));
         Check(config.Profile(ArenaMode.Teams).DeathRewards.Value == 7 && config.Profile(ArenaMode.FFA).KillRewards.Value == 0 && config.DamageScale.Value == .65f && !config.VoidProtection.Value, "schema-3 reload preserves new edits instead of reapplying legacy migration");
         Check(!File.ReadAllText(path).Contains("Settings schema = 2"), "settings schema advances after the successful reorganization");
+        File.WriteAllText(path,"[00 Internal]\nSettings schema = 3\n[General]\nLobby / Default mode = Teams\n[Teams]\nBots / Bot decision interval seconds = 0.85\n",Encoding.UTF8);
+        config=new ArenaConfig(Open(path));
+        Check(config.BotThinkSeconds.Value==.85f && config.BotIntelligence.Value==1, "schema-3 mode bot intervals migrate into General while Medium remains standard");
+        config.BotThinkSeconds.Value=.35f;config.BotIntelligence.Value=4;config.BotThinkSeconds.ConfigFile.Save();
+        config=new ArenaConfig(Open(path));
+        Check(config.BotThinkSeconds.Value==.35f && config.BotIntelligence.Value==4 && !config.Migration.Needed, "the shared bot interval and Ultra setting survive reload without reimporting old profile values");
+        Check(RiskOfOptions.ModSettingsManager.LastModName=="RiskOfPVP", "Mod Options uses the package name instead of the legacy runtime name");
     }
 }

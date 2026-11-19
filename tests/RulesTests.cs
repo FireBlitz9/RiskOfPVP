@@ -552,6 +552,7 @@ internal static class RulesTests
             int remainingPlayers = (ArenaRules.IsUserPresent(true, true, false) ? 1 : 0) + (ArenaRules.IsUserPresent(true, false, false) ? 1 : 0);
             Check(remainingPlayers == 1, "the host remains a valid participant after the last remote player leaves");
             BotBuilds();
+            BotIntelligenceAndCounters();
             RewardArrivalAndVehicleCleanup();
             foreach (string section in new[] { SettingsLayout.General, SettingsLayout.Profile(ArenaMode.FFA), SettingsLayout.Profile(ArenaMode.Teams), SettingsLayout.Profile(ArenaMode.KOTH) })
                 Check(ArenaRules.IsMatchSettingGroup(section), "match settings includes gameplay category " + section);
@@ -765,6 +766,75 @@ internal static class RulesTests
         Check(BotBuildRules.TargetScore(25, .1f, false, false, false) > BotBuildRules.TargetScore(25, 1, false, false, false), "bots prefer finishing a wounded opponent at equal range");
         Check(BotBuildRules.TargetScore(25, 1, true, false, false) > BotBuildRules.TargetScore(25, 1, false, false, false), "target stickiness avoids constant aim switching");
         Check(BotBuildRules.TargetScore(25, 1, false, true, false) > BotBuildRules.TargetScore(25, 1, false, false, false), "KOTH targets on the objective gain priority");
+    }
+    private static void BotIntelligenceAndCounters()
+    {
+        Check(BotTacticsRules.Tier(-20)==BotIntelligence.Low && BotTacticsRules.Tier(99)==BotIntelligence.Ultra,"intelligence clamps to its five supported settings");
+        Check(BotTacticsRules.Name(1)=="Medium" && BotTacticsRules.Name(3)=="Extra High" && BotTacticsRules.Name(4)=="Ultra","slider levels have readable labels");
+        Check(!BotTacticsRules.Adaptive(BotIntelligence.High) && BotTacticsRules.Adaptive(BotIntelligence.ExtraHigh) && BotTacticsRules.Adaptive(BotIntelligence.Ultra),"only the top two tiers replace fixed builds with adaptive scoring");
+        foreach(ArenaMode mode in Enum.GetValues(typeof(ArenaMode)))
+            Check(BotTacticsRules.ChaseHumans(true,mode)==(mode==ArenaMode.FFA),"human chase is FFA-only: "+mode);
+        Check(!BotTacticsRules.ChaseHumans(false,ArenaMode.FFA),"disabled chase never alters targeting");
+        foreach(BotIntelligence tier in Enum.GetValues(typeof(BotIntelligence)))
+        {
+            Check(!BotTacticsRules.CanFire(false,true,true,false,1,tier) && !BotTacticsRules.CanFire(true,false,true,false,1,tier),tier+" cannot fire at dead, absent or allied targets");
+            Check(!BotTacticsRules.CanFire(true,true,false,false,1,tier) && !BotTacticsRules.CanFire(true,true,true,true,1,tier),tier+" does not shoot through walls or into spawn protection");
+            Check(!BotTacticsRules.CanFire(true,true,true,false,-1,tier) && BotTacticsRules.CanFire(true,true,true,false,1,tier),tier+" must actually aim at its target before shooting");
+        }
+        Check(BotTacticsRules.AimDamping(BotIntelligence.Medium)==.18f && BotTacticsRules.AimSpeed(BotIntelligence.Medium)==10,"Medium retains the previous aim parameters");
+        Check(BotTacticsRules.AimDamping(BotIntelligence.Ultra)<BotTacticsRules.AimDamping(BotIntelligence.ExtraHigh),"Ultra converges on its aim faster");
+        Check(BotTacticsRules.TargetScore(BotIntelligence.High,5,1,false,false,false,1)>BotTacticsRules.TargetScore(BotIntelligence.High,6,.1f,true,true,false,10),"High seeks the closest hostile entity");
+        bool held=true;
+        for(int i=0;i<100;i++)held=BotTacticsRules.HeldSkill(true,held,true,false);
+        Check(held && !BotTacticsRules.HeldSkill(false,held,true,false),"losing the enemy preserves native held skills until the native state releases them");
+        Check(!BotTacticsRules.HeldSkill(true,false,true,false) && BotTacticsRules.HeldSkill(true,false,false,false),"missing targets block new offensive utilities while preserving defensive native actions");
+        for(int x=-100;x<=100;x+=20)for(int z=-100;z<=100;z+=20)
+        {
+            float sx,sz;BotTacticsRules.ObjectiveOffset(x,z,25,out sx,out sz);
+            Check(sx*sx+sz*sz<=25*25*.55f*.55f+.001f,"all tactical offsets stay within the KOTH capture area, including retreat directions");
+        }
+        Check(BotTacticsRules.StoppingDistance(30,80,1)>BotTacticsRules.StoppingDistance(7,80,1),"faster movement probes farther ahead for cliffs");
+        var fixedContext=new BotBuildContext();fixedContext.Inventory["FireRing"]=2;fixedContext.Inventory["IceRing"]=2;
+        var voidBand=new BotBuildItem { Pickup=1,Name="ElementalRingVoid",Corrupts=new[]{"FireRing","IceRing"} };
+        Check(!BotBuildRules.FixedCompatible(BotBuildKind.SkillCaster,voidBand,fixedContext),"fixed caster plans never destroy their Runald/Kjaro setup with Singularity Band");
+        fixedContext.Inventory.Clear();
+        Check(!BotBuildRules.FixedCompatible(BotBuildKind.SkillCaster,voidBand,fixedContext),"a fixed caster cannot sabotage its planned bands before buying them either");
+        var plasma=new BotBuildItem { Name="MissileVoid",Corrupts=new[]{"Missile"} };
+        fixedContext.PreferVoid=true;
+        Check(BotBuildRules.FixedCompatible(BotBuildKind.OnHit,plasma,fixedContext),"a void-route on-hit bot can acquire its planned Plasma Shrimp");
+        Check(!BotBuildRules.FixedCompatible(BotBuildKind.OnHit,new BotBuildItem { Name="Missile",ConvertsTo="MissileVoid" },fixedContext),"that route avoids buying an AtG it will only corrupt later");
+        fixedContext.Inventory["Missile"]=2;
+        Check(!BotBuildRules.FixedCompatible(BotBuildKind.OnHit,plasma,fixedContext),"an unexpected existing ordinary proc build is preserved rather than discarded");
+        var adaptive=new BotBuildContext();var hit=new BotBuildItem { Pickup=1,Name="Syringe",Traits=BotItemTraits.Damage };
+        var blast=new BotBuildItem { Pickup=2,Name="Behemoth",Rare=true,Traits=BotItemTraits.Damage };
+        Check(BotBuildRules.ChooseAdaptive(new[]{hit,blast},adaptive)==2,"adaptive builds are not artificially restricted to common items in Command");
+        adaptive.Ultra=true;adaptive.EnemyInventory["BearVoid"]=1;
+        Check(BotBuildRules.ChooseAdaptive(new[]{hit,blast},adaptive)==1,"Ultra builds multi-hit damage to break an opponent's Safer Spaces");
+        adaptive.EnemyInventory.Clear();adaptive.EnemyInventory["ArmorPlate"]=4;
+        Check(BotBuildRules.ChooseAdaptive(new[]{hit,blast},adaptive)==2,"Ultra prefers heavy hits over small repeated hits against flat damage reduction");
+        adaptive.EnemyInventory.Clear();adaptive.EnemyInventory["Hoof"]=4;
+        Check(BotBuildRules.ChooseAdaptive(new[]{new BotBuildItem { Pickup=3,Name="SlowOnHit" },blast},adaptive)==3,"Ultra can sacrifice raw damage to counter a mobility build");
+        adaptive.EnemyInventory.Clear();adaptive.EnemyInventory["CritDamage"]=1;
+        Check(BotBuildRules.ChooseAdaptive(new[]{new BotBuildItem { Pickup=4,Name="BearVoid" },blast},adaptive)==4,"Ultra responds to burst/crit equipment with protection");
+        adaptive.EnemyInventory.Clear();adaptive.EnemyEquipment.Add("Cleanse");
+        var bleed=new BotBuildItem { Pickup=5,Name="BleedOnHitVoid" };
+        Check(BotBuildRules.ChooseAdaptive(new[]{hit,bleed},adaptive)==1,"Blast Shower in an opponent's equipment changes Ultra's damage choice");
+        adaptive.EnemyEquipment.Clear();adaptive.Shield=.95f;
+        Check(BotBuildRules.AdaptiveScore(new BotBuildItem { Name="IncreaseHealing" },adaptive)<BotBuildRules.AdaptiveScore(hit,adaptive),"full shield conversion does not attract useless health-healing upgrades");
+        adaptive.Shield=0;adaptive.Crit=100;
+        Check(BotBuildRules.AdaptiveScore(new BotBuildItem { Name="CritGlasses" },adaptive)<BotBuildRules.AdaptiveScore(hit,adaptive),"adaptive scoring respects a completed crit setup");
+        adaptive.Inventory["FireRing"]=2;adaptive.Inventory["IceRing"]=2;
+        Check(BotBuildRules.AdaptiveScore(voidBand,adaptive)<BotBuildRules.AdaptiveScore(blast,adaptive),"adaptive builds include the actual cost of corrupting owned rings");
+        Check(BotBuildRules.ChooseAdaptive(new[]{new BotBuildItem { Pickup=77,Name="CustomDamage",Traits=BotItemTraits.Damage }},adaptive)==77,"adaptive scoring handles loaded custom catalog items without selecting unoffered content");
+        Check(BotBuildRules.ChooseAdaptive(new[]{new BotBuildItem { Pickup=78,Name="Fireworks",AiAllowed=false }},adaptive)==-1,"AI-incompatible-only offers can be banked instead of wasting a bot's reward");
+        Check(BotBuildRules.ChooseAdaptive(new[]{voidBand},adaptive)==-1,"an adaptive bot banks a destructive conversion when it is the only offered item");
+        var credits=new RewardQueue();credits.Enqueue(new RewardOffer { Id=500,Items=new[]{1},Catchup=true });
+        credits.Enqueue(new RewardOffer { Id=501,Items=new[]{2} });uint arrival=credits.ArrivalRevision;
+        Check(!credits.DeferBotOffer(999) && credits.First.Id==500,"stale bot deferral cannot reorder a different offer");
+        Check(credits.DeferBotOffer(500) && credits.First.Id==501 && credits.Count==2 && credits.PendingCatchup==1 && credits.ArrivalRevision==arrival,"bot deferral retains exact offers, catch-up credit and arrival identity while letting another class be chosen");
+        RewardOffer consumed;
+        Check(credits.TryConsume(501,2,false,out consumed) && credits.First.Id==500,"a usable bot reward is consumed without losing the earlier banked incompatible one");
+        Check(!credits.DeferBotOffer(500) && credits.TryConsume(500,-1,true,out consumed) && credits.Count==0,"a previously banked bot reward can turn into XP when the host cap allows it");
     }
     private static void RewardArrivalAndVehicleCleanup()
     {

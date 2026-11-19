@@ -10,7 +10,7 @@ Turn Risk of Rain 2 into a PvP arena. Fight everyone, split into red and blue te
 - Adjustable starting rewards and rewards for kills, deaths or timed intervals.
 - An XP choice instead of an item, with a level cap that rises over time.
 - Global and survivor-specific item/equipment blacklists, stack limits and a reward scrapper.
-- Survivor bots, configurable respawns, spawn protection, void rescue and anti-one-shot protection.
+- Survivor bots with five intelligence levels, configurable respawns, spawn protection, void rescue and anti-one-shot protection.
 - DLC and custom item support through the game's catalogs.
 
 Arena removes monsters, chests, shrines and teleporters. Void Fields, Void Locus and Planetarium have no void fog in Arena. The optional reward scrapper remains available. Normal gamemodes keep their usual rules.
@@ -21,7 +21,7 @@ Arena removes monsters, chests, shrines and teleporters. Void Fields, Void Locus
 2. Launch modded and select **RiskOfArena**, next to Monsoon in character selection.
 3. Use **Map Vote** and the mode buttons to vote. Open **Match settings** to set up the match, then ready up.
 
-The in-game mode and Mod Options entry are called **RiskOfArena**. When upgrading, remove or disable older copies, including older RiskOfArena installations, and restart the game. Keep only one copy enabled.
+The Mod Options entry is **RiskOfPVP**. The in-game mode remains **RiskOfArena**. When upgrading, remove or disable older copies, including older RiskOfArena installations, and restart the game. Keep only one copy enabled.
 
 One-person multiplayer lobbies work for practice or playing against bots.
 
@@ -56,23 +56,35 @@ Rewards show the usual pickup notification. Falling into the void never grants d
 
 The optional Arena scrapper has a marker and an outline visible through walls. Scrap items or equipment for reward points. Weighted, Draft and Random preserve the scrapped pickup's rarity or equipment class; Command keeps unrestricted choices. Item-removal effects still apply.
 
-Set a starting bot count in Match settings, or use **Esc > Arena bots** during a match. Bot controls are host-only. Bots earn rewards, respawn, join balanced teams and choose builds in choice modes. Inspect their inventories on the normal inventory scoreboard, usually **Tab**. Available survivors depend on registered survivor AI.
+Set a starting bot count in Match settings, or use **Esc > Arena bots** during a match. Bot controls are host-only. Bots earn rewards, respawn, join balanced teams and choose builds in choice modes. All tiers use safe navigation and prioritize holding the KOTH zone. Inspect their inventories on the normal inventory scoreboard, usually **Tab**. Available survivors depend on registered survivor AI.
+
+Bot intelligence is under **General > Bots**:
+
+| Level | Behaviour |
+|---|---|
+| **Low** | Simple targeting, slower aim and fixed builds. |
+| **Medium** | Standard tactics and fixed builds; the default. |
+| **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
+| **Extra High** | Adaptive item choices and predictive aiming. |
+| **Ultra** | Stronger aiming and threat selection, plus counter-builds based on opponents' actual items and equipment. |
+
+**Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
 
 ## Settings and controls
 
-Use **Match settings** in character selection or **Settings > Mod Options > RiskOfArena**.
+Use **Match settings** in character selection or **Settings > Mod Options > RiskOfPVP**.
 
 | Tab | Settings |
 |---|---|
-| **General** | Lobby maps, shared combat/respawn rules, protections, blacklists and eligible pickup classes. |
-| **FFA / Teams / KOTH** | Each mode's rewards and rarity weights, scrapper, levelling, match limits and bots. KOTH also has capture settings. |
+| **General** | Lobby maps, shared combat/respawn rules, protections, blacklists, pickup classes and bot behaviour. |
+| **FFA / Teams / KOTH** | Each mode's rewards, scrapper, levelling, match limits and starting bot count. KOTH also has capture settings. |
 | **Controls** | Your own keybinds, nametags, arrows and automatic reward-menu preference. |
 
 Reward amounts use sliders: **0 turns the event off**. One-shot grace ranges from 0.25 to 2 seconds in 0.05-second steps. Void protection returns players to safe ground instead of killing them; fall damage has its own toggle.
 
 The global blacklist includes equipment. Left-click a pickup to switch it On/Off. Right-click adds or increases a held-stack limit; Shift + right-click reduces it. For survivor-specific rules, choose the survivor first, then edit its pickups. Global bans and the stricter stack limit take priority. **Apply** saves; **Back** returns without applying unsaved changes.
 
-Gameplay rules come from the host. Clients can view them but cannot edit them. Personal controls stay local. Combat, protection, pickup restrictions and the scrapper toggle update live; reward clocks, levelling and eligible pickup classes apply next match.
+Gameplay rules come from the host. Clients can view them but cannot edit them. Personal controls stay local. Combat, protection, pickup restrictions, bot behaviour and the scrapper toggle update live; reward clocks, levelling and eligible pickup classes apply next match.
 
 On upgrade, shared rules inherit the previous default mode. Old mode blacklists merge into General with hard bans and stricter limits taking priority. Each mode keeps its own reward amounts and local controls stay unchanged.
 
@@ -91,7 +103,7 @@ RiskOfOptions and R2API Teams are required and included in the dependency list. 
 
 In Arena, Aerolt 4.3.1 initializes its menu only after you press its configured menu key. Aerolt handles its own initialization; Arena does not load its DLLs or modify UniverseLib. Aerolt's native first-time initialization can still pause when you open the menu. Other gamemodes retain normal Aerolt startup. DropIn integration was checked against DropinMultiplayer 4.2.1. Custom items need valid catalog entries; custom tier behavior can vary. Mods replacing teams, respawns or progression may need compatibility work. Split-screen reward selection is not supported.
 
-Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The reorganized menus, void rescue and large-lobby combinations still need fresh multiplayer testing.
+Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The new bot navigation, survivor-specific AI behaviour and large-lobby combinations still need fresh multiplayer testing.
 
 By **claytemplar**. MIT license.
 

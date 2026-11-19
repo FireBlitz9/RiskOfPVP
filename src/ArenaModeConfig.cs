@@ -17,7 +17,7 @@ namespace ArenaPvP
         internal readonly ConfigEntry<float> ItemInterval, CapInterval, RandomLevelSeconds;
         internal readonly ConfigEntry<int> InitialCap, CapStep, MaximumLevel;
         internal readonly ConfigEntry<int> KillLimit, StartingBots, FocusCaptures;
-        internal readonly ConfigEntry<float> MatchMinutes, WarmupSeconds, BotThinkSeconds, FocusChargeSeconds, FocusRadius, FocusMoveSeconds;
+        internal readonly ConfigEntry<float> MatchMinutes, WarmupSeconds, FocusChargeSeconds, FocusRadius, FocusMoveSeconds;
 
         internal ArenaModeConfig(ArenaConfig owner, ArenaMode mode)
         {
@@ -64,7 +64,6 @@ namespace ArenaPvP
             WarmupSeconds = Number("Match", "Warmup seconds", 10f, 0f, 120f, "Preparation time with damage disabled.");
             owner.Heading(Category, "Bots");
             StartingBots = Integer("Bots", "Starting survivor bots", 0, 0, 16, "Host-controlled AI survivor count at the start. Use Esc > Arena bots during a match.");
-            BotThinkSeconds = Number("Bots", "Bot decision interval seconds", .5f, .2f, 2f, "Time between extra tactical AI decisions. Native movement and skills continue between decisions.");
             if (mode == ArenaMode.KOTH)
             {
                 owner.Heading(Category, "KOTH objective");

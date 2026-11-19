@@ -1,3 +1,12 @@
+# 1.3.0
+
+- Renamed the RiskOfOptions entry to RiskOfPVP, retaining saved configuration and the in-game mode identity.
+- Added General > Bots with Low, Medium, High, Extra High and Ultra intelligence, a shared decision interval and FFA-only Chase mode. Medium remains the default.
+- Restored native survivor attack-driver priority and fixed discarded waypoint destinations. Travel no longer doubles as a primary attack. Bots require an aimed hostile target before firing.
+- Enabled native cliff checks, added bounded edge probes and retained validated navigation jumps. All bot tiers seek and hold KOTH objectives.
+- Reworked fixed builds to avoid destructive void conversions. Extra High and Ultra choose adaptive builds; Ultra reads nearby opponents' actual items and equipment to choose counters.
+- Cached catalog/loadout data and moved bot reward decisions into the shared tactical budget. Incompatible offers are banked without rerolls and cannot trap dead bots.
+
 # 1.2.1
 
 - Preserved LookingGlass and other tooltip overrides when a personal-level icon is reused for a normal item.

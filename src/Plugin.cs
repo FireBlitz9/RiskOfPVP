@@ -7,8 +7,8 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-[assembly: System.Reflection.AssemblyVersion("1.2.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("1.2.1")]
+[assembly: System.Reflection.AssemblyVersion("1.3.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.3.0")]
 [assembly: System.Reflection.AssemblyCompany("claytemplar")]
 
 namespace ArenaPvP
@@ -24,7 +24,8 @@ namespace ArenaPvP
     {
         public const string Guid = "com.fireb.arenapvp";
         public const string Name = "RiskOfArena";
-        public const string Version = "1.2.1";
+        public const string OptionsName = "RiskOfPVP";
+        public const string Version = "1.3.0";
         internal static Plugin Instance;
         internal static ArenaConfig Settings;
         internal static DifficultyIndex ArenaDifficulty = DifficultyIndex.Invalid;
@@ -57,7 +58,7 @@ namespace ArenaPvP
             LanguageAPI.Add("ARENA_PVP_SCRAPPER_NAME", "Reward Scrapper");
             LanguageAPI.Add("ARENA_PVP_SCRAPPER_CONTEXT", "Recycle items and equipment for matching-class rewards (Command: any class)");
             LanguageAPI.Add("ARENA_PVP_SCRAPPER_BLOCKED", "{0}: the reward scrapper cannot accept items. Spend banked rewards or enable eligible replacements of the same tier in the host's pool.");
-            LanguageAPI.Add("ARENA_PVP_DESCRIPTION", "<style=cIsDamage>ARENA PvP</style>\nVote for FFA, Teams or King of the Hill.\n\n<style=cIsUtility>Choose item rewards or personal levels.</style>\nFight in enemy-free arenas with configurable rewards, respawns and match goals.\n\nVote below Match settings in the lobby.\nConfigure host rules in <style=cIsUtility>Settings > Mod Options > RiskOfArena</style>.\nF2: rewards | F3: scoreboard\nAll players need the same mod version.");
+            LanguageAPI.Add("ARENA_PVP_DESCRIPTION", "<style=cIsDamage>ARENA PvP</style>\nVote for FFA, Teams or King of the Hill.\n\n<style=cIsUtility>Choose item rewards or personal levels.</style>\nFight in enemy-free arenas with configurable rewards, respawns and match goals.\n\nVote below Match settings in the lobby.\nConfigure host rules in <style=cIsUtility>Settings > Mod Options > RiskOfPVP</style>.\nF2: rewards | F3: scoreboard\nAll players need the same mod version.");
             var def = new DifficultyDef(3.001f, "ARENA_PVP_NAME", "Textures/MiscIcons/texDifficultyHardIcon", "ARENA_PVP_DESCRIPTION", new Color(0.16f, 0.88f, 0.84f), "ArenaPvP", false);
             using (var stream = typeof(Plugin).Assembly.GetManifestResourceStream("ArenaPvP.ModeIcon.png"))
             {
@@ -77,7 +78,7 @@ namespace ArenaPvP
                 modeIcon = Sprite.Create(modeTexture, new Rect(0, 0, modeTexture.width, modeTexture.height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
             }
             ArenaDifficulty = DifficultyAPI.AddDifficulty(def, modeIcon);
-            RiskOfOptions.ModSettingsManager.SetModIcon(modeIcon, Guid, Name);
+            RiskOfOptions.ModSettingsManager.SetModIcon(modeIcon, Guid, OptionsName);
             Run.onRunStartGlobal += OnRunStart;
             Run.onRunDestroyGlobal += OnRunEnd;
             CharacterBody.onBodyStartGlobal += OnBodyStart;

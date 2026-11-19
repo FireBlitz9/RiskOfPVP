@@ -297,6 +297,7 @@ namespace ArenaPvP
                 var field = go.AddComponent<TMP_InputField>(); field.targetGraphic = go.GetComponent<Image>(); field.textViewport = viewport.GetComponent<RectTransform>(); field.textComponent = label;
                 field.contentType = !number ? TMP_InputField.ContentType.Standard : entry.SettingType == typeof(int) ? TMP_InputField.ContentType.IntegerNumber : TMP_InputField.ContentType.DecimalNumber;
                 field.lineType = TMP_InputField.LineType.SingleLine;
+                if(entry==Plugin.Settings.BotIntelligence) { field.readOnly=true;field.contentType=TMP_InputField.ContentType.Standard; }
                 field.onEndEdit.AddListener(text => { if (!refreshing) { ArenaHostSettings.TryEdit(entry, text); Refresh(); } });
                 return field;
             }
@@ -334,9 +335,11 @@ namespace ArenaPvP
                     else if (ArenaBlacklistSettings.IsRule(Rule.Name)) value.text = entry == null ? "View bans / limits" : "Choose bans / limits";
                     else if (entry == Plugin.Settings.MapBlacklist) value.text = "Choose blacklisted stages";
                     else if (entry == Plugin.Settings.DefaultMap) value.text = "Choose default · " + text;
+                    else if(SettingsLayout.Section(Rule.Name)=="Bots" && SettingsLayout.Title(Rule.Name)=="Bot intelligence")
+                    { int number;value.text=int.TryParse(text,out number) ? BotTacticsRules.Name(number) : text; }
                     else value.text = text == "True" ? "On" : text == "False" ? "Off" : text;
                 }
-                if (input && !input.isFocused) input.text = text;
+                if (input && !input.isFocused) input.text = entry==Plugin.Settings.BotIntelligence ? BotTacticsRules.Name((int)entry.BoxedValue) : text;
                 if (slider) slider.SetValueWithoutNotify(Convert.ToSingle(entry.BoxedValue, CultureInfo.InvariantCulture));
                 bool allowed = entry == null ? Rule.Enabled : Plugin.Settings.IsEnabled(entry);
                 if (action) action.interactable = allowed;

@@ -73,7 +73,7 @@ internal static class ItemPoolTests
             Check(version.Update(new int[0]) && !version.Update(new int[0]), "empty eligibility rebuilds once and then stays stable");
             var mutable = new[] { 2, 3 }; version.Update(mutable); mutable[0] = 1;
             Check(version.Update(mutable), "menu tracking notices reused arrays whose contents change");
-            SurvivorRestrictions(); SharedWeightsAndDraft();
+            SurvivorRestrictions(); SharedWeightsAndDraft(); BotInventoryCounters();
             Console.WriteLine("PASS: " + assertions + " production ItemPool and reward-layout integration assertions."); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine("FAILED: " + error); return 1; }
@@ -138,6 +138,46 @@ internal static class ItemPoolTests
         Check(pool.CanGrant(Id(0), inv), "a typed custom-name cap offers a free first copy"); inv.Counts[(ItemIndex)0] = 1;
         Check(!pool.CanGrant(Id(0), inv) && !pool.Available(pool.All, inv).Contains(Id(0)), "punctuation in custom internal names survives the actual runtime policy path");
     }
+    private static void BotInventoryCounters()
+    {
+        ItemCatalog.Definitions=new[] { new ItemDef("Syringe",ItemTier.Tier1,0),new ItemDef("Behemoth",ItemTier.Tier3,1),
+            new ItemDef("BearVoid",ItemTier.VoidTier1,2),new ItemDef("ArmorPlate",ItemTier.Tier1,3),new ItemDef("SlowOnHit",ItemTier.Tier2,4),
+            new ItemDef("BleedOnHitVoid",ItemTier.VoidTier1,5) };
+        EquipmentCatalog.Definitions=new[] { new EquipmentDef("Fruit",0),new EquipmentDef("GainArmor",1),new EquipmentDef("Cleanse",2) };
+        RoR2.Items.ContagiousItemManager.transformationInfos=new RoR2.Items.TransformationInfo[0];
+        ArenaBotBuilds.Reset();UnityEngine.Time.unscaledTime=0;
+        var bot=new ArenaPlayer { IsBot=true,Master=new CharacterMaster(),BotBuild=BotBuildKind.OnHit };
+        var opponent=new ArenaPlayer { IsBot=false,Master=new CharacterMaster() };
+        opponent.Master.Body.corePosition=new UnityEngine.Vector3(10,0,0);opponent.Master.inventory.Counts[(ItemIndex)2]=1;
+        var match=new ArenaMatch { Rules=new MatchSettings { Mode=ArenaMode.FFA,BotIntelligence=BotIntelligence.ExtraHigh } };
+        match.AllPlayers.Add(bot);match.AllPlayers.Add(opponent);ArenaMatch.Instance=match;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==1,"Extra High adapts to its own build rather than using a preset or artificial rarity pacing");
+        Check(opponent.Master.inventory.EffectiveReads==0,"lower adaptive difficulty does not scan opponent inventories");
+        match.Rules.BotIntelligence=BotIntelligence.Ultra;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==0,"the actual Ultra chooser reads the opponent's Safer Spaces and chooses a multi-hit counter");
+        int reads=opponent.Master.inventory.EffectiveReads;
+        opponent.Master.inventory.Counts.Clear();opponent.Master.inventory.Counts[(ItemIndex)3]=4;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==0 && opponent.Master.inventory.EffectiveReads==reads,"repeated rewards reuse the opponent snapshot instead of rescanning every choice");
+        UnityEngine.Time.unscaledTime=.6f;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==1 && opponent.Master.inventory.EffectiveReads>reads,"fresh snapshots notice an opponent changing to flat-damage reduction");
+        opponent.Master.inventory.Counts.Clear();opponent.Master.inventory.Equipment[0]=(EquipmentIndex)2;UnityEngine.Time.unscaledTime=1.2f;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,5},ItemSelection.Command)==0,"Ultra reads actual equipment slots and responds to Blast Shower");
+        match.Rules.BotIntelligence=BotIntelligence.ExtraHigh;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,5},ItemSelection.Command)==5,"Extra High keeps its own synergy choice without inheriting Ultra-only opponent counters");
+        match.Rules.BotIntelligence=BotIntelligence.Ultra;match.Rules.Mode=ArenaMode.Teams;bot.Side=opponent.Side=0;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,5},ItemSelection.Command)==5,"allied inventories never contaminate the counter-build input");
+        match.Rules.Mode=ArenaMode.FFA;opponent.Master.inventory.Counts.Clear();opponent.Master.inventory.Equipment.Clear();opponent.Master.inventory.Counts[(ItemIndex)2]=1;UnityEngine.Time.unscaledTime=1.8f;
+        var settings=Settings("Syringe","");var pool=new ItemPool(new Run(),settings);
+        Check(ArenaBotBuilds.Choose(bot,pool.Available(new[]{0,1},bot.Master.inventory),ItemSelection.Command)==1,"Ultra cannot choose a counter removed by host bans or inventory limits");
+        bot.Dead=true;bot.Master.BodyMissing=true;
+        Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==0,"Ultra can read opponent inventories and choose its death reward after its old body has been removed");
+        var full=ItemCatalog.Definitions.Concat(Enumerable.Range(6,594).Select(i=>new ItemDef("CustomItem"+i,ItemTier.Tier1,i))).ToArray();
+        ItemCatalog.Definitions=full;ArenaBotBuilds.Reset();var large=Enumerable.Range(0,600).ToArray();
+        ArenaBotBuilds.Choose(bot,large,ItemSelection.Command); // Warm the descriptor cache, as normal repeated rewards do.
+        var clock=System.Diagnostics.Stopwatch.StartNew();
+        for(int i=0;i<1000;i++)ArenaBotBuilds.Choose(bot,large,ItemSelection.Command);
+        Console.WriteLine("INFO: 1,000 production bot evaluations of 600-pickup offers: "+clock.ElapsedMilliseconds+" ms (cached adapter; excludes Unity physics).");
+    }
 }
 
 namespace ArenaPvP
@@ -148,6 +188,35 @@ namespace ArenaPvP
         internal string GlobalBlacklist = "", SurvivorBlacklists = "";
         internal bool IncludeRestricted = true, IncludeLunar = true, IncludeVoid = true, IncludeBoss = true, IncludeSpecial = true, IncludeEquipment = true;
         internal EssenceWeights WeightedEssences = EssenceWeights.Default;
+        internal ArenaMode Mode;
+        internal BotIntelligence BotIntelligence;
+        internal bool BotChase=false;
+    }
+    internal sealed class ArenaPlayer
+    {
+        internal bool IsBot,Dead=false;
+        internal bool Connected=true;
+        internal CharacterMaster Master;
+        internal BotBuildKind BotBuild;
+        internal int BotOrdinal=0,BotRewards=0,Side;
+        internal uint LastAttacker=0,UserId=1;
+    }
+    internal sealed class ArenaMatch
+    {
+        internal static ArenaMatch Instance;
+        internal MatchSettings Rules;
+        internal readonly List<ArenaPlayer> AllPlayers=new List<ArenaPlayer>();
+        internal bool AreOpponents(ArenaPlayer a,ArenaPlayer b) { return a!=b && (Rules.Mode==ArenaMode.FFA || a.Side!=b.Side); }
+    }
+    internal static class ArenaEquipment
+    {
+        internal static EquipmentLocation GrantLocation(Inventory inventory)
+        {
+            for(uint slot=0;slot<inventory.equipmentSlotCount;slot++) { var location=new EquipmentLocation { slot=slot };if(inventory.GetEquipment(in location).equipmentIndex==EquipmentIndex.None)return location; }
+            return new EquipmentLocation();
+        }
+        internal static IEnumerable<EquipmentLocation> Locations(Inventory inventory)
+        { for(uint slot=0;slot<inventory.equipmentSlotCount;slot++)yield return new EquipmentLocation { slot=slot }; }
     }
 }
 namespace RoR2
@@ -156,7 +225,7 @@ namespace RoR2
     public enum ItemTier { Tier1, Tier2, Tier3, Lunar, Boss, VoidTier1, VoidTier2, VoidTier3, VoidBoss, NoTier }
     public enum ItemIndex { None = -1 }
     public enum EquipmentIndex { None = -1 }
-    public enum ItemTag { IgnoreForDropList, WorldUnique }
+    public enum ItemTag { IgnoreForDropList, WorldUnique, AIBlacklist, Damage, Healing, Utility, OnKillEffect, SprintRelated, InteractableRelated }
     public struct PickupIndex { public int value; public PickupIndex(int i) { value = i; } }
     public struct EquipmentLocation { public uint slot, set; }
     public struct EquipmentState { public EquipmentIndex equipmentIndex; }
@@ -167,7 +236,8 @@ namespace RoR2
     {
         public string name; public ItemTier tier; public ItemIndex itemIndex; public bool hidden = false; public ExpansionDef requiredExpansion = null;
         public ItemDef(string n, ItemTier t, int i) { name = n; tier = t; itemIndex = (ItemIndex)i; }
-        public bool ContainsTag(ItemTag tag) { return false; }
+        public readonly HashSet<ItemTag> Tags=new HashSet<ItemTag>();
+        public bool ContainsTag(ItemTag tag) { return Tags.Contains(tag); }
     }
     public class EquipmentDef : TestObject
     {
@@ -198,9 +268,29 @@ namespace RoR2
     {
         public readonly Dictionary<ItemIndex, int> Counts = new Dictionary<ItemIndex, int>();
         public int GetItemCountTotal(ItemIndex i) { int count; return Counts.TryGetValue(i, out count) ? count : 0; }
+        public int EffectiveReads;
+        public int GetItemCountEffective(ItemIndex i) { EffectiveReads++;return GetItemCountTotal(i); }
+        public IEnumerable<ItemIndex> itemAcquisitionOrder { get { return Counts.Keys; } }
         public byte equipmentSlotCount = 1, equipmentSetCount = 1;
         public readonly Dictionary<uint, EquipmentIndex> Equipment = new Dictionary<uint, EquipmentIndex>();
         public EquipmentState GetEquipment(in EquipmentLocation location) { EquipmentIndex e; return new EquipmentState { equipmentIndex = Equipment.TryGetValue(location.slot, out e) ? e : EquipmentIndex.None }; }
+        public EquipmentState GetActiveEquipment() { var location=new EquipmentLocation();return GetEquipment(in location); }
+    }
+    public class CharacterMaster : TestObject
+    {
+        public readonly Inventory inventory=new Inventory();
+        public readonly CharacterBody Body=new CharacterBody();
+        public readonly BodyPrefab bodyPrefab=new BodyPrefab();
+        public bool BodyMissing=false;
+        public CharacterBody GetBody() { return BodyMissing ? null : Body; }
+    }
+    public class BodyPrefab { public string name="CommandoBody"; }
+    public class HealthComponent : TestObject { public bool alive=true;public float combinedHealthFraction=1; }
+    public class CharacterBody : TestObject
+    {
+        public readonly HealthComponent healthComponent=new HealthComponent();
+        public float maxShield=0,maxHealth=100,crit=1,baseCrit=1,moveSpeed=7,armor=0,regen=1,damage=12,attackSpeed=1;
+        public UnityEngine.Vector3 corePosition;
     }
     public class Run
     {
@@ -208,6 +298,18 @@ namespace RoR2
         public readonly HashSet<ItemIndex> availableItems = new HashSet<ItemIndex>();
         public readonly HashSet<EquipmentIndex> availableEquipment = new HashSet<EquipmentIndex>();
         public bool IsExpansionEnabled(ExpansionDef expansion) { return true; }
+    }
+}
+namespace UnityEngine
+{
+    public static class Time { public static float unscaledTime; }
+    public struct Vector3
+    {
+        public static Vector3 zero { get { return new Vector3(); } }
+        public float x,y,z;
+        public Vector3(float x,float y,float z) { this.x=x;this.y=y;this.z=z; }
+        public float sqrMagnitude { get { return x*x+y*y+z*z; } }
+        public static Vector3 operator -(Vector3 a,Vector3 b) { return new Vector3(a.x-b.x,a.y-b.y,a.z-b.z); }
     }
 }
 namespace RoR2.Items

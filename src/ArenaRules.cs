@@ -495,6 +495,12 @@ namespace ArenaPvP
             return true;
         }
         private void AdvanceArrival() { ArrivalRevision++; if (ArrivalRevision == 0) ArrivalRevision = 1; }
+        // Only the host's bot scheduler uses this. Human menu order is unchanged.
+        internal bool DeferBotOffer(uint id)
+        {
+            if(First==null || First.Id!=id || Count<2)return false;
+            var offer=offers[0];offers.RemoveAt(0);offers.Add(offer);return true;
+        }
 
         public bool TryConsume(uint id, int selection, bool mayLevel, out RewardOffer consumed, Func<int, int> tierOf = null, Func<int, bool> canGrant = null)
         {

@@ -16,6 +16,9 @@ namespace ArenaPvP
         internal readonly ConfigEntry<float> DamageScale, HealOnKill, RespawnSeconds, ProtectionSeconds, AntiBurstSeconds;
         internal readonly ConfigEntry<RespawnRule> Respawn;
         internal readonly ConfigEntry<bool> IncludeEquipment, IncludeLunar, IncludeVoid, IncludeBoss, IncludeSpecial, IncludeRestricted;
+        internal readonly ConfigEntry<int> BotIntelligence;
+        internal readonly ConfigEntry<float> BotThinkSeconds;
+        internal readonly ConfigEntry<bool> BotChase;
         internal readonly ConfigEntry<bool> AutoOpen, ShowNametags, ShowOpponentArrows;
         internal readonly ConfigEntry<KeyboardShortcut> PickerKey, BoardKey, VoteKey;
         private readonly Dictionary<ArenaMode, ArenaModeConfig> profiles = new Dictionary<ArenaMode, ArenaModeConfig>();
@@ -40,7 +43,7 @@ namespace ArenaPvP
             foreach (var profile in profiles.Values) if (profile.Category == entry.Definition.Section) return profile.Enabled(entry);
             return true;
         }
-        internal void Add(BaseOption option) { ModSettingsManager.AddOption(option, Plugin.Guid, Plugin.Name); }
+        internal void Add(BaseOption option) { ModSettingsManager.AddOption(option, Plugin.Guid, Plugin.OptionsName); }
         internal void Heading(string category, string title) { Add(new ArenaSettingsHeading(category, title)); }
         internal void Track(ConfigEntryBase entry) { if (ArenaRules.IsMatchSettingGroup(entry.Definition.Section) && !matchEntries.Contains(entry)) matchEntries.Add(entry); }
         internal T OldMode<T>(ArenaMode mode, string section, string name, string legacySection, T fallback)
@@ -126,6 +129,18 @@ namespace ArenaPvP
                 IncludeSpecial = SharedCheck("Blacklist", "Include expansion special tiers", "Item pool", "Include expansion special tiers", true, "Allow visible special tiers from enabled DLCs and item mods.", "02 Item pool");
                 IncludeRestricted = SharedCheck("Blacklist", "Include restricted pickups", "Item pool", "Include restricted pickups", true, "Include visible tiered pickups normally excluded by drop/unlock restrictions, including elite equipment. DLC rules and blacklists still apply.", "02 Item pool");
 
+                Heading(SettingsLayout.General, "Bots");
+                BotIntelligence = General("Bots", "Bot intelligence", 1,
+                    "Low: simple tactics and fixed builds. Medium: standard tactics. High: nearest-enemy awareness and fixed builds. Extra High: adaptive builds and advanced tactics. Ultra: threat-aware targeting, predictive aim and stronger adaptation. Every tier seeks KOTH objectives and uses cliff avoidance. Host-controlled and live.", new AcceptableValueRange<int>(0,4));
+                Add(new ArenaBotIntelligenceOption(BotIntelligence));
+                BotThinkSeconds = General("Bots", "Decision interval", .5f,
+                    "Seconds between tactical decisions per bot. Lower values react sooner but use more CPU. Decisions are staggered inside a shared 2 ms budget; native movement and aiming continue between them. Applies live.", new AcceptableValueRange<float>(.1f,2f),
+                    new ConfigDefinition(SettingsLayout.Profile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
+                    new ConfigDefinition(SettingsLayout.LegacyProfile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
+                    new ConfigDefinition("05 Match", "Bot decision interval seconds"));
+                Add(new StepSliderOption(BotThinkSeconds, new StepSliderConfig { name = "Decision interval", min = .1f, max = 2f, increment = .05f }));
+                BotChase = GeneralCheck("Bots", "Chase mode", false, "FFA only: bots prioritize human players over other bots. If no living human target is available, they fight other enemies. Ignored by Teams and KOTH; objectives always take priority. Applies live.");
+
                 profiles.Add(ArenaMode.FFA, new ArenaModeConfig(this, ArenaMode.FFA));
                 profiles.Add(ArenaMode.Teams, new ArenaModeConfig(this, ArenaMode.Teams));
                 profiles.Add(ArenaMode.KOTH, new ArenaModeConfig(this, ArenaMode.KOTH));
@@ -142,7 +157,7 @@ namespace ArenaPvP
                 AutoOpen = Local("Open new rewards automatically", true, "Open new rewards automatically when abilities permit. Double-tap and release W to close and bank them. This preference stays local.");
                 Add(new CheckBoxOption(AutoOpen));
                 Migration.Complete();
-                ModSettingsManager.SetModDescription("General shares lobby, combat, protection, blacklists and item-pool rules across all modes. FFA, Teams and KOTH keep independent rewards, levels, match and bot settings. Controls stays local.", Plugin.Guid, Plugin.Name);
+                ModSettingsManager.SetModDescription("Arena PvP with FFA, Teams and King of the Hill. General holds shared rules and bot intelligence. Each mode keeps its own rewards, levels, match goals and starting bot count. Controls stays local.", Plugin.Guid, Plugin.OptionsName);
             }
             finally { file.SaveOnConfigSet = save; if (save) file.Save(); }
             file.SettingChanged += (sender, args) => {
@@ -185,6 +200,8 @@ namespace ArenaPvP
         internal int FocusCaptures;
         internal int StartingBots;
         internal float BotThinkSeconds;
+        internal BotIntelligence BotIntelligence;
+        internal bool BotChase;
         internal float FocusChargeSeconds, FocusRadius, FocusMoveSeconds;
         internal bool AntiOneShot, RandomAutoLevel, VoidProtection;
         internal float AntiBurstSeconds, RandomLevelSeconds;
@@ -204,7 +221,7 @@ namespace ArenaPvP
             Selection = c.Selection.Value; Respawn = config.Respawn.Value;
             Mode = mode; FocusCaptures = (c.FocusCaptures == null ? 3 : c.FocusCaptures.Value);
             StartingBots = c.StartingBots.Value;
-            BotThinkSeconds = c.BotThinkSeconds.Value;
+            BotThinkSeconds = config.BotThinkSeconds.Value; BotIntelligence = BotTacticsRules.Tier(config.BotIntelligence.Value); BotChase = config.BotChase.Value;
             FocusChargeSeconds = (c.FocusChargeSeconds == null ? 45f : c.FocusChargeSeconds.Value); FocusRadius = (c.FocusRadius == null ? 25f : c.FocusRadius.Value); FocusMoveSeconds = (c.FocusMoveSeconds == null ? 8f : c.FocusMoveSeconds.Value);
             AntiOneShot = config.AntiOneShot.Value; AntiBurstSeconds = config.AntiBurstSeconds.Value; VoidProtection = config.VoidProtection.Value;
             RandomAutoLevel = c.RandomAutoLevel.Value; RandomLevelSeconds = c.RandomLevelSeconds.Value;
@@ -235,6 +252,7 @@ namespace ArenaPvP
             AntiOneShot = config.AntiOneShot.Value; AntiBurstSeconds = config.AntiBurstSeconds.Value;
             VoidProtection = config.VoidProtection.Value; NoFallDamage = !config.FallDamage.Value;
             EnableScrapper = config.Profile(Mode).EnableScrapper.Value;
+            BotThinkSeconds = config.BotThinkSeconds.Value; BotIntelligence = BotTacticsRules.Tier(config.BotIntelligence.Value); BotChase = config.BotChase.Value;
         }
     }
 }

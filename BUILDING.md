@@ -15,7 +15,7 @@ The package script checks dependency pins and the DLL/manifest version match, th
 
 ## Development checks
 
-`-RunTests` runs deterministic gameplay-rule tests, tests against the actual reward-pool source with a catalog adapter, real BepInEx configuration/migration/transport tests with a UI registration adapter, deferred optional-menu lifecycle tests and a metadata audit of native game hooks. Optional public Aerolt menu/DropIn contract auditing is in `tests/AeroltContractAudit.cs` and requires separate copies of those optional DLLs.
+`-RunTests` runs deterministic gameplay-rule tests, tests against the actual reward-pool and bot-choice sources with catalog/inventory adapters, real BepInEx configuration/migration/transport tests with a UI registration adapter, deferred optional-menu lifecycle tests and a metadata audit of native game hooks. Optional public Aerolt menu/DropIn contract auditing is in `tests/AeroltContractAudit.cs` and requires separate copies of those optional DLLs.
 
 These checks do not run Unity or replace multiplayer playtesting. Test changes in a separate mod-manager profile. Only one RiskOfPVP/RiskOfArena plugin copy should be enabled, and every player must use the same version.
 

@@ -18,12 +18,13 @@ namespace ArenaPvP
         private readonly System.Diagnostics.Stopwatch decisionBudget = new System.Diagnostics.Stopwatch();
         private readonly List<ArenaBotBrain> brains = new List<ArenaBotBrain>();
         private readonly List<BotTarget> targets = new List<BotTarget>();
+        private readonly Dictionary<CharacterMaster,ArenaPlayer> owners = new Dictionary<CharacterMaster,ArenaPlayer>();
         private int choice;
         private SurvivorDef[] survivors;
         internal string Status = "";
         private void Awake() { Instance = this; }
         private void OnDestroy() { Reset(); Instance = null; }
-        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextBrain = 0; brains.Clear(); targets.Clear(); Status = ""; }
+        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextBrain = 0; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); Status = ""; }
         internal SurvivorDef[] Survivors
         {
             get
@@ -63,11 +64,24 @@ namespace ArenaPvP
             float now = Time.unscaledTime;
             if (now >= nextRoster)
             {
-                nextRoster = now + 0.25f; targets.Clear(); brains.RemoveAll(b => !b);
+                nextRoster = now + 0.25f; targets.Clear(); owners.Clear(); brains.RemoveAll(b => !b);
                 foreach (var player in match.AllPlayers)
                 {
+                    if(player.Connected && player.Master) owners[player.Master]=player;
                     var body = player.Connected && !player.Dead && player.Master ? player.Master.GetBody() : null;
                     if (body && body.healthComponent && body.healthComponent.alive) targets.Add(new BotTarget { Player = player, Body = body });
+                }
+                if(match.Rules.BotIntelligence>=BotIntelligence.High)
+                foreach(var master in CharacterMaster.readOnlyInstancesList)
+                {
+                    if(!master || owners.ContainsKey(master))continue;
+                    var root=master.minionOwnership ? master.minionOwnership.ownerMaster : null;
+                    ArenaPlayer owner=null;
+                    for(int depth=0;root && depth<8;depth++)
+                    { if(owners.TryGetValue(root,out owner))break;root=root.minionOwnership ? root.minionOwnership.ownerMaster : null; }
+                    var body=owner!=null ? master.GetBody() : null;
+                    if(body && body.healthComponent && body.healthComponent.alive && !ArenaWorldObjects.PreserveVehicle(body))
+                        targets.Add(new BotTarget { Player=owner,Body=body,Summon=true });
                 }
             }
             if (brains.Count == 0) return;
@@ -79,7 +93,13 @@ namespace ArenaPvP
             {
                 nextBrain %= brains.Count;
                 var brain = brains[nextBrain++];
-                if (brain && now >= brain.NextThink) brain.Think(match, targets, now);
+                if (brain)
+                {
+                    if(now>=brain.NextThink)brain.Think(match,targets,now);
+                    var player=brain.Participant;
+                    if(player!=null && player.Rewards.First!=null && (now>=brain.NextChoice || player.Rewards.ArrivalRevision!=brain.ChoiceArrival))
+                    { brain.ChoiceArrival=player.Rewards.ArrivalRevision;brain.NextChoice=now+(match.SpendBotReward(player) ? .05f : .25f); }
+                }
                 if (decisionBudget.Elapsed.TotalMilliseconds >= 2) break;
             }
         }
@@ -120,7 +140,8 @@ namespace ArenaPvP
                 brain.Initialize(bot, def.bodyPrefab.name); brains.Add(brain);
                 foreach (var item in new[] { RoR2Content.Items.UseAmbientLevel, RoR2Content.Items.InvadingDoppelganger })
                 { int count = bot.Master.inventory.GetItemCountPermanent(item); if (count > 0) bot.Master.inventory.RemoveItemPermanent(item, count); }
-                match.EnsureParticipant(bot); Status = "Spawned " + bot.Name + " (" + BotBuildRules.Name(bot.BotBuild) + ").";
+                match.EnsureParticipant(bot); Status = "Spawned " + bot.Name + " (" + BotTacticsRules.Name((int)match.Rules.BotIntelligence) + ", "
+                    + (BotTacticsRules.Adaptive(match.Rules.BotIntelligence) ? "adaptive build" : BotBuildRules.Name(bot.BotBuild)) + ").";
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage { baseToken = "ARENA_PVP_BOT_SPAWNED", paramTokens = new[] { ArenaMatch.SafeName(bot.Name) } });
                 ArenaNetwork.SendSnapshots(); return true;
             }

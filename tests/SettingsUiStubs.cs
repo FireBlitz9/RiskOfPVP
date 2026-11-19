@@ -9,8 +9,9 @@ namespace RiskOfOptions
     internal static class ModSettingsManager
     {
         internal static readonly List<Options.BaseOption> Options = new List<Options.BaseOption>();
-        public static void AddOption(Options.BaseOption option, string guid, string name) { Options.Add(option); }
-        public static void SetModDescription(string description, string guid, string name) { }
+        internal static string LastModName;
+        public static void AddOption(Options.BaseOption option, string guid, string name) { Options.Add(option);LastModName=name; }
+        public static void SetModDescription(string description, string guid, string name) { LastModName=name; }
     }
 }
 namespace RiskOfOptions.OptionConfigs
@@ -41,7 +42,9 @@ namespace RiskOfOptions.Options
 }
 namespace ArenaPvP
 {
-    internal static class Plugin { public const string Guid="com.fireb.arenapvp", Name="RiskOfArena"; }
+    internal static class Plugin { public const string Guid="com.fireb.arenapvp", Name="RiskOfArena", OptionsName="RiskOfPVP"; }
+    internal sealed class ArenaBotIntelligenceOption : RiskOfOptions.Options.IntSliderOption
+    { internal ArenaBotIntelligenceOption(ConfigEntry<int> entry) : base(entry,new RiskOfOptions.OptionConfigs.IntSliderConfig { name="Bot intelligence",min=0,max=4 }) { } }
     internal class ArenaSettingsHeading : RiskOfOptions.Options.BaseOption
     { internal ArenaSettingsHeading(string category, string title) { Category=category; Name=title; } }
     internal static class ArenaStageSettings { internal static void Open(bool blacklist) { } }

@@ -17,7 +17,7 @@ internal static class ApiAudit
                 {
                     var attribute = patch.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch");
                     if (attribute == null) continue;
-                    bool scoped = patch.Methods.Where(m => m.HasBody && (m.Name == "Prefix" || m.Name == "Postfix" || m.Name == "Finalizer" || patch.Name == "ArenaPickupChatIdentity" && m.Name == "AddPickupMessage" || patch.Name == "ArenaReprieveBarrier" && m.Name == "HealthBasis" || patch.Name == "ArenaBeadStats" && m.Name == "TeamForBeadStats"))
+                    bool scoped = patch.Methods.Where(m => m.HasBody && (m.Name == "Prefix" || m.Name == "Postfix" || m.Name == "Finalizer" || patch.Name == "ArenaPickupChatIdentity" && m.Name == "AddPickupMessage" || patch.Name == "ArenaReprieveBarrier" && m.Name == "HealthBasis" || patch.Name == "ArenaBeadStats" && m.Name == "TeamForBeadStats" || patch.Name == "ArenaBotInputPatch" && m.Name == "Filter"))
                         .SelectMany(m => m.Body.Instructions).Any(i => i.Operand is MethodReference
                             && (((MethodReference)i.Operand).DeclaringType.FullName == "ArenaPvP.Plugin" && ((MethodReference)i.Operand).Name == "get_Active"
                                 || ((MethodReference)i.Operand).DeclaringType.FullName == "ArenaPvP.ArenaLobby" && ((MethodReference)i.Operand).Name == "get_Selected"
@@ -270,8 +270,11 @@ internal static class ApiAudit
                 if (think.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name.StartsWith("FindObjects")))
                     throw new Exception("Bot decisions must not scan the whole scene.");
                 var reward = matchType.Methods.Single(m => m.Name == "GiveReward");
-                if (!reward.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "ArenaBotBuilds" && ((MethodReference)i.Operand).Name == "Choose"))
-                    throw new Exception("Bots must select builds from the host-created reward offer.");
+                var botSpend=matchType.Methods.Single(m=>m.Name=="SpendBotReward");
+                if (!botSpend.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "ArenaBotBuilds" && ((MethodReference)i.Operand).Name == "Choose")
+                    || !reward.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Enqueue")
+                    || !botTick.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="SpendBotReward"))
+                    throw new Exception("Bots must spend queued host-created offers within the shared tactical budget.");
                 var buildChooser = plugin.MainModule.GetType("ArenaPvP.ArenaBotBuilds").Methods.Single(m => m.Name == "Choose");
                 if (buildChooser.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "ItemPool"))
                     throw new Exception("Bot builds cannot rebuild or reroll the host's offer.");
@@ -281,6 +284,35 @@ internal static class ApiAudit
                 foreach (var item in plugin.MainModule.GetType("ArenaPvP.BotBuildRules").Methods.Single(m => m.Name == ".cctor").Body.Instructions
                     .Where(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Ldstr).Select(i => (string)i.Operand))
                     if (!nativeItemNames.Contains(item)) throw new Exception("Unknown saved bot build item/equipment identifier: " + item);
+                foreach(var method in plugin.MainModule.GetType("ArenaPvP.BotBuildRules").Methods.Where(m=>new[]{"CounterValue","Utility","FixedCompatible","VoidRoute"}.Contains(m.Name)))
+                    foreach(var item in method.Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>(string)i.Operand))
+                        if(!nativeItemNames.Contains(item))throw new Exception("Unknown adaptive/counter item identifier: "+item);
+                var nativeInputs=game.MainModule.GetType("RoR2.CharacterAI.BaseAI").Methods.Single(m=>m.Name=="UpdateBodyInputs");
+                var generated=nativeInputs.Body.Instructions.Where(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="GenerateBodyInputs").ToArray();
+                if(generated.Length!=1 || generated[0].Next.OpCode.Code!=Mono.Cecil.Cil.Code.Stfld || ((FieldReference)generated[0].Next.Operand).Name!="bodyInputs")
+                    throw new Exception("Bot input filtering must occur between native generation and its single input-field assignment.");
+                var botInput=plugin.MainModule.GetType("ArenaPvP.ArenaBotInputPatch").Methods.Single(m=>m.Name=="Filter");
+                if(!botInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName=="UnityEngine.Networking.NetworkServer" && ((MethodReference)i.Operand).Name=="get_active")
+                    || !botInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="ArenaBotControl" && ((MethodReference)i.Operand).Name=="Find"))
+                    throw new Exception("Only host-owned registered bot inputs may be filtered.");
+                var navigation=plugin.MainModule.GetType("ArenaPvP.ArenaBotControl").Methods.Single(m=>m.Name=="Navigate");
+                if(!navigation.Body.Instructions.Any(i=>i.Operand is FieldReference && ((FieldReference)i.Operand).DeclaringType.FullName=="RoR2.LocalNavigator" && ((FieldReference)i.Operand).Name=="allowWalkOffCliff"))
+                    throw new Exception("Bots must opt into the native cliff probe for every intelligence level.");
+                var waypoint=plugin.MainModule.GetType("ArenaPvP.ArenaBotPathDestination").Methods.Single(m=>m.Name=="Prefix");
+                if(!waypoint.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="SetGoalPosition" && ((MethodReference)i.Operand).Parameters[0].ParameterType.FullName=="System.Nullable`1<UnityEngine.Vector3>"))
+                    throw new Exception("Plain bot waypoints must use the native position-based path setter.");
+                var brainInput=plugin.MainModule.GetType("ArenaPvP.ArenaBotBrain").Methods.Single(m=>m.Name=="FilterInputs");
+                if(!brainInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="CanFire")
+                    || !brainInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="HeldSkill"))
+                    throw new Exception("Bots require a real aimed hostile target and must preserve native held utilities.");
+                var loadouts=plugin.MainModule.GetType("ArenaPvP.ArenaBotBuilds");
+                if(!loadouts.Methods.Single(m=>m.Name=="ReadLoadout").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="GetItemCountEffective")
+                    || !loadouts.Methods.Single(m=>m.Name=="ReadOpponents").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="AreOpponents")
+                    || !loadouts.Methods.Single(m=>m.Name=="Choose").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="ChooseAdaptive"))
+                    throw new Exception("Ultra must read real opposing inventories and use adaptive scoring within host-created offers.");
+                if(!plugin.MainModule.GetType("ArenaPvP.ArenaBotBrain").Methods.Single(m=>m.Name=="Think").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="ObjectiveOffset"))
+                    throw new Exception("Every bot tier must constrain its movement to a ready KOTH objective.");
+                Console.WriteLine("PASS: host-only bot input sequencing, non-firing travel, native waypoint/cliff fixes, objective priority and actual-inventory Ultra counters audited.");
                 Console.WriteLine("PASS: mode profile capture, compressed settings, native headings, bounded bot tactics and saved build catalog identifiers audited.");
                 var suppression = plugin.MainModule.GetType("ArenaPvP.BlockSkillsWhileChoosing");
                 if (suppression.Methods.Any(m => m.Name == "Prefix") || !suppression.Methods.Any(m => m.Name == "Postfix"))
