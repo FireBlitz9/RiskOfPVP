@@ -107,7 +107,7 @@ namespace ArenaPvP
                 var view = JsonUtility.FromJson<HostSettingsView>(SettingsSnapshotCodec.Decode(json));
                 if (view == null || view.Rules == null || view.Rules.Length > 256) return;
                 if (view.Rules.Any(r => r == null || !ArenaRules.IsMatchSettingGroup(r.Group)
-                    || string.IsNullOrEmpty(r.Name) || r.Name.Length > 128 || (r.Value ?? "").Length > 16384
+                    || string.IsNullOrEmpty(r.Name) || r.Name.Length > 128 || (r.Value ?? "").Length > 262144
                     || (r.Description ?? "").Length > 4096)) return;
                 ClientView = view;
             }

@@ -35,6 +35,7 @@ namespace ArenaPvP
         internal readonly LevelExperienceQueue BeadExperience = new LevelExperienceQueue();
         internal uint UserId { get { return IsBot ? 0xF0000000u + (uint)BotOrdinal : User ? User.netId.Value : 0; } }
         internal CharacterMaster Master { get { return IsBot ? BotMaster : User ? User.master : null; } }
+        internal string SurvivorKey { get { var master = Master; return master && master.bodyPrefab ? master.bodyPrefab.name : ""; } }
         internal bool Connected { get { return IsBot ? !BotRemoved && BotMaster : ArenaNetwork.IsUserPresent(User) && User.isParticipating; } }
     }
 
@@ -63,6 +64,7 @@ namespace ArenaPvP
         private float nextSnapshot;
         private bool stageStarted;
         private bool warnedEmptyPool;
+        private uint itemPolicyRevision;
         private readonly List<Vector3> spawnPositions = new List<Vector3>();
 
         private void Awake() { Instance = this; Stage.onServerStageBegin += OnStage; }
@@ -81,7 +83,7 @@ namespace ArenaPvP
             WarmupRemaining = settings.WarmupSeconds; NextReward = settings.ItemInterval; TimeLimit = settings.MatchMinutes * 60f;
             if (TeamManager.instance) TeamManager.instance.SetTeamLevel(TeamIndex.Player, 1);
             EnsurePlayers();
-            Plugin.Log("Arena started. Host mode=" + settings.Selection + "; weighted W/G/R/V/L/E=" + settings.WeightedEssences.Describe()
+            Plugin.Log("Arena started. Host mode=" + settings.Selection + "; weights W/G/R/V/L/E/B/S=" + settings.WeightedEssences.Describe()
                 + "; start/death/kill/timer amounts=" + settings.StartingRewards + "/" + settings.DeathRewards + "/" + settings.KillRewards + "/" + settings.TimedRewards + ".");
             Plugin.Log("Arena " + settings.Mode + " host initialization: " + timing.Elapsed.TotalMilliseconds.ToString("0.0") + " ms.");
         }
@@ -94,7 +96,7 @@ namespace ArenaPvP
             balancedMembers.Clear(); teamRoster.Clear(); nextCatchup = 0;
             ContinueVotes.Close();
             Restarting = false;
-            Clock = Elapsed = nextSnapshot = TimeLimit = 0; Finished = ReturningToLobby = stageStarted = warnedEmptyPool = false;
+            Clock = Elapsed = nextSnapshot = TimeLimit = 0; Finished = ReturningToLobby = stageStarted = warnedEmptyPool = false; itemPolicyRevision = 0;
             Result = "";
             teamRoster.Clear(); TeamKills[0] = TeamKills[1] = 0; Hill.Reset();
         }
@@ -252,7 +254,7 @@ namespace ArenaPvP
         private void FixedUpdate()
         {
             if (!Plugin.Active || !NetworkServer.active || Rules == null) return;
-            Rules.EnableScrapper = Plugin.Settings.Profile(Rules.Mode).EnableScrapper.Value;
+            RefreshItemRules();
             EnsurePlayers();
             if (Finished) RefreshContinueVotes();
             if (!stageStarted && Stage.instance && SceneInfo.instance && AllPlayers.Any(p => p.Master && p.Master.GetBody()))
@@ -390,13 +392,13 @@ namespace ArenaPvP
             RefreshItemRules();
             if (Rules.Selection == ItemSelection.Random)
             {
-                int item = pool.Pick(inventory: player.Master.inventory);
+                int item = pool.Pick(inventory: player.Master.inventory, survivor: player.SurvivorKey);
                 if (item < 0) { WarnEmpty(); return false; }
                 return GrantPickup(player, item);
             }
             int[] choices = Rules.Selection == ItemSelection.Command ? pool.All
-                : Rules.Selection == ItemSelection.Weighted ? pool.Weighted(player.Master.inventory) : pool.DraftByEssence(Rules.DraftSize, player.Master.inventory);
-            var available = pool.Available(choices, player.Master.inventory);
+                : Rules.Selection == ItemSelection.Weighted ? pool.Weighted(player.Master.inventory, player.SurvivorKey) : pool.DraftByEssence(Rules.DraftSize, player.Master.inventory, player.SurvivorKey);
+            var available = pool.Available(choices, player.Master.inventory, player.SurvivorKey);
             if (available.Length == 0 && !(Rules.AllowLevel && player.Level < Cap)) { WarnEmpty(); return false; }
             if (player.IsBot)
             {
@@ -412,7 +414,7 @@ namespace ArenaPvP
             if (queued && Rules.Selection == ItemSelection.Weighted)
                 Plugin.Log("Weighted reward " + offerId + ": " + SafeName(player.Name) + ", source=" + source
                     + ", essence=" + (choices.Length > 0 ? ItemPool.Category(choices[0]).ToString() : "XP only")
-                    + ", configured W/G/R/V/L/E=" + Rules.WeightedEssences.Describe() + ", banked=" + player.Rewards.Count + ".");
+                    + ", configured W/G/R/V/L/E/B/S=" + Rules.WeightedEssences.Describe() + ", banked=" + player.Rewards.Count + ".");
             return queued;
         }
 
@@ -420,7 +422,7 @@ namespace ArenaPvP
         {
             if (ScrapCapacity(player, tier, 1) == 0) return false;
             if (!ScrapRewardRules.PreservesTier(Rules.Selection)) return GiveReward(player, false, "scrapper");
-            int[] choices = pool.ScrapChoices(Rules.Selection, tier, Rules.DraftSize, player.Master.inventory);
+            int[] choices = pool.ScrapChoices(Rules.Selection, tier, Rules.DraftSize, player.Master.inventory, player.SurvivorKey);
             if (choices.Length == 0) return false;
             if (Rules.Selection == ItemSelection.Random)
             { return GrantPickup(player, choices[0]); }
@@ -433,7 +435,7 @@ namespace ArenaPvP
                 || player == null || !player.Connected || player.Dead || !player.Master) return 0;
             RefreshItemRules();
             return ArenaRules.ScrapBatchLimit(requested, player.Rewards.Count, Rules.Selection == ItemSelection.Random,
-                pool.CanScrap(Rules.Selection, tier, Rules.AllowLevel && player.Level < Cap, player.Master.inventory, releasing));
+                pool.CanScrap(Rules.Selection, tier, Rules.AllowLevel && player.Level < Cap, player.Master.inventory, releasing, player.SurvivorKey));
         }
 
         private void WarnEmpty()
@@ -452,7 +454,7 @@ namespace ArenaPvP
             p.LastRequest = Clock;
             bool mayLevel = Rules.AllowLevel && p.Level < Cap;
             RewardOffer used;
-            if (!p.Rewards.TryConsume(offerId, selection, mayLevel, out used, ItemPool.ExactTier, pickup => pool.CanGrant(pickup, p.Master.inventory))) return false;
+            if (!p.Rewards.TryConsume(offerId, selection, mayLevel, out used, ItemPool.ExactTier, pickup => pool.CanGrant(pickup, p.Master.inventory, -1, p.SurvivorKey))) return false;
             if (selection == -1) { p.Level++; ApplyLevel(p); }
             else GrantPickup(p, selection);
             if (used.GatesRespawn) p.ChoiceComplete = true;
@@ -478,18 +480,23 @@ namespace ArenaPvP
         internal void RefreshItemRules()
         {
             if (!Plugin.Active || !NetworkServer.active || Rules == null || pool == null) return;
-            var profile = Plugin.Settings.Profile(Rules.Mode);
-            if (!pool.RefreshRestrictions(profile.BannedItems.Value, profile.BannedEquipment.Value)) return;
-            Rules.BannedItems = profile.BannedItems.Value; Rules.BannedEquipment = profile.BannedEquipment.Value;
+            if (itemPolicyRevision == Plugin.Settings.MatchRevision) return;
+            itemPolicyRevision = Plugin.Settings.MatchRevision;
+            Rules.RefreshCombat(Plugin.Settings);
+            if (!Rules.AntiOneShot) foreach (var player in AllPlayers) player.Burst.Reset();
+            if (Rules.ProtectionSeconds <= 0f) foreach (var player in AllPlayers) player.ProtectionUntil = 0f;
+            string combined = Plugin.Settings.GlobalBlacklist.Value;
+            if (!pool.RefreshRestrictions(combined, Plugin.Settings.SurvivorBlacklists.Value)) return;
+            Rules.GlobalBlacklist = combined; Rules.SurvivorBlacklists = Plugin.Settings.SurvivorBlacklists.Value;
             Plugin.Log("Applied " + Rules.Mode + " host item/equipment restrictions to active rewards.");
         }
         internal int[] AvailableChoices(ArenaPlayer player, int[] choices)
-        { RefreshItemRules(); return player.Master && pool != null ? pool.Available(choices, player.Master.inventory) : new int[0]; }
+        { RefreshItemRules(); return player.Master && pool != null ? pool.Available(choices, player.Master.inventory, player.SurvivorKey) : new int[0]; }
 
         private bool GrantPickup(ArenaPlayer player, int pickup)
         {
             var definition = PickupCatalog.GetPickupDef(new PickupIndex(pickup));
-            if (definition == null || !player.Master || !player.Master.inventory || !pool.CanGrant(pickup, player.Master.inventory)) return false;
+            if (definition == null || !player.Master || !player.Master.inventory || !pool.CanGrant(pickup, player.Master.inventory, -1, player.SurvivorKey)) return false;
             var inventory = player.Master.inventory;
             if (definition.itemIndex != ItemIndex.None) inventory.GiveItemPermanent(definition.itemIndex);
             else if (definition.equipmentIndex != EquipmentIndex.None)

@@ -14,6 +14,40 @@ namespace ArenaPvP
         private static readonly Dictionary<int, AsyncOperationHandle<Texture>> maps = new Dictionary<int, AsyncOperationHandle<Texture>>();
         private static readonly Dictionary<int, Sprite> mapSprites = new Dictionary<int, Sprite>();
         private static readonly Dictionary<int, AsyncOperationHandle<Sprite>> pickups = new Dictionary<int, AsyncOperationHandle<Sprite>>();
+        private static Sprite levelSprite;
+        private static Texture2D levelTexture;
+
+        internal static Sprite Level()
+        {
+            if (levelSprite) return levelSprite;
+            const int size = 128, samples = 4;
+            levelTexture = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            levelTexture.name = "Arena personal level"; levelTexture.filterMode = FilterMode.Trilinear; levelTexture.wrapMode = TextureWrapMode.Clamp;
+            var pixels = new Color[size * size];
+            for (int y = 0; y < size; y++) for (int x = 0; x < size; x++)
+            {
+                Color sum = Color.clear;
+                for (int sy = 0; sy < samples; sy++) for (int sx = 0; sx < samples; sx++)
+                {
+                    float px = x + (sx + .5f) / samples - 64f, py = y + (sy + .5f) / samples;
+                    // A chunky, outlined promotion arrow with two shaded faces.
+                    bool outer = Arrow(px, py, 1.12f), rim = Arrow(px, py, 1f), core = Arrow(px, py, .88f);
+                    Color c = !outer ? Color.clear : !rim ? new Color(.035f,.08f,.1f,1) : !core ? new Color(.94f,.91f,.77f,1)
+                        : px < -3 ? new Color(.26f,.7f,.78f,1) : px < 2 ? new Color(.76f,.98f,.98f,1) : new Color(.13f,.4f,.51f,1);
+                    if (Mathf.Abs(px) < 27 && py > 9 && py < 16) c = new Color(.94f,.91f,.77f,1);
+                    sum += c;
+                }
+                float alpha = sum.a / (samples * samples);
+                pixels[y * size + x] = alpha > 0 ? new Color(sum.r / sum.a, sum.g / sum.a, sum.b / sum.a, alpha) : Color.clear;
+            }
+            levelTexture.SetPixels(pixels); levelTexture.Apply(true, true);
+            levelSprite = Sprite.Create(levelTexture, new Rect(0,0,size,size), new Vector2(.5f,.5f)); return levelSprite;
+        }
+        private static bool Arrow(float x, float y, float scale)
+        {
+            x /= scale; y = (y - 65f) / scale + 65f;
+            return y >= 27 && y <= 114 && (y < 77 ? Mathf.Abs(x) < 17 : Mathf.Abs(x) < (114 - y) * 1.04f);
+        }
 
         internal static Sprite Map(int index)
         {
@@ -54,6 +88,8 @@ namespace ArenaPvP
             foreach (var handle in maps.Values) if (handle.IsValid()) Addressables.Release(handle);
             foreach (var handle in pickups.Values) if (handle.IsValid()) Addressables.Release(handle);
             maps.Clear(); mapSprites.Clear(); pickups.Clear();
+            if (levelSprite) Object.Destroy(levelSprite); if (levelTexture) Object.Destroy(levelTexture);
+            levelSprite = null; levelTexture = null;
         }
     }
 

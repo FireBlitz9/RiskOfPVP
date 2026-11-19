@@ -443,7 +443,7 @@ internal static class ApiAudit
                     throw new Exception("Blacklist gallery must guard host edits and bound rendered controls.");
                 if (!plugin.MainModule.GetType("ArenaPvP.ArenaBlacklistRightClick").Interfaces.Any(i => i.InterfaceType.FullName == "UnityEngine.EventSystems.IPointerClickHandler"))
                     throw new Exception("Stack limits need an independent right-click handler.");
-                Console.WriteLine("PASS: paged blacklist gallery, independent mode caps, disabled/pending-corruption stack counts and host reward-claim enforcement audited.");
+                Console.WriteLine("PASS: paged combined blacklist gallery, disabled/pending-corruption stack counts and host reward-claim enforcement audited.");
                 var refreshRules = matchType.Methods.Single(m => m.Name == "RefreshItemRules");
                 if (!refreshRules.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == "UnityEngine.Networking.NetworkServer" && ((MethodReference)i.Operand).Name == "get_active")
                     || !refreshRules.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "RefreshRestrictions"))
@@ -456,6 +456,34 @@ internal static class ApiAudit
                     || !gallerySave.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == "BepInEx.Configuration.ConfigFile" && ((MethodReference)i.Operand).Name == "Save"))
                     throw new Exception("Saved restrictions must persist and the reward grid must rebuild when eligible item contents change.");
                 Console.WriteLine("PASS: live host restriction refresh, persistent Apply and content-driven reward-grid rebuild audited.");
+                foreach (string path in new[] { "GiveReward", "GiveScrapReward", "ScrapCapacity", "AvailableChoices", "GrantPickup" })
+                    if (!matchType.Methods.Single(m => m.Name == path).Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "get_SurvivorKey"))
+                        throw new Exception("Body-specific restrictions must reach the actual reward path: " + path);
+                var policy = poolType.Methods.Single(m => m.Name == "RestrictionsFor");
+                if (!policy.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "PickupBlacklist" && ((MethodReference)i.Operand).Name == "Merge"))
+                    throw new Exception("Survivor policies must tighten global restrictions, never replace them.");
+                var selector = plugin.MainModule.GetType("ArenaPvP.ArenaSurvivorSettings");
+                if (!selector.Methods.Single(m => m.Name == "Show").Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "GetSurvivorDef")
+                    || !gallerySave.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "SurvivorPickupRules" && ((MethodReference)i.Operand).Name == "Set"))
+                    throw new Exception("Survivor selection must use loaded catalogs and save only the edited profile.");
+                var eligibility = plugin.MainModule.GetType("ArenaPvP.ArenaVoidEligibility").Methods.Single(m => m.Name == "Postfix");
+                var returnPoint = plugin.MainModule.GetType("ArenaPvP.ArenaLastSafeVoidPosition").Methods.Single(m => m.Name == "Prefix");
+                if (!eligibility.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name == "ArenaVoidSafety" && ((MethodReference)i.Operand).Name == "get_Enabled")
+                    || !returnPoint.Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "ReturningBody")
+                    || !returnPoint.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "TryPosition")
+                    || !plugin.MainModule.GetType("ArenaPvP.ArenaVoidTeleportScope").Methods.Any(m => m.Name == "Finalizer"))
+                    throw new Exception("Void rescue must honor host rules and scope the last-ground override to native MapZone teleports with cleanup.");
+                var sharedRefresh = configuration.Methods.Single(m => m.Name == "RefreshCombat");
+                if (!sharedRefresh.Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "VoidProtection")
+                    || !plugin.MainModule.GetType("ArenaPvP.MatchView").Fields.Any(f => f.Name == "VoidProtection")
+                    || !snapshots.Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "VoidProtection"))
+                    throw new Exception("Void protection must propagate from host configuration through the match snapshot.");
+                var levelArt = plugin.MainModule.GetType("ArenaPvP.ArenaLevelPresentation").Methods.Single(m => m.Name == "Postfix");
+                if (!levelArt.Body.Instructions.Any(i => i.Operand is FieldReference && ((FieldReference)i.Operand).Name == "LevelBonus")
+                    || plugin.MainModule.GetTypes().SelectMany(t => t.Methods).Where(m => m.HasBody).SelectMany(m => m.Body.Instructions)
+                        .Any(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && ((FieldReference)i.Operand).DeclaringType.FullName == "RoR2.ItemDef" && ((FieldReference)i.Operand).Name == "hidden"))
+                    throw new Exception("Level artwork must use native replicated LevelBonus without globally exposing hidden items.");
+                Console.WriteLine("PASS: global/survivor reward enforcement, catalog survivor selection, host-synchronized native void rescue and per-icon native level presentation audited.");
                 if (plugin.MainModule.AssemblyReferences.Any(a => a.Name.IndexOf("Aerolt", StringComparison.OrdinalIgnoreCase) >= 0 || a.Name.IndexOf("UniverseLib", StringComparison.OrdinalIgnoreCase) >= 0)
                     || plugin.MainModule.GetTypeReferences().Any(t => t.Namespace.StartsWith("Aerolt", StringComparison.Ordinal) || t.Namespace.StartsWith("UniverseLib", StringComparison.Ordinal)))
                     throw new Exception("Aerolt compatibility must never introduce a required external assembly reference.");

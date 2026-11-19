@@ -21,12 +21,14 @@ namespace ArenaPvP
         internal static int LastClosedFrame { get; private set; } = -1;
         internal static void CloseOpen() { if (instance) instance.Dismiss(); }
         internal static bool IsRule(string key)
-        { string title = SettingsLayout.Title(key); return title == "Banned internal item names" || title == "Banned internal equipment names"; }
-        internal static bool EquipmentRule(string key) { return SettingsLayout.Title(key) == "Banned internal equipment names"; }
-        internal static string RuleTitle(string key) { return EquipmentRule(key) ? "Equipment blacklist" : "Item blacklist"; }
-        private sealed class Entry { internal string Name, Title; internal int Pickup, Category; internal bool Reserved, Internal; }
+        { string title = SettingsLayout.Title(key); return title == "Global item blacklist" || title == "Survivor specific"; }
+        internal static bool SurvivorRule(string key) { return SettingsLayout.Title(key) == "Survivor specific"; }
+        internal static string RuleTitle(string key) { return SettingsLayout.Title(key); }
+        private sealed class Entry { internal string Name, Key, Title; internal int Pickup, Category; internal bool Reserved, Internal; }
         private ConfigEntry<string> setting;
-        private bool requireHost, readOnly, equipment;
+        private string survivorKey;
+        private BlacklistSelection inherited = new BlacklistSelection("");
+        private bool requireHost, readOnly;
         private BlacklistSelection selection;
         private Entry[] catalog, filtered, shown = new Entry[PageSize];
         private int page, filter;
@@ -41,17 +43,20 @@ namespace ArenaPvP
         private MPEventSystem eventSystem;
         private GameObject previousSelection, canvasObject;
         private TMP_FontAsset font;
-        internal static void Open(ConfigEntry<string> entry, bool gear, bool hostOnly = false)
-        { Create(entry, entry.Value, gear, hostOnly, false, entry.Definition.Section); }
-        internal static void OpenReadOnly(string values, bool gear, string profile)
-        { Create(null, values, gear, true, true, profile); }
-        private static void Create(ConfigEntry<string> entry, string values, bool gear, bool hostOnly, bool viewOnly, string profile)
+        internal static void Open(ConfigEntry<string> entry, bool hostOnly = false)
+        { Create(entry, entry.Value, hostOnly, false, entry.Definition.Section); }
+        internal static void OpenReadOnly(string values, string profile)
+        { Create(null, values, true, true, profile); }
+        internal static void OpenSurvivor(ConfigEntry<string> entry, string survivor, string title, string values, string global, bool hostOnly, bool viewOnly)
+        { Create(entry, new SurvivorPickupRules(values).For(survivor), hostOnly, viewOnly, title, survivor, global); }
+        private static void Create(ConfigEntry<string> entry, string values, bool hostOnly, bool viewOnly, string profile, string survivor = null, string global = "")
         {
             if (hostOnly && !ArenaLobby.Selected || hostOnly && !viewOnly && !NetworkServer.active) return;
             CloseOpen();
             var owner = new GameObject("RiskOfArena Blacklist"); instance = owner.AddComponent<ArenaBlacklistSettings>();
-            instance.setting = entry; instance.requireHost = hostOnly; instance.readOnly = viewOnly; instance.equipment = gear;
-            instance.selection = new BlacklistSelection(values);
+            instance.setting = entry; instance.requireHost = hostOnly; instance.readOnly = viewOnly;
+            instance.selection = new BlacklistSelection(new PickupBlacklist(values).Serialize()); instance.survivorKey = survivor;
+            instance.inherited = new BlacklistSelection(global);
             try { instance.Show(profile); } catch (Exception error) { Plugin.Warn("Could not open item blacklist: " + error); instance.Dismiss(); }
         }
         private bool CanEdit()
@@ -67,23 +72,23 @@ namespace ArenaPvP
             var list = new List<Entry>();
             // Use the complete loaded catalogs, independently of the current Run,
             // enabled expansions, bans or unlocks. Unknown saved names are retained.
-            for (int i = 0; i < (equipment ? EquipmentCatalog.equipmentCount : ItemCatalog.itemCount); i++)
+            for (int type = 0; type < 2; type++) for (int i = 0; i < (type == 1 ? EquipmentCatalog.equipmentCount : ItemCatalog.itemCount); i++)
             {
-                var item = equipment ? null : ItemCatalog.GetItemDef((ItemIndex)i);
-                var gear = equipment ? EquipmentCatalog.GetEquipmentDef((EquipmentIndex)i) : null;
+                var item = type == 1 ? null : ItemCatalog.GetItemDef((ItemIndex)i);
+                var gear = type == 1 ? EquipmentCatalog.GetEquipmentDef((EquipmentIndex)i) : null;
                 if (!item && !gear) continue;
                 var pickup = item ? PickupCatalog.FindPickupIndex(item.itemIndex) : PickupCatalog.FindPickupIndex(gear.equipmentIndex);
                 if (pickup == PickupIndex.none) continue;
                 string name = item ? item.name : gear.name, token = item ? item.nameToken : gear.nameToken;
                 string title = Language.GetString(token ?? ""); if (string.IsNullOrWhiteSpace(title) || title == token) title = name;
-                list.Add(new Entry { Name = name, Title = title, Pickup = pickup.value,
-                    Category = equipment ? gear.isLunar ? (int)EssenceKind.Lunar : (int)EssenceKind.Equipment : (int)ItemPool.Category(pickup.value),
-                    Internal = item && (item.hidden || item.tier == ItemTier.NoTier), Reserved = !equipment && (name == "LevelBonus" || name == "UseAmbientLevel") });
+                list.Add(new Entry { Name = name, Key = PickupBlacklist.Key(name, gear), Title = title, Pickup = pickup.value,
+                    Category = gear ? (int)EssenceKind.Equipment : (int)ItemPool.Category(pickup.value),
+                    Internal = item && (item.hidden || item.tier == ItemTier.NoTier), Reserved = item && (name == "LevelBonus" || name == "UseAmbientLevel" || name == "ArenaPersonalLevel") });
             }
             catalog = list.OrderBy(e => e.Internal).ThenBy(e => e.Category).ThenBy(e => e.Title, StringComparer.CurrentCultureIgnoreCase).ToArray();
             canvasObject = new GameObject("Blacklist canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(MPEventSystemProvider), typeof(Image));
             canvasObject.transform.SetParent(transform, false);
-            var canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 200;
+            var canvas = canvasObject.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 210;
             var scaler = canvasObject.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize; scaler.referenceResolution = new Vector2(1920, 1080); scaler.matchWidthOrHeight = 0.5f;
             canvasObject.GetComponent<MPEventSystemProvider>().eventSystem = eventSystem;
             canvasObject.GetComponent<MPEventSystemProvider>().fallBackToMainEventSystem = true;
@@ -91,13 +96,13 @@ namespace ArenaPvP
             var panel = new GameObject("Blacklist panel", typeof(RectTransform), typeof(Image)); panel.transform.SetParent(canvasObject.transform, false);
             var rect = panel.GetComponent<RectTransform>(); rect.anchorMin = new Vector2(0.05f, 0.05f); rect.anchorMax = new Vector2(0.95f, 0.95f); rect.offsetMin = rect.offsetMax = Vector2.zero;
             panel.GetComponent<Image>().color = new Color(0.04f, 0.07f, 0.09f, 0.92f); ArenaStyle.Border(panel, new Color(0.55f, 0.95f, 0.3f), 2);
-            heading = Label(panel.transform, (equipment ? "Equipment blacklist" : "Item blacklist") + " - " + profile.Substring(3), 32);
+            heading = Label(panel.transform, (survivorKey == null ? "Global item blacklist" : "Survivor blacklist") + " - " + profile, 32);
             Place(heading.rectTransform, 20, 12, -20, 48); heading.fontStyle = FontStyles.Bold | FontStyles.Italic;
             var help = Label(panel.transform, readOnly ? "Host settings - view only. On: allowed. Off: banned. A number is the maximum held stack."
-                : "Left-click: On / Off. Right-click: increase stack limit. Shift + right-click: decrease (zero removes the limit).\nOn allows rewards; Off bans them. Apply saves this mode; active hosts update immediately.", 19);
+                : "Left-click: On / Off. Right-click: increase stack limit. Shift + right-click: decrease (zero removes the limit).\nItems and equipment share this list. Apply saves restrictions; active hosts update immediately. Global bans and tighter limits take priority.", 19);
             Place(help.rectTransform, 20, 65, -20, 54);
             search = Search(panel.transform); Place(search.GetComponent<RectTransform>(), 40, 130, -590, 44);
-            filterButton = Button(panel.transform, "All rarities", () => { filter = (filter + 1) % (equipment ? 3 : 8); Refilter(); });
+            filterButton = Button(panel.transform, "All rarities", () => { filter = (filter + 1) % 9; Refilter(); });
             Place(filterButton.GetComponent<RectTransform>(), 1160, 130, -280, 44);
             bannedButton = Button(panel.transform, "Show all", () => { bannedOnly = !bannedOnly; Refilter(); });
             Place(bannedButton.GetComponent<RectTransform>(), 1460, 130, -40, 44);
@@ -135,15 +140,14 @@ namespace ArenaPvP
         {
             string text = search.text.Trim();
             filtered = catalog.Where(e => (text.Length == 0 || e.Title.IndexOf(text, StringComparison.CurrentCultureIgnoreCase) >= 0 || e.Name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
-                && (!bannedOnly || e.Reserved || selection.Limit(e.Name) >= 0) && MatchesFilter(e)).ToArray();
+                && (!bannedOnly || e.Reserved || selection.Limit(e.Key) >= 0) && MatchesFilter(e)).ToArray();
             page = 0; RefreshPage();
         }
         private bool MatchesFilter(Entry entry)
         {
             if (filter == 0) return true;
-            if (equipment) return entry.Category == (filter == 1 ? (int)EssenceKind.Equipment : (int)EssenceKind.Lunar);
             return entry.Category == new[] { -1, (int)EssenceKind.White, (int)EssenceKind.Green, (int)EssenceKind.Red,
-                (int)EssenceKind.Lunar, (int)EssenceKind.Void, (int)EssenceKind.Boss, (int)EssenceKind.Expansion }[filter];
+                (int)EssenceKind.Lunar, (int)EssenceKind.Void, (int)EssenceKind.Equipment, (int)EssenceKind.Boss, (int)EssenceKind.Expansion }[filter];
         }
         private void RefreshPage()
         {
@@ -163,36 +167,48 @@ namespace ArenaPvP
             }
             previous.interactable = page > 0; next.interactable = page + 1 < pages;
             pageLabel.text = "Page " + (page + 1) + " / " + pages + " - " + filtered.Length + " pickups";
-            filterButton.GetComponentInChildren<TMP_Text>().text = equipment ? new[] { "All rarities", "Ordinary", "Lunar" }[filter]
-                : new[] { "All rarities", "White", "Green", "Red", "Lunar", "Void", "Boss", "Other" }[filter];
+            filterButton.GetComponentInChildren<TMP_Text>().text = new[] { "All rarities", "White", "Green", "Red", "Lunar", "Void", "Equipment", "Boss", "Other" }[filter];
             bannedButton.GetComponentInChildren<TMP_Text>().text = bannedOnly ? "Bans / limits" : "Show all";
             RefreshStatus();
         }
         private void RefreshCell(int i)
         {
-            var item = shown[i]; bool off = item.Reserved || selection.Contains(item.Name); int limit = selection.Limit(item.Name);
-            states[i].text = off ? "Off" : "On"; states[i].color = off ? new Color(0.72f, 0.72f, 0.72f) : new Color(0.65f, 1, 0.6f);
+            var item = shown[i]; int own = selection.Limit(item.Key), parent = inherited.Limit(item.Key);
+            int limit = own < 0 ? parent : parent < 0 ? own : Math.Min(own, parent);
+            bool off = item.Reserved || limit == 0;
+            states[i].text = parent == 0 && !item.Reserved ? "Off (global)" : off ? "Off" : "On"; states[i].color = off ? new Color(0.72f, 0.72f, 0.72f) : new Color(0.65f, 1, 0.6f);
             artwork[i].Image.color = off ? new Color(0.45f, 0.45f, 0.45f, 0.65f) : Color.white;
             limits[i].text = !off && limit > 0 ? limit.ToString() : "";
         }
         private void Toggle(int i)
-        { if (!CanEdit() || shown[i] == null || shown[i].Reserved) return; selected = shown[i]; selection.Toggle(selected.Name); RefreshCell(i); RefreshStatus(); }
+        { if (!CanEdit() || shown[i] == null || shown[i].Reserved || inherited.Contains(shown[i].Key)) return; selected = shown[i]; selection.Toggle(selected.Key); RefreshCell(i); RefreshStatus(); }
         private void Adjust(int i, int amount)
-        { if (!CanEdit() || shown[i] == null || shown[i].Reserved) return; selected = shown[i]; selection.Adjust(selected.Name, amount); RefreshCell(i); RefreshStatus(); }
+        { if (!CanEdit() || shown[i] == null || shown[i].Reserved || inherited.Contains(shown[i].Key)) return; selected = shown[i]; selection.Adjust(selected.Key, amount); RefreshCell(i); RefreshStatus(); }
         private void AdjustSelected(int amount)
         { if (selected == null) return; int index = Array.IndexOf(shown, selected); if (index >= 0) Adjust(index, amount); }
         private void RefreshStatus()
-        { if (status) status.text = selected == null ? "Hover an icon for its full description. Search includes internal names; all loaded DLC and custom definitions are shown."
-            : selected.Title + " - " + (selected.Reserved ? "Reserved by the level system" : selection.Contains(selected.Name) ? "Off - banned" : selection.Limit(selected.Name) > 0 ? "On - maximum " + selection.Limit(selected.Name) + " held" : "On - unlimited") + (selected.Internal ? " (internal item)" : ""); }
+        {
+            if (!status) return;
+            if (selected == null) { status.text = "Hover an icon for its full description. Search includes internal names; all loaded DLC and custom definitions are shown."; return; }
+            int own = selection.Limit(selected.Key), parent = inherited.Limit(selected.Key);
+            int limit = own < 0 ? parent : parent < 0 ? own : Math.Min(own, parent);
+            status.text = selected.Title + " - " + (selected.Reserved ? "Reserved by the level system" : limit == 0 ? "Off - banned" : limit > 0 ? "On - maximum " + limit + " held" : "On - unlimited")
+                + (parent >= 0 ? " (global rule also applies)" : "") + (selected.Internal ? " (internal item)" : "");
+        }
         private void Save()
         {
             if (!CanEdit()) { Dismiss(); return; }
-            if (requireHost && !ArenaHostSettings.TryEdit(setting, selection.Serialize())) return;
-            if (!requireHost) setting.Value = selection.Serialize();
+            string next = selection.Serialize();
+            if (survivorKey != null)
+            {
+                var all = new SurvivorPickupRules(setting.Value); all.Set(survivorKey, next); next = all.Serialize();
+            }
+            if (requireHost) { if (!ArenaHostSettings.TryEdit(setting, next)) return; }
+            else setting.Value = next;
             setting.ConfigFile.Save();
             if (Plugin.Active && NetworkServer.active && ArenaMatch.Instance)
             { ArenaMatch.Instance.RefreshItemRules(); ArenaNetwork.SendSnapshots(); }
-            Plugin.Log("Saved " + setting.Definition.Section + " " + (equipment ? "equipment" : "item") + " bans/limits.");
+            Plugin.Log("Saved " + setting.Definition.Section + " " + (survivorKey ?? "global") + " pickup bans/limits.");
             Dismiss();
         }
         private void Update()

@@ -8,16 +8,23 @@ namespace ArenaPvP
 {
     internal sealed class ItemPool
     {
-        private sealed class Bucket { internal readonly List<int> Items = new List<int>(); internal int Weight; }
+        private sealed class Bucket { internal readonly List<int> Items = new List<int>(); }
         private readonly List<Bucket> buckets = new List<Bucket>();
         internal readonly int[] All;
         private readonly Random random;
         private readonly Random scrapRandom;
         private readonly EssenceWeights weightedEssences;
-        private BlacklistSelection itemLimits, equipmentLimits;
-        private string itemRules, equipmentRules;
+        private sealed class Restrictions
+        {
+            internal PickupBlacklist Rules;
+            internal readonly HashSet<int> Constrained = new HashSet<int>();
+        }
+        private Restrictions global;
+        private SurvivorPickupRules survivorRules;
+        private readonly Dictionary<string, Restrictions> survivorPolicies = new Dictionary<string, Restrictions>(StringComparer.OrdinalIgnoreCase);
+        private string globalRules, survivorSettings;
         private readonly Dictionary<ItemIndex, ItemIndex[]> corruptionSources;
-        private readonly HashSet<int> eligiblePickups, constrainedPickups = new HashSet<int>();
+        private readonly HashSet<int> eligiblePickups;
 
         internal ItemPool(Run run, MatchSettings settings)
         {
@@ -44,8 +51,7 @@ namespace ArenaPvP
                 Bucket b;
                 if (!byTier.TryGetValue(def.tier, out b))
                 {
-                    b = new Bucket { Weight = def.tier == ItemTier.Tier1 ? settings.CommonWeight
-                        : def.tier == ItemTier.Tier2 ? settings.GreenWeight : def.tier == ItemTier.Tier3 ? settings.RedWeight : 5 };
+                    b = new Bucket();
                     byTier.Add(def.tier, b); buckets.Add(b);
                 }
                 int pickup = PickupCatalog.FindPickupIndex(def.itemIndex).value;
@@ -53,7 +59,7 @@ namespace ArenaPvP
             }
             if (settings.IncludeEquipment)
             {
-                var equipment = new Bucket { Weight = 5 };
+                var equipment = new Bucket();
                 for (int i = 0; i < EquipmentCatalog.equipmentCount; i++)
                 {
                     var def = EquipmentCatalog.GetEquipmentDef((EquipmentIndex)i);
@@ -67,18 +73,33 @@ namespace ArenaPvP
             }
             All = buckets.SelectMany(b => b.Items).Distinct().ToArray();
             eligiblePickups = new HashSet<int>(All);
-            RefreshRestrictions(settings.BannedItems, settings.BannedEquipment);
+            RefreshRestrictions(settings.GlobalBlacklist, settings.SurvivorBlacklists);
             Plugin.Log("RiskOfArena catalog scan: " + ItemCatalog.itemCount + " item definitions, " + EquipmentCatalog.equipmentCount
                 + " equipment definitions; " + All.Length + " catalog-eligible pickups before per-player restrictions. Categories: "
                 + string.Join(", ", All.GroupBy(Category).Select(g => g.Key + "=" + g.Count()).ToArray()) + ".");
         }
 
-        internal bool RefreshRestrictions(string items, string equipment)
+        internal bool RefreshRestrictions(string combined, string survivors = "")
         {
-            if (itemLimits != null && itemRules == items && equipmentRules == equipment) return false;
-            itemRules = items; equipmentRules = equipment;
-            itemLimits = new BlacklistSelection(items); equipmentLimits = new BlacklistSelection(equipment);
-            constrainedPickups.Clear();
+            survivors = survivors ?? "";
+            if (global != null && globalRules == combined && survivorSettings == survivors) return false;
+            globalRules = combined; survivorSettings = survivors;
+            global = BuildRestrictions(new PickupBlacklist(combined));
+            survivorRules = new SurvivorPickupRules(survivors); survivorPolicies.Clear();
+            return true;
+        }
+        private Restrictions RestrictionsFor(string survivor)
+        {
+            if (string.IsNullOrEmpty(survivor)) return global;
+            Restrictions result;
+            if (survivorPolicies.TryGetValue(survivor, out result)) return result;
+            string extra = survivorRules.For(survivor);
+            result = extra.Length == 0 ? global : BuildRestrictions(PickupBlacklist.Merge(global.Rules, new PickupBlacklist(extra)));
+            survivorPolicies.Add(survivor, result); return result;
+        }
+        private Restrictions BuildRestrictions(PickupBlacklist rules)
+        {
+            var result = new Restrictions { Rules = rules };
             foreach (int pickup in All)
             {
                 var definition = PickupCatalog.GetPickupDef(new PickupIndex(pickup));
@@ -86,56 +107,58 @@ namespace ArenaPvP
                 if (item)
                 {
                     var transformed = ItemCatalog.GetItemDef(ContagiousItemManager.GetTransformedItemIndex(item.itemIndex));
-                    if (itemLimits.Limit(item.name) >= 0 || transformed && itemLimits.Limit(transformed.name) >= 0) constrainedPickups.Add(pickup);
+                    if (rules.Items.Limit(item.name) >= 0 || transformed && rules.Items.Limit(transformed.name) >= 0) result.Constrained.Add(pickup);
                 }
                 else
                 {
                     var gear = EquipmentCatalog.GetEquipmentDef(definition.equipmentIndex);
-                    if (gear && equipmentLimits.Limit(gear.name) >= 0) constrainedPickups.Add(pickup);
+                    if (gear && rules.Equipment.Limit(gear.name) >= 0) result.Constrained.Add(pickup);
                 }
             }
-            return true;
+            return result;
         }
 
-        internal int[] DraftByEssence(int count, Inventory inventory)
+        internal int[] DraftByEssence(int count, Inventory inventory, string survivor = "")
         {
             // Each offer is rolled once. Going back to the essence screen never rerolls it.
-            return Available(All, inventory).GroupBy(Category).SelectMany(group => group.OrderBy(x => random.Next()).Take(count)).ToArray();
+            return Available(All, inventory, survivor).GroupBy(Category).SelectMany(group => group.OrderBy(x => random.Next()).Take(count)).ToArray();
         }
 
-        internal int[] Weighted(Inventory inventory)
+        internal int[] Weighted(Inventory inventory, string survivor = "")
         {
             // Roll once per offer on the host. The queued item IDs retain that
             // essence across menus, reconnects and every snapshot of the offer.
-            var allowed = Available(All, inventory);
+            var allowed = Available(All, inventory, survivor);
             var kind = EssenceRollRules.Choose(allowed.Select(Category).Distinct().ToArray(), weightedEssences, total => random.Next(total));
             return kind.HasValue ? allowed.Where(p => Category(p) == kind.Value).ToArray() : new int[0];
         }
 
-        internal bool CanOffer(ItemSelection mode, bool canLevel, Inventory inventory, int releasing = -1)
+        internal bool CanOffer(ItemSelection mode, bool canLevel, Inventory inventory, int releasing = -1, string survivor = "")
         {
-            var allowed = All.Where(p => CanGrant(p, inventory, releasing)).ToArray();
-            if (mode == ItemSelection.Weighted)
-                return canLevel || allowed.Any(p => weightedEssences.Weight(Category(p)) > 0);
+            var allowed = All.Where(p => CanGrant(p, inventory, releasing, survivor)).ToArray();
+            if (mode == ItemSelection.Weighted || mode == ItemSelection.Random)
+                return mode != ItemSelection.Random && canLevel || allowed.Any(p => weightedEssences.Weight(Category(p)) > 0);
             return allowed.Length > 0 || mode != ItemSelection.Random && canLevel;
         }
 
-        internal bool CanScrap(ItemSelection mode, int tier, bool canLevel, Inventory inventory, int releasing = -1)
+        internal bool CanScrap(ItemSelection mode, int tier, bool canLevel, Inventory inventory, int releasing = -1, string survivor = "")
         {
-            return !ScrapRewardRules.PreservesTier(mode) ? CanOffer(mode, canLevel, inventory, releasing)
-                : All.Any(p => ExactTier(p) == tier && CanGrant(p, inventory, releasing));
+            return !ScrapRewardRules.PreservesTier(mode) ? CanOffer(mode, canLevel, inventory, releasing, survivor)
+                : All.Any(p => ExactTier(p) == tier && CanGrant(p, inventory, releasing, survivor));
         }
 
-        internal int[] ScrapChoices(ItemSelection mode, int tier, int draftSize, Inventory inventory)
-        { return ScrapRewardRules.Choices(mode, Available(All, inventory), tier, draftSize, ExactTier, total => scrapRandom.Next(total)); }
+        internal int[] ScrapChoices(ItemSelection mode, int tier, int draftSize, Inventory inventory, string survivor = "")
+        { return ScrapRewardRules.Choices(mode, Available(All, inventory, survivor), tier, draftSize, ExactTier, total => scrapRandom.Next(total)); }
 
-        internal int[] Available(int[] choices, Inventory inventory)
-        { return !inventory ? new int[0] : constrainedPickups.Count == 0 ? choices : choices.Where(p => CanGrant(p, inventory)).ToArray(); }
-        internal bool CanGrant(int pickup, Inventory inventory, int releasing = -1)
+        internal int[] Available(int[] choices, Inventory inventory, string survivor = "")
+        { return !inventory ? new int[0] : RestrictionsFor(survivor).Constrained.Count == 0 ? choices : choices.Where(p => CanGrant(p, inventory, -1, survivor)).ToArray(); }
+        internal bool CanGrant(int pickup, Inventory inventory, int releasing = -1, string survivor = "")
         {
             if (!inventory) return false;
             if (!eligiblePickups.Contains(pickup)) return false;
-            if (!constrainedPickups.Contains(pickup)) return true;
+            var policy = RestrictionsFor(survivor);
+            if (!policy.Constrained.Contains(pickup)) return true;
+            var itemLimits = policy.Rules.Items; var equipmentLimits = policy.Rules.Equipment;
             var definition = PickupCatalog.GetPickupDef(new PickupIndex(pickup));
             if (definition == null) return false;
             var item = ItemCatalog.GetItemDef(definition.itemIndex);
@@ -219,19 +242,12 @@ namespace ArenaPvP
             }
         }
 
-        internal int Pick(Inventory inventory, HashSet<int> excluded = null)
+        internal int Pick(Inventory inventory, HashSet<int> excluded = null, string survivor = "")
         {
-            Func<int, bool> eligible = i => (excluded == null || !excluded.Contains(i)) && CanGrant(i, inventory);
-            var available = buckets.Where(b => b.Items.Any(eligible)).ToArray();
-            if (available.Length == 0) return -1;
-            int total = available.Sum(b => b.Weight);
-            Bucket bucket = available[random.Next(available.Length)];
-            if (total > 0)
-            {
-                int roll = random.Next(total);
-                foreach (var candidate in available) { roll -= candidate.Weight; if (roll < 0) { bucket = candidate; break; } }
-            }
-            var candidates = bucket.Items.Where(eligible).ToArray();
+            var allowed = Available(All, inventory, survivor).Where(p => excluded == null || !excluded.Contains(p)).ToArray();
+            var kind = EssenceRollRules.Choose(allowed.Select(Category).Distinct().ToArray(), weightedEssences, total => random.Next(total));
+            if (!kind.HasValue) return -1;
+            var candidates = allowed.Where(p => Category(p) == kind.Value).ToArray();
             return candidates[random.Next(candidates.Length)];
         }
     }

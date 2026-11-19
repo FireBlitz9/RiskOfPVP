@@ -34,7 +34,7 @@ namespace ArenaPvP
         public int Mode, OwnSide = -1, RedKills, BlueKills;
         public HillView Hill;
         public float TimeLimit;
-        public bool Finished, LevelEnabled, CanLevel, WaitingChoice, TimerEnabled, NoFallDamage, ScrapperEnabled;
+        public bool Finished, LevelEnabled, CanLevel, WaitingChoice, TimerEnabled, NoFallDamage, ScrapperEnabled, VoidProtection;
         public string Result;
         public int[] Items;
         public PlayerView[] Players;
@@ -219,7 +219,7 @@ namespace ArenaPvP
                     Mode = (int)rules.Mode, OwnSide = p.Side, RedKills = match.TeamKills[0], BlueKills = match.TeamKills[1],
                     Hill = rules.Mode == ArenaMode.KOTH ? match.Hill.View(rules) : null,
                     LevelEnabled = rules.AllowLevel && rules.Selection != ItemSelection.Random,
-                    CanLevel = rules.AllowLevel && p.Level < match.Cap, NoFallDamage = rules.NoFallDamage,
+                    CanLevel = rules.AllowLevel && p.Level < match.Cap, NoFallDamage = rules.NoFallDamage, VoidProtection = rules.VoidProtection,
                     Players = players
                 };
                 if (p.User.localUser != null) Views[p.UserId] = view;

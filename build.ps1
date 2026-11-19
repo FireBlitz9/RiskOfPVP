@@ -47,12 +47,12 @@ if ($RunTests) {
     New-Item -ItemType Directory -Force -Path $testDirectory | Out-Null
     $testExe = Join-Path $testDirectory 'ArenaRules.Tests.exe'
     $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
-    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\DeferredMenuStartup.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs')
+    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\PickupRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\DeferredMenuStartup.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Rules tests failed.' }
     $poolExe = Join-Path $testDirectory 'ItemPool.Tests.exe'
-    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $poolExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\ItemPool.cs') (Join-Path $PSScriptRoot 'tests\ItemPoolTests.cs')
+    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $poolExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\PickupRules.cs') (Join-Path $PSScriptRoot 'src\ItemPool.cs') (Join-Path $PSScriptRoot 'tests\ItemPoolTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Production ItemPool test compilation failed.' }
     & $poolExe
     if ($LASTEXITCODE -ne 0) { throw 'Production ItemPool tests failed.' }
@@ -61,8 +61,9 @@ if ($RunTests) {
     $migrationExe = Join-Path $testDirectory 'Settings.Tests.exe'
     # This BepInEx distribution carries a 32-bit-required CLR flag; run its
     # standalone config tests in x86 CLR rather than altering the dependency.
-    & $compiler /nologo /noconfig /target:exe /platform:x86 /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/reference:" + $bepinex) ("/out:" + $migrationExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\ArenaConfigMigration.cs') (Join-Path $PSScriptRoot 'src\SettingsSnapshotCodec.cs') (Join-Path $PSScriptRoot 'src\MatchSnapshotCodec.cs') (Join-Path $PSScriptRoot 'tests\SettingsTests.cs')
+    & $compiler /nologo /noconfig /target:exe /platform:x86 /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/reference:" + $bepinex) ("/reference:" + (Join-Path $managed 'UnityEngine.dll')) ("/reference:" + (Join-Path $managed 'UnityEngine.CoreModule.dll')) ("/out:" + $migrationExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\PickupRules.cs') (Join-Path $PSScriptRoot 'src\ArenaConfigMigration.cs') (Join-Path $PSScriptRoot 'src\SettingsSnapshotCodec.cs') (Join-Path $PSScriptRoot 'src\MatchSnapshotCodec.cs') (Join-Path $PSScriptRoot 'src\ArenaConfig.cs') (Join-Path $PSScriptRoot 'src\ArenaModeConfig.cs') (Join-Path $PSScriptRoot 'tests\SettingsUiStubs.cs') (Join-Path $PSScriptRoot 'tests\SettingsTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Settings test compilation failed.' }
+    Copy-Item -LiteralPath (Join-Path $managed 'UnityEngine.dll'), (Join-Path $managed 'UnityEngine.CoreModule.dll') -Destination $testDirectory -Force
     & $migrationExe
     if ($LASTEXITCODE -ne 0) { throw 'Settings migration/snapshot tests failed.' }
     $cecil = Join-Path $DependencyDirectory 'bepinex\BepInExPack\BepInEx\core\Mono.Cecil.dll'

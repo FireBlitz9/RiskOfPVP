@@ -64,7 +64,7 @@ namespace ArenaPvP
             var title = Label(panel.transform, "Match settings", 34); Place(title.rectTransform, 24, 16, -24, 48); title.fontStyle = FontStyles.Bold | FontStyles.Italic;
             status = Label(panel.transform, host ? "Host · changes save directly to RiskOfOptions" : "Host settings · view only", 19);
             Place(status.rectTransform, 24, 72, -24, 27); status.color = host ? new Color(0.7f, 1, 0.65f) : new Color(0.65f, 0.85f, 1);
-            var help = Label(panel.transform, host ? "Each mode has its own profile. Item bans, stack limits and the scrapper toggle apply live; other rules apply next match."
+            var help = Label(panel.transform, host ? "General applies to every mode. Combat, protection, bans and the scrapper update live; rewards, levels and pool categories apply next match."
                 : "Only the host can edit these rules. Values update when the host changes them.", 16);
             Place(help.rectTransform, 24, 104, -24, 28);
 
@@ -95,7 +95,8 @@ namespace ArenaPvP
         {
             if (!ArenaLobby.Selected || host != NetworkServer.active) { Close(); return; }
             if (Input.GetKeyDown(KeyCode.Escape) && !ArenaStageSettings.IsOpen && ArenaStageSettings.LastClosedFrame != Time.frameCount
-                && !ArenaBlacklistSettings.IsOpen && ArenaBlacklistSettings.LastClosedFrame != Time.frameCount)
+                && !ArenaBlacklistSettings.IsOpen && ArenaBlacklistSettings.LastClosedFrame != Time.frameCount
+                && !ArenaSurvivorSettings.IsOpen && ArenaSurvivorSettings.LastClosedFrame != Time.frameCount)
             { Close(); return; }
             try
             {
@@ -133,7 +134,7 @@ namespace ArenaPvP
                 foreach (string category in next.Rules.Select(x => x.Group).Distinct())
                 {
                     string chosen = category;
-                    var b = Button(categoryList, category.Substring(3), () => ShowGroup(chosen));
+                    var b = Button(categoryList, category, () => ShowGroup(chosen));
                     Place(b.GetComponent<RectTransform>(), 0, i++ * 60, 0, 50); categoryButtons.Add(b);
                 }
                 ShowGroup(next.Rules.Select(x => x.Group).FirstOrDefault());
@@ -158,7 +159,6 @@ namespace ArenaPvP
             foreach (var rule in view.Rules.Where(r => r.Group == category))
             {
                 string nextSection = SettingsLayout.Section(rule.Name);
-                if (category == SettingsLayout.General) nextSection = rule.Name == "Default Arena mode" ? "Lobby" : "Map voting";
                 if (nextSection.Length > 0 && section != nextSection)
                 {
                     section = nextSection;
@@ -200,6 +200,7 @@ namespace ArenaPvP
         private void Close() { if (gameObject.activeSelf) gameObject.SetActive(false); Destroy(gameObject); }
         private void OnDestroy()
         {
+            if (ArenaSurvivorSettings.IsOpen) ArenaSurvivorSettings.CloseOpen();
             if (ArenaStageSettings.IsOpen) ArenaStageSettings.CloseOpen();
             if (ArenaBlacklistSettings.IsOpen) ArenaBlacklistSettings.CloseOpen();
             if (eventSystem)
@@ -238,8 +239,17 @@ namespace ArenaPvP
                 {
                     action = owner.Button(root.transform, entry == null ? "View items" : "Choose items", () =>
                     {
-                        if (entry == null) ArenaBlacklistSettings.OpenReadOnly(Rule.Value, ArenaBlacklistSettings.EquipmentRule(Rule.Name), Rule.Group);
-                        else ArenaBlacklistSettings.Open((ConfigEntry<string>)entry, ArenaBlacklistSettings.EquipmentRule(Rule.Name), true);
+                        if (ArenaBlacklistSettings.SurvivorRule(Rule.Name))
+                        {
+                            if (entry != null) ArenaSurvivorSettings.Open((ConfigEntry<string>)entry, true);
+                            else
+                            {
+                                var global = owner.view.Rules.FirstOrDefault(r => SettingsLayout.Title(r.Name) == "Global item blacklist");
+                                ArenaSurvivorSettings.OpenReadOnly(Rule.Value, global == null ? "" : global.Value);
+                            }
+                        }
+                        else if (entry == null) ArenaBlacklistSettings.OpenReadOnly(Rule.Value, Rule.Group);
+                        else ArenaBlacklistSettings.Open((ConfigEntry<string>)entry, true);
                     });
                     Area(action.GetComponent<RectTransform>(), 0.49f, 0.98f); value = action.GetComponentInChildren<TMP_Text>();
                 }
@@ -308,7 +318,7 @@ namespace ArenaPvP
                 slider.onValueChanged.AddListener(amount =>
                 {
                     if (refreshing) return;
-                    float step = integers != null ? 1 : max > 120 ? 5 : max > 3 ? 1 : 0.05f;
+                    float step = Plugin.Settings.SliderStep(entry);
                     float rounded = Mathf.Clamp(Mathf.Round(amount / step) * step, min, max);
                     ArenaHostSettings.TryEdit(entry, rounded.ToString("0.####", CultureInfo.InvariantCulture)); Refresh();
                 });
@@ -317,10 +327,11 @@ namespace ArenaPvP
             {
                 refreshing = true;
                 string text = entry == null ? Rule.Value : ArenaHostSettings.Value(entry);
-                if (tooltip) tooltip.overrideBodyText = Rule.Description + (entry == null ? "\n\nHost value:\n" + text : "");
+                if (tooltip) tooltip.overrideBodyText = Rule.Description + (entry == null && !ArenaBlacklistSettings.IsRule(Rule.Name) ? "\n\nHost value:\n" + text : "");
                 if (value)
                 {
-                    if (ArenaBlacklistSettings.IsRule(Rule.Name)) value.text = entry == null ? "View bans / limits" : "Choose bans / limits";
+                    if (ArenaBlacklistSettings.SurvivorRule(Rule.Name)) value.text = entry == null ? "View survivor rules" : "Choose survivor";
+                    else if (ArenaBlacklistSettings.IsRule(Rule.Name)) value.text = entry == null ? "View bans / limits" : "Choose bans / limits";
                     else if (entry == Plugin.Settings.MapBlacklist) value.text = "Choose blacklisted stages";
                     else if (entry == Plugin.Settings.DefaultMap) value.text = "Choose default · " + text;
                     else value.text = text == "True" ? "On" : text == "False" ? "Off" : text;

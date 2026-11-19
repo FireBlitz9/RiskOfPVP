@@ -507,6 +507,7 @@ namespace ArenaPvP
         private Sprite MapIcon(int id) { return ArenaArtwork.Map(id) ?? EssenceIcon(101); }
         private Sprite EssenceIcon(int id)
         {
+            if (id == 100) return ArenaArtwork.Level();
             Sprite sprite; if (cubes.TryGetValue(id, out sprite)) return sprite;
             var color = id >= 100 ? new Color(0.4f, 0.85f, 1f) : EssenceColor((EssenceKind)id);
             var texture = new Texture2D(64, 64, TextureFormat.RGBA32, false); texture.filterMode = FilterMode.Point;
@@ -514,8 +515,7 @@ namespace ArenaPvP
             {
                 int dx = x - 32, dy = y - 35; bool cube = Math.Abs(dx) < 21 && dy >= -23 && dy <= 18 && Math.Abs(dx) + Math.Abs(dy + 2) < 35;
                 bool edge = cube && (Math.Abs(dx) > 18 || Math.Abs(dy + 2) > 19 || Math.Abs(dx) + Math.Abs(dy + 2) > 31 || Math.Abs(dx - dy) < 2 || (Math.Abs(dx) < 2 && dy < 1));
-                bool arrow = id == 100 && ((Math.Abs(dx) < 4 && dy >= -17 && dy <= 10) || (dy >= 5 && dy <= 19 && Math.Abs(dx) < 20 - dy));
-                texture.SetPixel(x, y, id == 100 ? (arrow ? color : Color.clear) : cube ? color * (edge ? 1f : dx < 0 ? 0.42f : 0.64f) : Color.clear);
+                texture.SetPixel(x, y, cube ? color * (edge ? 1f : dx < 0 ? 0.42f : 0.64f) : Color.clear);
             }
             texture.Apply(); sprite = Sprite.Create(texture, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f)); cubes[id] = sprite; ownedArt.Add(sprite); ownedArt.Add(texture); return sprite;
         }

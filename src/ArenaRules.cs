@@ -127,11 +127,13 @@ namespace ArenaPvP
     }
     public static class SettingsLayout
     {
-        public const string General = "01 General", Controls = "05 Controls";
+        public const string General = "General", Controls = "Controls";
         public static string Profile(ArenaMode mode)
         {
-            switch (mode) { case ArenaMode.FFA: return "02 FFA"; case ArenaMode.Teams: return "03 Teams"; case ArenaMode.KOTH: return "04 KOTH"; default: throw new ArgumentOutOfRangeException("mode"); }
+            switch (mode) { case ArenaMode.FFA: return "FFA"; case ArenaMode.Teams: return "Teams"; case ArenaMode.KOTH: return "KOTH"; default: throw new ArgumentOutOfRangeException("mode"); }
         }
+        public static string LegacyProfile(ArenaMode mode)
+        { return mode == ArenaMode.FFA ? "02 FFA" : mode == ArenaMode.Teams ? "03 Teams" : "04 KOTH"; }
         public static string Key(string section, string name) { return section + " / " + name; }
         public static string Section(string key) { int at = key.IndexOf(" / ", StringComparison.Ordinal); return at < 0 ? "" : key.Substring(0, at); }
         public static string Title(string key) { int at = key.IndexOf(" / ", StringComparison.Ordinal); return at < 0 ? key : key.Substring(at + 3); }
@@ -153,6 +155,9 @@ namespace ArenaPvP
             }
         }
         public int Limit(string name) { int value; return entries.TryGetValue(name, out value) ? value : -1; }
+        public IEnumerable<KeyValuePair<string, int>> Entries { get { return entries; } }
+        public void Set(string name, int limit)
+        { if (limit < 0) entries.Remove(name); else entries[name] = limit; }
         public bool Contains(string name) { return Limit(name) == 0; }
         public void Toggle(string name) { if (Contains(name)) entries.Remove(name); else entries[name] = 0; }
         public void Adjust(string name, int change)
@@ -309,15 +314,15 @@ namespace ArenaPvP
     public sealed class EssenceWeights
     {
         public static readonly EssenceWeights Default = new EssenceWeights(55, 25, 10, 3, 2, 5);
-        private readonly int white, green, red, @void, lunar, equipment;
-        public EssenceWeights(int white, int green, int red, int @void, int lunar, int equipment = 0)
+        private readonly int white, green, red, @void, lunar, equipment, boss, special;
+        public EssenceWeights(int white, int green, int red, int @void, int lunar, int equipment = 0, int boss = 0, int special = 0)
         {
             this.white = Clamp(white); this.green = Clamp(green); this.red = Clamp(red);
             this.@void = Clamp(@void); this.lunar = Clamp(lunar);
-            this.equipment = Clamp(equipment);
+            this.equipment = Clamp(equipment); this.boss = Clamp(boss); this.special = Clamp(special);
         }
         private static int Clamp(int value) { return Math.Max(0, Math.Min(100, value)); }
-        public string Describe() { return white + "/" + green + "/" + red + "/" + @void + "/" + lunar + "/" + equipment; }
+        public string Describe() { return white + "/" + green + "/" + red + "/" + @void + "/" + lunar + "/" + equipment + "/" + boss + "/" + special; }
         public int Weight(EssenceKind kind)
         {
             switch (kind)
@@ -328,6 +333,8 @@ namespace ArenaPvP
                 case EssenceKind.Void: return @void;
                 case EssenceKind.Lunar: return lunar;
                 case EssenceKind.Equipment: return equipment;
+                case EssenceKind.Boss: return boss;
+                case EssenceKind.Expansion: return special;
                 default: return 0;
             }
         }
@@ -338,7 +345,7 @@ namespace ArenaPvP
         { return Choose(available, EssenceWeights.Default, roll); }
         public static EssenceKind? Choose(EssenceKind[] available, EssenceWeights weights, Func<int, int> roll)
         {
-            var order = new[] { EssenceKind.White, EssenceKind.Green, EssenceKind.Red, EssenceKind.Void, EssenceKind.Lunar, EssenceKind.Equipment };
+            var order = new[] { EssenceKind.White, EssenceKind.Green, EssenceKind.Red, EssenceKind.Void, EssenceKind.Lunar, EssenceKind.Equipment, EssenceKind.Boss, EssenceKind.Expansion };
             int total = 0; foreach (var kind in order) if (Array.IndexOf(available, kind) >= 0) total += weights.Weight(kind);
             if (total == 0) return null;
             int ticket = roll(total);
@@ -417,7 +424,7 @@ namespace ArenaPvP
         { return hasClientConnection || serverActive && isLocalUser; }
 
         public static bool IsMatchSettingGroup(string section)
-        { return section == SettingsLayout.General || section == "02 FFA" || section == "03 Teams" || section == "04 KOTH"; }
+        { return section == SettingsLayout.General || section == "FFA" || section == "Teams" || section == "KOTH"; }
 
         public static int ScrapBatchLimit(int requested, int pending, bool automatic, bool rewardAvailable)
         {

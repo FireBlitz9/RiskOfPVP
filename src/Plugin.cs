@@ -7,8 +7,8 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-[assembly: System.Reflection.AssemblyVersion("1.1.12.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("1.1.12")]
+[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.2.0")]
 [assembly: System.Reflection.AssemblyCompany("claytemplar")]
 
 namespace ArenaPvP
@@ -24,7 +24,7 @@ namespace ArenaPvP
     {
         public const string Guid = "com.fireb.arenapvp";
         public const string Name = "RiskOfArena";
-        public const string Version = "1.1.12";
+        public const string Version = "1.2.0";
         internal static Plugin Instance;
         internal static ArenaConfig Settings;
         internal static DifficultyIndex ArenaDifficulty = DifficultyIndex.Invalid;
@@ -141,11 +141,14 @@ namespace ArenaPvP
 
         private void OnBodyStart(CharacterBody body)
         {
-            if (!Active || !NetworkServer.active) return;
+            if (!Active) return;
+            ArenaVoidSafety.Track(body);
+            if (!NetworkServer.active) return;
             if (ArenaWorldObjects.PreserveVehicle(body)) return;
             if (ArenaMatch.IsPlayerOrOwned(body.master))
             {
                 ArenaTeams.Ensure(body.master);
+                ArenaVoidSafety.Track(body);
                 if (ArenaMatch.Instance && ArenaMatch.Instance.Find(body.master) != null)
                     ArenaMatch.Instance.BodySpawned(body);
                 return;

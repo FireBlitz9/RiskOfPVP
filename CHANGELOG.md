@@ -1,3 +1,12 @@
+# 1.2.0
+
+- Reorganized settings into General, FFA, Teams, KOTH and Controls, without numbered category names.
+- Moved shared combat, respawn, protection and pickup-pool rules into General. Added a combined item/equipment blacklist and survivor-specific bans and stack limits.
+- Added optional void rescue using the game's teleport system and the player's last safe ground position. Combat and protection edits apply live from the host.
+- Replaced reward-event toggles with amount sliders; zero disables an event. Random and Weighted now share one set of rarity weights. Draft keeps the configured number of choices inside every essence.
+- Kept timed levelling exclusive to Random. Added a themed personal-level icon to the native inventory bar and Tab display.
+- Migrated old saved rules and local preferences. Old mode blacklists merge into General using the strictest restriction; shared values inherit the previous default mode.
+
 # 1.1.12
 
 - Removed managed-DLL loading, whole-process assembly scans and UniverseLib cache patches.

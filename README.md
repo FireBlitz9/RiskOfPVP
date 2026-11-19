@@ -9,8 +9,8 @@ Turn Risk of Rain 2 into a PvP arena. Fight everyone, split into red and blue te
 - **Command, Weighted, Draft and Random** item rewards.
 - Adjustable starting rewards and rewards for kills, deaths or timed intervals.
 - An XP choice instead of an item, with a level cap that rises over time.
-- Item blacklists, stack limits, equipment recycling and a reward scrapper.
-- Survivor bots, configurable respawns, spawn protection and anti-one-shot protection.
+- Global and survivor-specific item/equipment blacklists, stack limits and a reward scrapper.
+- Survivor bots, configurable respawns, spawn protection, void rescue and anti-one-shot protection.
 - DLC and custom item support through the game's catalogs.
 
 Arena removes monsters, chests, shrines and teleporters. Void Fields, Void Locus and Planetarium have no void fog in Arena. The optional reward scrapper remains available. Normal gamemodes keep their usual rules.
@@ -42,11 +42,13 @@ At match end, **Continue** keeps builds and scores and extends the goal. **Play 
 | Reward mode | How it works |
 |---|---|
 | **Command** | Choose an essence, then a pickup from it. |
-| **Weighted** | Roll an essence, then choose its pickup. Each class's chance is editable. |
-| **Draft** | Choose from a fixed shortlist for each essence. |
-| **Random** | Receive a random pickup automatically. |
+| **Weighted** | Roll an essence using the rarity weights, then choose its pickup. |
+| **Draft** | Choose from a fixed set of pickups inside each essence. |
+| **Random** | Receive a pickup automatically using the same rarity weights as Weighted. |
 
-Choice modes can offer **+1 Level** instead of an item. The host sets how the level cap grows. Random can level everyone at a shared interval, every 60 seconds by default.
+Draft choices are per essence: a setting of four gives four pickups in each class, where enough eligible pickups exist. Draft includes every enabled essence and does not use the Random/Weighted rarity roll.
+
+Choice modes can offer **+1 Level** instead of an item. The host sets how the level cap grows. Personal levels have their own icon in the inventory bar and Tab display. Random alone can level everyone at a shared interval, every 60 seconds by default.
 
 Rewards show the usual pickup notification. Falling into the void never grants death or kill rewards. Item selectors show icons and full descriptions, and respect enabled DLCs, host bans and each player's stack limits.
 
@@ -58,9 +60,21 @@ Set a starting bot count in Match settings, or use **Esc > Arena bots** during a
 
 ## Settings and controls
 
-Use **Match settings** in character selection or **Settings > Mod Options > RiskOfArena**. General holds map rules; FFA, Teams and KOTH have independent gameplay profiles. Controls holds your keybinds, nametags, overhead arrows and menu preferences.
+Use **Match settings** in character selection or **Settings > Mod Options > RiskOfArena**.
 
-Gameplay rules come from the host. Clients can view them but cannot edit them. Personal controls stay local. Most rule changes apply next match; item restrictions and the scrapper toggle also update live.
+| Tab | Settings |
+|---|---|
+| **General** | Lobby maps, shared combat/respawn rules, protections, blacklists and eligible pickup classes. |
+| **FFA / Teams / KOTH** | Each mode's rewards and rarity weights, scrapper, levelling, match limits and bots. KOTH also has capture settings. |
+| **Controls** | Your own keybinds, nametags, arrows and automatic reward-menu preference. |
+
+Reward amounts use sliders: **0 turns the event off**. One-shot grace ranges from 0.25 to 2 seconds in 0.05-second steps. Void protection returns players to safe ground instead of killing them; fall damage has its own toggle.
+
+The global blacklist includes equipment. Left-click a pickup to switch it On/Off. Right-click adds or increases a held-stack limit; Shift + right-click reduces it. For survivor-specific rules, choose the survivor first, then edit its pickups. Global bans and the stricter stack limit take priority. **Apply** saves; **Back** returns without applying unsaved changes.
+
+Gameplay rules come from the host. Clients can view them but cannot edit them. Personal controls stay local. Combat, protection, pickup restrictions and the scrapper toggle update live; reward clocks, levelling and eligible pickup classes apply next match.
+
+On upgrade, shared rules inherit the previous default mode. Old mode blacklists merge into General with hard bans and stricter limits taking priority. Each mode keeps its own reward amounts and local controls stay unchanged.
 
 | Default control | Action |
 |---|---|
@@ -77,7 +91,7 @@ RiskOfOptions and R2API Teams are required and included in the dependency list. 
 
 In Arena, Aerolt 4.3.1 initializes its menu only after you press its configured menu key. Aerolt handles its own initialization; Arena does not load its DLLs or modify UniverseLib. Aerolt's native first-time initialization can still pause when you open the menu. Other gamemodes retain normal Aerolt startup. DropIn integration was checked against DropinMultiplayer 4.2.1. Custom items need valid catalog entries; custom tier behavior can vary. Mods replacing teams, respawns or progression may need compatibility work. Split-screen reward selection is not supported.
 
-Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The latest Aerolt startup change and large-lobby combinations still need fresh multiplayer testing.
+Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The reorganized menus, void rescue and large-lobby combinations still need fresh multiplayer testing.
 
 By **claytemplar**. MIT license.
 
