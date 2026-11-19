@@ -65,10 +65,12 @@ Bot intelligence is under **General > Bots**:
 | **Low** | Simple targeting, slower aim and fixed builds. |
 | **Medium** | Standard tactics and fixed builds; the default. |
 | **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
-| **Extra High** | Adaptive item choices and predictive aiming. |
-| **Ultra** | Stronger aiming and threat selection, plus counter-builds based on opponents' actual items and equipment. |
+| **Extra High** | Adaptive builds, predictive aiming, dodging, combat jumps and sprint resets. |
+| **Ultra** | Stronger aim, opponent counter-builds and survivor-specific attack combinations, with the same evasive movement. |
 
 **Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
+
+Extra High and Ultra sprint whenever movement and their current skill allow it. They check for safe landings before combat jumps and keep KOTH movement inside the zone. Ultra coordinates setup, burst and finishing skills where supported; complex traversal, scope/reload and custom survivor chains retain their native AI handling.
 
 ## Settings and controls
 

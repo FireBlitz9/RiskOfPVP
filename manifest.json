@@ -1,6 +1,6 @@
 {
   "name": "RiskOfPVP",
-  "version_number": "1.3.0",
+  "version_number": "1.3.1",
   "website_url": "https://github.com/FireBlitz9/RiskOfPVP",
   "description": "Free-for-all PvP: enemy-free arenas, item drafts or personal XP, timed level caps, configurable rewards, respawns and score limits. RiskOfOptions support.",
   "dependencies": [

@@ -131,7 +131,7 @@ namespace ArenaPvP
 
                 Heading(SettingsLayout.General, "Bots");
                 BotIntelligence = General("Bots", "Bot intelligence", 1,
-                    "Low: simple tactics and fixed builds. Medium: standard tactics. High: nearest-enemy awareness and fixed builds. Extra High: adaptive builds and advanced tactics. Ultra: threat-aware targeting, predictive aim and stronger adaptation. Every tier seeks KOTH objectives and uses cliff avoidance. Host-controlled and live.", new AcceptableValueRange<int>(0,4));
+                    "Low: simple tactics and fixed builds. Medium: standard tactics. High: nearest-enemy awareness and fixed builds. Extra High: adaptive builds, predictive aim, dodging, combat jumps and sprint resets. Ultra: stronger aim, opponent counter-builds and survivor-specific attack combinations. Every tier seeks KOTH objectives and uses cliff avoidance. Host-controlled and live.", new AcceptableValueRange<int>(0,4));
                 Add(new ArenaBotIntelligenceOption(BotIntelligence));
                 BotThinkSeconds = General("Bots", "Decision interval", .5f,
                     "Seconds between tactical decisions per bot. Lower values react sooner but use more CPU. Decisions are staggered inside a shared 2 ms budget; native movement and aiming continue between them. Applies live.", new AcceptableValueRange<float>(.1f,2f),

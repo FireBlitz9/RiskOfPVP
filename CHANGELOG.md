@@ -1,3 +1,10 @@
+# 1.3.1
+
+- Extra High and Ultra bots dodge, jump in combat and resume sprinting between compatible attacks, including sprint resets after recovery.
+- Ultra coordinates survivor-specific setup, burst and finishing attacks using actual skill activations and cooldowns. Charged and channelled skills keep their normal hold/release handling.
+- Combat movement checks landing support, obstacles, sprint stopping distance and the KOTH boundary. Native traversal and custom survivor skill chains remain available.
+- Bot actions stay host-only and use normal movement and skill inputs. No new dependencies.
+
 # 1.3.0
 
 - Renamed the RiskOfOptions entry to RiskOfPVP, retaining saved configuration and the in-game mode identity.

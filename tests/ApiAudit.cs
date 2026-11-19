@@ -313,6 +313,26 @@ internal static class ApiAudit
                 if(!plugin.MainModule.GetType("ArenaPvP.ArenaBotBrain").Methods.Single(m=>m.Name=="Think").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="ObjectiveOffset"))
                     throw new Exception("Every bot tier must constrain its movement to a ready KOTH objective.");
                 Console.WriteLine("PASS: host-only bot input sequencing, non-firing travel, native waypoint/cliff fixes, objective priority and actual-inventory Ultra counters audited.");
+                var actions=plugin.MainModule.GetType("ArenaPvP.ArenaBotActions");
+                var actionCode=actions.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).ToArray();
+                foreach(string contract in new[]{"CanExecute","IsInMainState","add_onSkillActivatedServer","remove_onSkillActivatedServer","GameObjectPassesSkillDriverFilters"})
+                    if(!actionCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name==contract))
+                        throw new Exception("Bot action sequencing lost its native readiness/lifecycle contract: "+contract);
+                foreach(string field in new[]{"cancelSprintingOnActivation","canceledFromSprinting","forceSprintDuringState"})
+                    if(!actionCode.Any(i=>i.Operand is FieldReference && ((FieldReference)i.Operand).Name==field))
+                        throw new Exception("Bot movement no longer honors a native sprint/skill flag: "+field);
+                if(actionCode.Any(i=>i.Operand is MethodReference && new[]{"ExecuteIfReady","SetNextState","SetInterruptState","set_stock","set_rechargeStopwatch","set_isSprinting"}.Contains(((MethodReference)i.Operand).Name))
+                    || actionCode.Any(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && ((FieldReference)i.Operand).DeclaringType.FullName=="RoR2.GenericSkill"))
+                    throw new Exception("Bots must request normal inputs without forcing skills, stock, cooldowns or sprint states.");
+                foreach(string method in new[]{"Combo","Motion","Protected","SafeCombatJump","KeepInObjective"})
+                    if(!brainInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name==method))
+                        throw new Exception("Advanced bot input integration lost its sequencing or navigation guard: "+method);
+                var jump=plugin.MainModule.GetType("ArenaPvP.ArenaBotBrain").Methods.Single(m=>m.Name=="SafeCombatJump");
+                if(!jump.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Raycast")
+                    || !jump.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Linecast")
+                    || !jump.Body.Instructions.Any(i=>i.Operand is FieldReference && ((FieldReference)i.Operand).Name=="movementHill"))
+                    throw new Exception("Combat jumps must validate overhead clearance, route/landing support and KOTH containment.");
+                Console.WriteLine("PASS: activation-confirmed bot combos, native sprint/charge contracts, normal-input mobility and bounded landing/objective guards audited.");
                 Console.WriteLine("PASS: mode profile capture, compressed settings, native headings, bounded bot tactics and saved build catalog identifiers audited.");
                 var suppression = plugin.MainModule.GetType("ArenaPvP.BlockSkillsWhileChoosing");
                 if (suppression.Methods.Any(m => m.Name == "Prefix") || !suppression.Methods.Any(m => m.Name == "Postfix"))

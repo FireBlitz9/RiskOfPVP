@@ -74,6 +74,7 @@ internal static class ItemPoolTests
             var mutable = new[] { 2, 3 }; version.Update(mutable); mutable[0] = 1;
             Check(version.Update(mutable), "menu tracking notices reused arrays whose contents change");
             SurvivorRestrictions(); SharedWeightsAndDraft(); BotInventoryCounters();
+            BotActionsTests.Run(Check);
             Console.WriteLine("PASS: " + assertions + " production ItemPool and reward-layout integration assertions."); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine("FAILED: " + error); return 1; }
@@ -291,6 +292,39 @@ namespace RoR2
         public readonly HealthComponent healthComponent=new HealthComponent();
         public float maxShield=0,maxHealth=100,crit=1,baseCrit=1,moveSpeed=7,armor=0,regen=1,damage=12,attackSpeed=1;
         public UnityEngine.Vector3 corePosition;
+        public bool currentVehicle=false,isSprinting=false;
+        public SkillLocator skillLocator=new SkillLocator();
+        public CharacterMotor characterMotor=new CharacterMotor();
+        public InputBankTest inputBank=new InputBankTest();
+        public event Action<GenericSkill> onSkillActivatedServer;
+        public void Activate(GenericSkill skill) { skill.Ready=false;skill.stateMachine.Main=false;onSkillActivatedServer?.Invoke(skill); }
+        public int GetInstanceID() { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this); }
+    }
+    public class CharacterMotor : TestObject { public bool isGrounded=true; }
+    public class InputBankTest : TestObject
+    {
+        public struct ButtonState { public bool down; }
+        public UnityEngine.Vector3 aimOrigin,aimDirection=new UnityEngine.Vector3(0,0,1);
+        public ButtonState skill1,skill2,skill4;
+    }
+    public enum SkillSlot { None=-1,Primary,Secondary,Utility,Special }
+    public struct SerializableEntityStateType
+    { public Type stateType;public SerializableEntityStateType(Type t) { stateType=t; } }
+    public class EntityStateMachine : TestObject { public bool Main=true;public bool IsInMainState() { return Main; } }
+    public class GenericSkill : TestObject
+    {
+        public RoR2.Skills.SkillDef skillDef=new RoR2.Skills.SkillDef();
+        public EntityStateMachine stateMachine=new EntityStateMachine();
+        public SerializableEntityStateType activationState=new SerializableEntityStateType(typeof(NativeShot));
+        public bool Ready=true;
+        public bool CanExecute() { return Ready && stateMachine.Main; }
+    }
+    public class NativeShot { }
+    public class NativeChargeBomb { }
+    public class SkillLocator : TestObject
+    {
+        public GenericSkill primary=new GenericSkill(),secondary=new GenericSkill(),utility=new GenericSkill(),special=new GenericSkill();
+        public GenericSkill GetSkill(SkillSlot slot) { return slot==SkillSlot.Primary ? primary : slot==SkillSlot.Secondary ? secondary : slot==SkillSlot.Utility ? utility : special; }
     }
     public class Run
     {
@@ -310,6 +344,39 @@ namespace UnityEngine
         public Vector3(float x,float y,float z) { this.x=x;this.y=y;this.z=z; }
         public float sqrMagnitude { get { return x*x+y*y+z*z; } }
         public static Vector3 operator -(Vector3 a,Vector3 b) { return new Vector3(a.x-b.x,a.y-b.y,a.z-b.z); }
+        public Vector3 normalized { get { float n=(float)Math.Sqrt(sqrMagnitude);return n>0 ? new Vector3(x/n,y/n,z/n) : new Vector3(); } }
+        public static float Dot(Vector3 a,Vector3 b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
+        public static float Distance(Vector3 a,Vector3 b) { return (float)Math.Sqrt((a-b).sqrMagnitude); }
+    }
+    public static class Mathf { public static float Max(float a,float b) { return Math.Max(a,b); }public static float Clamp(float x,float a,float b) { return Math.Max(a,Math.Min(b,x)); } }
+}
+namespace RoR2.Skills
+{
+    public class SkillDef : RoR2.TestObject { public bool cancelSprintingOnActivation=true,canceledFromSprinting=false,forceSprintDuringState=false; }
+}
+namespace RoR2.CharacterAI
+{
+    public class AISkillDriver : RoR2.TestObject
+    {
+        public enum ButtonPressType { Hold,PressOnce,Abstain }
+        public enum TargetType { CurrentEnemy,Custom }
+        public enum AimType { AtCurrentEnemy,AtMoveTarget }
+        public RoR2.SkillSlot skillSlot;
+        public RoR2.Skills.SkillDef requiredSkill,forbiddenSkill;
+        public ButtonPressType buttonPressType;
+        public TargetType moveTargetType=TargetType.CurrentEnemy;
+        public AimType aimType=AimType.AtCurrentEnemy;
+        public int maxTimesSelected=-1,timesSelected=0;
+        public float minUserHealthFraction=0,maxUserHealthFraction=1;
+        public bool selectionRequiresOnGround=false;
+    }
+    public class BaseAI
+    {
+        public struct BodyInputs { public UnityEngine.Vector3 moveVector;public bool pressSkill1,pressSkill2,pressSkill3,pressSkill4,pressJump,pressSprint; }
+        public class Target { }
+        public RoR2.CharacterBody body;
+        public Target currentEnemy=new Target();
+        public bool GameObjectPassesSkillDriverFilters(Target target,AISkillDriver driver,out float distance) { distance=100;return true; }
     }
 }
 namespace RoR2.Items

@@ -29,6 +29,8 @@ namespace ArenaPvP
         private bool unsafeMove, hasGoal;
         private int patrol;
         private BotIntelligence tier = BotIntelligence.Medium;
+        private readonly ArenaBotActions actions=new ArenaBotActions();
+        private HillView movementHill;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
 
@@ -47,6 +49,7 @@ namespace ArenaPvP
             // Native combat drivers keep their exact priority, required skills and
             // press/release semantics. Travel is only a non-firing last resort.
             var drivers=gameObject.GetComponents<AISkillDriver>().Where(d=>d!=movement).Concat(new[]{movement}).ToArray();
+            actions.Initialize(bodyName,drivers,player.BotOrdinal);
             ais=gameObject.GetComponents<BaseAI>();
             foreach(var ai in ais)
             {
@@ -57,7 +60,7 @@ namespace ArenaPvP
             nextGroundProbe=Time.unscaledTime+(player.BotOrdinal%5)*.02f; patrol=player.BotOrdinal*17;
         }
         private void OnDestroy()
-        { if(ais!=null)foreach(var ai in ais)ArenaBotControl.Unregister(ai,this); if(goal)Destroy(goal); }
+        { actions.Dispose();if(ais!=null)foreach(var ai in ais)ArenaBotControl.Unregister(ai,this); if(goal)Destroy(goal); }
         internal bool CanSteer(BaseAI ai)
         {
             if(!hasGoal || !goal || player==null || !player.Connected || player.Dead || !ai.body || ai.body.currentVehicle) return false;
@@ -73,6 +76,7 @@ namespace ArenaPvP
             foreach(var ai in ais)if(ai)
             { ai.fullVision=tier>=BotIntelligence.High; ai.aimVectorDampTime=BotTacticsRules.AimDamping(tier); ai.aimVectorMaxSpeed=BotTacticsRules.AimSpeed(tier); }
             var hill=match.Rules.Mode==ArenaMode.KOTH ? match.Hill.View(match.Rules) : null;
+            movementHill=hill;
             bool objective=hill!=null && hill.Ready;
             bool chase=BotTacticsRules.ChaseHumans(match.Rules.BotChase,match.Rules.Mode);
             bool human=false;
@@ -195,6 +199,7 @@ namespace ArenaPvP
                 input.pressSkill3=BotTacticsRules.HeldSkill(input.pressSkill3,previous.pressSkill3,true,fire);
                 input.pressSkill4=BotTacticsRules.HeldSkill(input.pressSkill4,previous.pressSkill4,true,fire);
             }
+            if(BotTacticsRules.Adaptive(tier) || actions.HasHold)actions.Combo(ai,ref input,previous,Enemy,fire,tier);
             if(body.equipmentSlot && body.inventory)
             {
                 var equipment=EquipmentCatalog.GetEquipmentDef(body.inventory.GetActiveEquipment().equipmentIndex);
@@ -217,25 +222,77 @@ namespace ArenaPvP
                 input.moveVector=(Destination-body.footPosition).sqrMagnitude>2.25f ? ai.localNavigator.moveVector : Vector3.zero;
                 if(!Enemy && input.moveVector.sqrMagnitude>.01f)input.pressSprint=true;
             }
+            bool addedMobility=false,wantsCombatJump=false;
+            if(!plannedJump && BotTacticsRules.Adaptive(tier) && CanSteer(ai) && body.characterMotor && !body.isFlying)
+            {
+                bool protectedSkill=actions.Protected(body,previous);
+                var intent=actions.Motion(body,input,previous,Enemy,visible,protectedSkill,player.BotOrdinal,tier);
+                if(!protectedSkill)
+                {
+                    if(intent.DodgeSide!=0 && body.characterMotor.isGrounded)
+                    {
+                        var forward=body.inputBank.aimDirection;forward.y=0;forward.Normalize();
+                        var direction=(forward*.7f+Vector3.Cross(Vector3.up,forward)*intent.DodgeSide).normalized;
+                        if(KeepInObjective(body,ref direction)) { input.moveVector=direction;addedMobility=true; }
+                    }
+                    bool sprintBlocked=actions.SprintBlocked(body);
+                    if(!sprintBlocked)
+                    {
+                        bool directionAllowed=(body.bodyFlags&CharacterBody.BodyFlags.SprintAnyDirection)!=0 || SprintDirection(body,input.moveVector);
+                        input.pressSprint=intent.Sprint && directionAllowed && input.moveVector.sqrMagnitude>.01f;
+                        if(intent.RestoringSprint)
+                        { input.pressSkill1=input.pressSkill2=false;if(!previous.pressSkill3)input.pressSkill3=false;if(!previous.pressSkill4)input.pressSkill4=false; }
+                    }
+                    else input.pressSprint=false;
+                    wantsCombatJump=intent.Jump;
+                }
+            }
             if(!plannedJump && body.characterMotor && body.characterMotor.isGrounded && !body.isFlying && !body.currentVehicle && input.moveVector.sqrMagnitude>.01f)
             {
                 var direction=input.moveVector.normalized;
                 if(Time.unscaledTime>=nextGroundProbe)
                 {
-                    nextGroundProbe=Time.unscaledTime+.1f;previousProbeDirection=direction;unsafeMove=!SupportedAhead(body,direction);avoidedMove=Vector3.zero;
+                    nextGroundProbe=Time.unscaledTime+.1f;previousProbeDirection=direction;unsafeMove=!SupportedAhead(body,direction,input.pressSprint);avoidedMove=Vector3.zero;
                     if(unsafeMove)
                     {
                         var left=Quaternion.Euler(0,-65,0)*direction;var right=Quaternion.Euler(0,65,0)*direction;
-                        if(SupportedAhead(body,left))avoidedMove=left;else if(SupportedAhead(body,right))avoidedMove=right;
+                        if(SupportedAhead(body,left,input.pressSprint))avoidedMove=left;else if(SupportedAhead(body,right,input.pressSprint))avoidedMove=right;
                     }
                 }
-                if(unsafeMove && Vector3.Dot(direction,previousProbeDirection)>.5f) { input.moveVector=avoidedMove;input.pressSprint=false;input.pressJump=false; }
+                if(addedMobility && Vector3.Dot(direction,previousProbeDirection)<.5f)
+                { input.moveVector=Vector3.zero;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
+                if(unsafeMove && Vector3.Dot(direction,previousProbeDirection)>.5f) { input.moveVector=avoidedMove;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
             }
+            if(wantsCombatJump && !unsafeMove && !previous.pressJump && SafeCombatJump(body,input.moveVector,input.pressSprint))input.pressJump=true;
             return input;
         }
-        private static bool SupportedAhead(CharacterBody body,Vector3 direction)
+        private static bool SprintDirection(CharacterBody body,Vector3 movement)
+        { var aim=body.inputBank.aimDirection;aim.y=0;movement.y=0;return Vector3.Dot(aim.normalized,movement.normalized)>=.5f; }
+        private bool KeepInObjective(CharacterBody body,ref Vector3 direction)
         {
-            float speed=Mathf.Max(body.moveSpeed,body.characterMotor.velocity.magnitude);
+            if(movementHill==null || !movementHill.Ready)return true;
+            var offset=body.footPosition-movementHill.To;offset.y=0;
+            if(offset.magnitude>movementHill.Radius*.8f)return false;
+            float speed=body.moveSpeed*(body.isSprinting ? 1 : body.sprintingSpeedMultiplier);
+            var projected=offset+direction*speed*.4f;
+            if(projected.magnitude>movementHill.Radius*.85f)direction=-offset.normalized;
+            return true;
+        }
+        private bool SafeCombatJump(CharacterBody body,Vector3 movement,bool sprint)
+        {
+            if(!body.characterMotor || !body.characterMotor.isGrounded || body.currentVehicle || body.jumpPower<=0 || movement.sqrMagnitude<.01f)return false;
+            float flight=2*body.jumpPower/Mathf.Max(1,Mathf.Abs(Physics.gravity.y));
+            float speed=body.moveSpeed*(sprint && !body.isSprinting ? body.sprintingSpeedMultiplier : 1);
+            Vector3 destination=body.footPosition+movement.normalized*speed*Mathf.Clamp(flight,.3f,2f);
+            if(movementHill!=null && movementHill.Ready && (destination-movementHill.To).sqrMagnitude>movementHill.Radius*movementHill.Radius*.81f)return false;
+            RaycastHit landing;
+            return !Physics.Raycast(body.corePosition,Vector3.up,2.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)
+                && !Physics.Linecast(body.corePosition,destination+Vector3.up*2,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)
+                && Physics.Raycast(destination+Vector3.up*4,Vector3.down,out landing,8,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && landing.normal.y>.55f;
+        }
+        private static bool SupportedAhead(CharacterBody body,Vector3 direction,bool sprint)
+        {
+            float speed=Mathf.Max(body.moveSpeed*(sprint && !body.isSprinting ? body.sprintingSpeedMultiplier : 1),body.characterMotor.velocity.magnitude);
             float distance=BotTacticsRules.StoppingDistance(speed,body.acceleration,body.radius);
             RaycastHit hit;
             return Physics.Raycast(body.footPosition+direction*distance+Vector3.up*1.5f,Vector3.down,out hit,5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.45f;
