@@ -31,8 +31,9 @@ namespace ArenaPvP
             if (__instance.tooltipProvider)
             {
                 __instance.tooltipProvider.titleToken = __instance.tooltipProvider.bodyToken = "";
-                __instance.tooltipProvider.overrideTitleText = "Personal level";
-                __instance.tooltipProvider.overrideBodyText = "Each stack adds <style=cIsUtility>1 survivor level</style>.\nCurrent bonus: <style=cIsUtility>+" + args.newItemCount + " levels</style>.";
+                __instance.tooltipProvider.overrideTitleText = ArenaLevelArt.Title;
+                art.Description = "Each stack adds <style=cIsUtility>1 survivor level</style>.\nCurrent bonus: <style=cIsUtility>+" + args.newItemCount + " levels</style>.";
+                __instance.tooltipProvider.overrideBodyText = art.Description;
                 __instance.tooltipProvider.titleColor = new Color(.5f, .9f, 1f);
             }
         }
@@ -42,7 +43,9 @@ namespace ArenaPvP
     {
         private ItemIcon icon;
         private GameObject overlay;
-        private bool shown;
+        private bool shown, imageWasEnabled;
+        internal const string Title = "Personal level";
+        internal string Description;
         private void Awake()
         {
             icon = GetComponent<ItemIcon>();
@@ -61,11 +64,24 @@ namespace ArenaPvP
         }
         internal void Show(bool value)
         {
-            if (shown && !value && icon && icon.image) icon.image.enabled = true;
+            if (shown && !value)
+            {
+                if (icon && icon.image) icon.image.enabled = imageWasEnabled;
+                ReleaseTooltip();
+            }
+            if (!shown && value && icon && icon.image) imageWasEnabled = icon.image.enabled;
             shown = value; if (overlay) overlay.SetActive(value);
             if (shown && icon && icon.image) icon.image.enabled = false;
-            if (!value && icon && icon.tooltipProvider)
-            { icon.tooltipProvider.overrideTitleText = null; icon.tooltipProvider.overrideBodyText = null; }
+        }
+        private void ReleaseTooltip()
+        {
+            if (!icon || !icon.tooltipProvider) return;
+            var tooltip = icon.tooltipProvider;
+            // A different postfix may already have supplied the new item's
+            // description. Clear only text still owned by our level icon.
+            if (tooltip.overrideTitleText == Title) tooltip.overrideTitleText = null;
+            if (Description != null && tooltip.overrideBodyText == Description) tooltip.overrideBodyText = null;
+            Description = null;
         }
         private void LateUpdate()
         {

@@ -484,6 +484,9 @@ internal static class ApiAudit
                         .Any(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && ((FieldReference)i.Operand).DeclaringType.FullName == "RoR2.ItemDef" && ((FieldReference)i.Operand).Name == "hidden"))
                     throw new Exception("Level artwork must use native replicated LevelBonus without globally exposing hidden items.");
                 Console.WriteLine("PASS: global/survivor reward enforcement, catalog survivor selection, host-synchronized native void rescue and per-icon native level presentation audited.");
+                var levelCleanup = plugin.MainModule.GetType("ArenaPvP.ArenaLevelArt").Methods.Single(m => m.Name == "ReleaseTooltip");
+                if (levelCleanup.Body.Instructions.Count(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == "System.String" && ((MethodReference)i.Operand).Name == "op_Equality") < 2)
+                    throw new Exception("Pooled level icons must only remove their own tooltip text, preserving descriptions supplied by other mods.");
                 if (plugin.MainModule.AssemblyReferences.Any(a => a.Name.IndexOf("Aerolt", StringComparison.OrdinalIgnoreCase) >= 0 || a.Name.IndexOf("UniverseLib", StringComparison.OrdinalIgnoreCase) >= 0)
                     || plugin.MainModule.GetTypeReferences().Any(t => t.Namespace.StartsWith("Aerolt", StringComparison.Ordinal) || t.Namespace.StartsWith("UniverseLib", StringComparison.Ordinal)))
                     throw new Exception("Aerolt compatibility must never introduce a required external assembly reference.");

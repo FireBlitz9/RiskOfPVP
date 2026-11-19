@@ -1,3 +1,8 @@
+# 1.2.1
+
+- Preserved LookingGlass and other tooltip overrides when a personal-level icon is reused for a normal item.
+- Restored the icon's prior image visibility when releasing the level artwork.
+
 # 1.2.0
 
 - Reorganized settings into General, FFA, Teams, KOTH and Controls, without numbered category names.
