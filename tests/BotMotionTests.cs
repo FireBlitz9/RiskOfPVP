@@ -35,6 +35,40 @@ internal static class BotMotionTests
         state.Clear();
         check(!Tick(state,2,sprint:false).Sprint && Tick(state,2.02f,previousSprint:false).Sprint,"unexpected sprint interruption also produces a legal reset");
 
+        state.Clear();
+        var calm = state.Update(1, BotIntelligence.Ultra, 0, true, true, true, false, false, true, false, false, false, reactive: true);
+        check(calm.Sprint && calm.DodgeSide == 0 && !calm.Jump, "Ultra travels normally while no attack threatens it");
+        var windup = state.Update(1.1f, BotIntelligence.Ultra, 0, true, true, true, true, false, true, false, false, false, reactive: true);
+        check(windup.DodgeSide != 0 && !windup.Jump, "a windup prompts a dodge without demanding a jump");
+        var projectile = state.Update(2, BotIntelligence.Ultra, 0, true, true, true, true, false, true, false, false, false,
+            reactive: true, projectile: true);
+        check(projectile.DodgeSide != 0 && projectile.Jump, "an incoming projectile can request evasive movement and a validated jump");
+
+        var memory = new BotMemory();
+        var opponent = memory.For(12);
+        opponent.See(1, 4, 11, .8f, .7f, .5f);
+        opponent.See(1, 4.25f, 11, .9f, .7f, .7f);
+        opponent.Damage(4.26f, .5f, true);
+        opponent.Damage(4.27f, .12f, false);
+        var kit = new BotKit { Range = 25, Reach = 45, OnHit = .8f, SkillUse = .5f };
+        check(memory.Find(13) == null && opponent.Sustain > 0 && opponent.Pressure(4.3f) > .5f
+            && opponent.Trade(4.3f) < -.28f, "the bot learns healing, pressure and trade results per opponent");
+        check(BotAdaptation.Engage(.5f, .8f, 25, kit, opponent.Trade(4.3f), opponent.Pressure(4.3f), 1, 0, false, false)
+            == BotEngagement.Recover, "a losing trade makes an injured bot reset the fight");
+        check(BotAdaptation.Engage(.5f, .8f, 25, kit, opponent.Trade(4.3f), opponent.Pressure(4.3f), 1, 0, true, false)
+            == BotEngagement.Hold, "objective holders retain the hill through a losing trade");
+        check(BotAdaptation.Spacing(kit, BotEngagement.Trade, opponent.Approach, opponent.Pressure(4.3f), 1) > kit.Range,
+            "the same ranged kit keeps more space against a player who rushes it");
+        memory.NewLife();
+        check(opponent.Pressure(5) == 0 && opponent.Familiarity(5) > 0, "respawns clear the active fight while retaining learned tendencies");
+        for (int i = 0; i < 20; i++) memory.SkillHit(6 + i * .1f, false, .08f, .25f);
+        var learned = memory.RefineKit(kit, 8);
+        check(learned.OnHit < kit.OnHit && learned.SkillUse > kit.SkillUse && memory.RefineKit(kit, 100).OnHit == kit.OnHit,
+            "recent damage sources improve build estimates and stale samples lose influence");
+        check(Math.Abs(BotAdaptation.LeadTime(60, 900, 0, 0) - .5f) < .0001f
+            && BotAdaptation.LeadTime(60, 900, 100, 0) > .5f
+            && BotAdaptation.LeadTime(30, 900, 1600, 1200) == 0, "prediction handles stationary, lateral and unreachable targets");
+
         var plan=BotComboRules.Plan("CommandoBody");var sequence=new BotComboState();
         check(sequence.Pick(plan,0,1,15,10,1,false)==BotAction.Secondary,"combo begins at its survivor-specific setup");
         check(sequence.Pick(plan,.1f,1,15,10,1,false)==BotAction.Secondary,"requests without activation retain the same step");

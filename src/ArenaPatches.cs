@@ -151,7 +151,19 @@ namespace ArenaPvP
             var body = damageInfo.attacker ? damageInfo.attacker.GetComponent<CharacterBody>() : null;
             var attacker = body ? match.Find(ArenaMatch.PlayerOwner(body.master)) : null;
             if (match.AreOpponents(victim, attacker))
-            { victim.LastAttacker = attacker.UserId; victim.LastHitTime = match.Clock; }
+            {
+                victim.LastAttacker = attacker.UserId; victim.LastHitTime = match.Clock;
+                if (match.Rules.BotIntelligence == BotIntelligence.Ultra)
+                {
+                    float now = Time.unscaledTime;
+                    float fraction = (__state - __instance.combinedHealth) / Mathf.Max(1, __instance.fullCombinedHealth);
+                    victim.BotMemory?.For(attacker.UserId).Damage(now, fraction, true);
+                    attacker.BotMemory?.For(victim.UserId).Damage(now, fraction, false);
+                    var source = damageInfo.damageType.damageSource & DamageSource.SkillMask;
+                    if (source != DamageSource.NoneSpecified && body && body.master == attacker.Master)
+                        attacker.BotMemory?.SkillHit(now, source == DamageSource.Primary, fraction, damageInfo.procCoefficient);
+                }
+            }
         }
     }
 

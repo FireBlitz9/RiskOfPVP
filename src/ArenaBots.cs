@@ -20,32 +20,48 @@ namespace ArenaPvP
         private readonly List<BotTarget> targets = new List<BotTarget>();
         private readonly Dictionary<CharacterMaster,ArenaPlayer> owners = new Dictionary<CharacterMaster,ArenaPlayer>();
         private int choice;
-        private SurvivorDef[] survivors;
+        private sealed class BotSurvivor
+        {
+            internal string BodyName, DisplayNameToken, SortName;
+            internal GameObject MasterPrefab;
+        }
+        private BotSurvivor[] survivors;
         internal string Status = "";
         private void Awake() { Instance = this; }
         private void OnDestroy() { Reset(); Instance = null; }
         internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextBrain = 0; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); Status = ""; }
-        internal SurvivorDef[] Survivors
+        private BotSurvivor[] Survivors
         {
             get
             {
                 if (survivors == null)
                 {
-                    var result = new List<SurvivorDef>();
+                    var result = new List<BotSurvivor>();
                     for (int i = 0; i < SurvivorCatalog.survivorCount; i++)
                     {
                         var def = SurvivorCatalog.GetSurvivorDef((SurvivorIndex)i);
                         if (!def || !def.bodyPrefab) continue;
                         var body = def.bodyPrefab.GetComponent<CharacterBody>();
-                        var prefab = body ? MasterCatalog.GetMasterPrefab(MasterCatalog.FindAiMasterIndexForBody(body.bodyIndex)) : null;
-                        if (prefab && prefab.GetComponent<BaseAI>()) result.Add(def);
+                        AddSurvivor(result, body, def.displayNameToken, def.cachedName);
                     }
-                    survivors = result.OrderBy(s => s.bodyPrefab.name == "CommandoBody" ? 0 : 1).ThenBy(s => s.cachedName).ToArray();
+                    // Heretic is a playable transformation outside character select.
+                    var heretic = BodyCatalog.FindBodyPrefab("HereticBody");
+                    if (heretic && !result.Any(s => s.BodyName == heretic.name))
+                        AddSurvivor(result, heretic.GetComponent<CharacterBody>(), "HERETIC_BODY_NAME", "Heretic");
+                    survivors = result.OrderBy(s => s.BodyName == "CommandoBody" ? 0 : 1).ThenBy(s => s.SortName).ToArray();
                 }
                 return survivors;
             }
         }
-        internal string SelectionName { get { return Survivors.Length == 0 ? "No registered survivor AI" : Language.GetString(Survivors[choice % Survivors.Length].displayNameToken); } }
+        private static void AddSurvivor(List<BotSurvivor> result, CharacterBody body, string token, string name)
+        {
+            if (!body) return;
+            var prefab = MasterCatalog.GetMasterPrefab(MasterCatalog.FindAiMasterIndexForBody(body.bodyIndex));
+            if (!prefab || !prefab.GetComponent<BaseAI>()) return;
+            result.Add(new BotSurvivor { BodyName = body.gameObject.name, DisplayNameToken = token, SortName = name, MasterPrefab = prefab });
+        }
+
+        internal string SelectionName { get { return Survivors.Length == 0 ? "No registered survivor AI" : Language.GetString(Survivors[choice % Survivors.Length].DisplayNameToken); } }
         internal void NextSurvivor() { if (Survivors.Length > 0) choice = (choice + 1) % Survivors.Length; }
         internal void Tick(ArenaMatch match)
         {
@@ -112,8 +128,7 @@ namespace ArenaPvP
             var bot = match.Bots.FirstOrDefault(p => p.BotRemoved);
             bool fresh = bot == null;
             if (fresh && match.Bots.Count >= ArenaTeams.BotCapacity) { Status = "Bot limit reached (" + ArenaTeams.BotCapacity + ")."; return false; }
-            var def = Survivors[choice % Survivors.Length]; var bodyDef = def.bodyPrefab.GetComponent<CharacterBody>();
-            var prefab = MasterCatalog.GetMasterPrefab(MasterCatalog.FindAiMasterIndexForBody(bodyDef.bodyIndex));
+            var def = Survivors[choice % Survivors.Length];
             GameObject staging = null, instance = null;
             try
             {
@@ -125,19 +140,20 @@ namespace ArenaPvP
                 // Register before activation/SpawnBody, so world cleanup and the
                 // global body-start callback recognize this as a participant.
                 staging = new GameObject("Arena bot staging"); staging.SetActive(false);
-                instance = Instantiate(prefab, staging.transform, false);
+                instance = Instantiate(def.MasterPrefab, staging.transform, false);
                 bot.BotMaster = instance.GetComponent<CharacterMaster>(); bot.BotRemoved = false; bot.Dead = false; bot.LastBody = 0;
                 bot.InitialGranted = false; bot.Rewards.Clear(); bot.Level = match.Rules.Selection == ItemSelection.Random ? match.Cap : 1;
                 bot.LateEntrant = !starting && match.Elapsed > 0; bot.CatchupRemaining = bot.CatchupTarget = 0; bot.CatchupPrepared = false; bot.BeadExperience.Clear();
-                bot.BotBuild = BotBuildRules.ForBody(def.bodyPrefab.name, bot.BotOrdinal, match.Rules.Mode == ArenaMode.KOTH); bot.BotRewards = 0;
-                bot.Name = "Bot " + (bot.BotOrdinal + 1) + " - " + Language.GetString(def.displayNameToken);
+                bot.BotBuild = BotBuildRules.ForBody(def.BodyName, bot.BotOrdinal, match.Rules.Mode == ArenaMode.KOTH); bot.BotRewards = 0;
+                bot.BotMemory = new BotMemory();
+                bot.Name = "Bot " + (bot.BotOrdinal + 1) + " - " + Language.GetString(def.DisplayNameToken);
                 var brain = instance.AddComponent<ArenaBotBrain>();
                 instance.transform.SetParent(null, true); instance.SetActive(true); Destroy(staging); staging = null;
                 match.RefreshTeamAssignments(); NetworkServer.Spawn(instance); ArenaTeams.Ensure(bot.BotMaster);
                 var points = match.SpawnPositions.ToArray();
                 Vector3 position = points.Length > 0 ? points[UnityEngine.Random.Range(0, points.Length)] : bot.Master.CalculateSafeRespawnPosition();
                 bot.BotMaster.Respawn(position, Quaternion.identity, true);
-                brain.Initialize(bot, def.bodyPrefab.name); brains.Add(brain);
+                brain.Initialize(bot, def.BodyName); brains.Add(brain);
                 foreach (var item in new[] { RoR2Content.Items.UseAmbientLevel, RoR2Content.Items.InvadingDoppelganger })
                 { int count = bot.Master.inventory.GetItemCountPermanent(item); if (count > 0) bot.Master.inventory.RemoveItemPermanent(item, count); }
                 match.EnsureParticipant(bot); Status = "Spawned " + bot.Name + " (" + BotTacticsRules.Name((int)match.Rules.BotIntelligence) + ", "

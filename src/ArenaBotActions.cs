@@ -177,18 +177,19 @@ namespace ArenaPvP
             }
             return false;
         }
-        internal BotMotionIntent Motion(CharacterBody body,BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool visible,bool protectedSkill,int identity,BotIntelligence level)
+        internal BotMotionIntent Motion(CharacterBody body,BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool visible,bool protectedSkill,int identity,BotIntelligence level,
+            bool ultraThreat = false, bool projectileThreat = false)
         {
             Observe(body);tier=level;
-            bool moving=input.moveVector.sqrMagnitude>.01f || visible;
-            bool threat=false;
-            if(visible && enemy && enemy.inputBank)
+            bool moving=input.moveVector.sqrMagnitude>.01f || visible || projectileThreat;
+            bool threat=ultraThreat;
+            if(level != BotIntelligence.Ultra && visible && enemy && enemy.inputBank)
             {
                 var toward=(body.corePosition-enemy.inputBank.aimOrigin).normalized;
                 threat=Vector3.Dot(enemy.inputBank.aimDirection,toward)>.92f && (enemy.inputBank.skill1.down || enemy.inputBank.skill2.down || enemy.inputBank.skill4.down);
             }
-            return motion.Update(Time.unscaledTime,level,identity,moving,body.characterMotor && body.characterMotor.isGrounded,visible,threat,protectedSkill,true,
-                body.isSprinting,previous.pressSprint,previous.pressJump,SprintBlocked(body));
+            return motion.Update(Time.unscaledTime,level,identity,moving,body.characterMotor && body.characterMotor.isGrounded,visible || projectileThreat,threat,protectedSkill,true,
+                body.isSprinting,previous.pressSprint,previous.pressJump,SprintBlocked(body), level == BotIntelligence.Ultra, projectileThreat);
         }
     }
 }

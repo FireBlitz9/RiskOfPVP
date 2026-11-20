@@ -1,3 +1,10 @@
+# 1.3.2
+
+- Ultra adapts its spacing, defensive timing, and item choices to individual opponents. It uses the survivor's equipped skills and recent damage trades to evaluate builds.
+- Bots use native AI drivers and the host's eligible item pool, including DLC content. Ultra can use opponent positions for routing and requires line of sight for new attacks.
+- Added an offline comparison of v1.3.1 and v1.3.2 to the description, covering scripted decision checks, reward scoring time, and managed allocations.
+- Updated the public credits to Clay Templar and MaTtHeBEST4444.
+
 # 1.3.1
 
 - Extra High and Ultra bots dodge, jump in combat and resume sprinting between compatible attacks, including sprint resets after recovery.

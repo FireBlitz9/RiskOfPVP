@@ -1,0 +1,1870 @@
+{
+  "workload": "Production Ultra rules and reward chooser with deterministic catalog and inventory adapters",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 151 Stepping 5, GenuineIntel",
+  "runtime": "4.0.30319.42000",
+  "versions": {
+    "previous": {
+      "source": "53b5fc90b4e8191c7f5fc14ee07b63725d0ae8a0",
+      "files": {
+        "src/ArenaRules.cs": "3d82c1880dd1672d5bd0e1c64763f16d7b5f553e01639af0b2a748086c9b8e45",
+        "src/PickupRules.cs": "dda0b08d8982dc1744c18b09958f7124e30c73aa190ff3c79c9f63ed84143412",
+        "src/BotTacticsRules.cs": "1f47e4d799a39ef4a7c86e165d915494021cb70cd190b4ffd54bccb07a9a6c98",
+        "src/BotBuildRules.cs": "690265f8d48c985f6b72e2c5e0dae16e2e86b9f82b1fe6a449aea2316273a719",
+        "src/BotActionRules.cs": "c62fed843ad9792cabef62d5592ab69ee2d01e3be3e8b9410456fd1d3fa8300d",
+        "src/ItemPool.cs": "f67e3d0ceef1370dd186b6ac07617fd36df8276cb6369d70619d15bbfe4a38de",
+        "src/ArenaBotBuilds.cs": "8c7bfa24fc5eed8514ee1fcce81677244389f3e5918f998355fc2ef4be423081",
+        "src/ArenaBotActions.cs": "46f3608eff4f55b8c3b7dfbd28a6ad18511e880e81f8cdd2ddae57286972553d",
+        "tests/ItemPoolTests.cs": "a45a96c22cb2b010babe5acffefa225a91f45dcee494327ea989036bcdc243e6",
+        "tests/BotActionsTests.cs": "63c74a2dabb9a90523c78f4db4d950ba25b6a6feec7de05dd71b77e58e0b01ec"
+      },
+      "samples": [
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.7937000000000003,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.2419000000000002,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.2675,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.1936,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.31,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.1839,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.2853000000000003,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 8.423300000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 8.924000000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 10.1183,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.283000000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 8.8118,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 9.8468,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 8.8228,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 57.5092,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 54.222100000000005,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 53.3913,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 54.8215,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 56.6321,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 56.9543,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 56.996100000000006,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 9.308200000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.5731,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 9.7626,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 8.856,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 9.7878,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 9.8582,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 9.521700000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 56.5461,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 61.526900000000005,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 56.344300000000004,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 53.4133,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 56.0015,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 56.0123,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 57.3299,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.3168,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.2542,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.5124,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.2163,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.5713,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.2639,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 3.1103,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 53.5931,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 55.674,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 52.38,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 53.726600000000005,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 56.4827,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 55.7075,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 58.0067,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.5019,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.3209,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.7108000000000003,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.2706,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.6914000000000002,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.326,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.5220000000000002,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 9.2951,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.4201,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 8.408100000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.0289,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 8.4853,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 8.153,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 11.2294,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.5605,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.4907,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.2361,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.8533,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.2475,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.597,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.2505,
+          "allocated_bytes": 2376000,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 8.4427,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 8.4639,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 8.4801,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.325000000000001,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 8.3437,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 9.3328,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 10.1972,
+          "allocated_bytes": 8078400,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 57.447900000000004,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 55.910900000000005,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 54.345600000000005,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 56.8265,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 56.5452,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 56.906800000000004,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 57.9178,
+          "allocated_bytes": 47995200,
+          "iterations": 900,
+          "checksum": 900
+        }
+      ],
+      "scenarios": [
+        {
+          "group": "Combat guardrails",
+          "label": "Fire at an aligned visible opponent",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire when the target is hidden",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire against an ally",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire against a dead target",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Respect spawn protection",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Wait for aim to align",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Keep extra movement off during protected skill recovery",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Avoid extra jumps without ground contact",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Suppress extra movement on unsafe ground",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Keep a steering goal inside the hill",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Keep normal movement with no cue to dodge",
+          "passed": false
+        },
+        {
+          "group": "Threat response",
+          "label": "Stay grounded when no projectile threatens",
+          "passed": false
+        },
+        {
+          "group": "Threat response",
+          "label": "Dodge a threatening windup",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Avoid spending a jump on the windup alone",
+          "passed": false
+        },
+        {
+          "group": "Threat response",
+          "label": "Try a grounded jump for an incoming projectile",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Sprint during quiet travel",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer rapid hits against Safer Spaces",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch to a heavy-hit choice against flat damage reduction",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Avoid relying on a debuff against Blast Shower",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Ignore a teammate's Blast Shower when building",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Consider an unfamiliar legal catalog item",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Choose within the host-filtered offer",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer a DLC cooldown trade for a skill-heavy kit",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer a DLC on-hit item for a rapid attacker",
+          "passed": false
+        },
+        {
+          "group": "Build choices",
+          "label": "Take an available early level over weak filler",
+          "passed": false
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch from attack speed to a slow after seeing repeated strafing",
+          "passed": false
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch to a shield against a high-burst opponent",
+          "passed": false
+        }
+      ],
+      "metrics": {
+        "24": {
+          "median_us": 2.5765000000000002,
+          "median_bytes": 2640.0,
+          "batches": 28,
+          "offers": 25200
+        },
+        "96": {
+          "median_us": 10.321166666666667,
+          "median_bytes": 8976.0,
+          "batches": 28,
+          "offers": 25200
+        },
+        "600": {
+          "median_us": 62.68166666666667,
+          "median_bytes": 53328.0,
+          "batches": 28,
+          "offers": 25200
+        }
+      }
+    },
+    "upgraded": {
+      "source": "v1.3.2",
+      "files": {
+        "src/ArenaRules.cs": "3d82c1880dd1672d5bd0e1c64763f16d7b5f553e01639af0b2a748086c9b8e45",
+        "src/PickupRules.cs": "dda0b08d8982dc1744c18b09958f7124e30c73aa190ff3c79c9f63ed84143412",
+        "src/BotTacticsRules.cs": "1f47e4d799a39ef4a7c86e165d915494021cb70cd190b4ffd54bccb07a9a6c98",
+        "src/BotBuildRules.cs": "b395125212e7e248c5ebbd5190c5d07c0a6a079efdd6c6baa3f0761498e7ec7f",
+        "src/BotActionRules.cs": "86d6f388a5b302aa5a88418cc58158464ef0653b6896cff81ad362ba61460230",
+        "src/ItemPool.cs": "f67e3d0ceef1370dd186b6ac07617fd36df8276cb6369d70619d15bbfe4a38de",
+        "src/ArenaBotBuilds.cs": "4ea4170c7ddcfac4f6b240c2f4bade04b6c0d9660f1574dbf2fb7e1b4cedd241",
+        "src/ArenaBotActions.cs": "82b5f343361f5bcc7e7511a3516093e911acb9d3e7d4875780d343dc3dac6b79",
+        "tests/ItemPoolTests.cs": "90f8495106853d653fc35452554c651f94ef3e955312267146ee54d7477bdd4a",
+        "tests/BotActionsTests.cs": "63c74a2dabb9a90523c78f4db4d950ba25b6a6feec7de05dd71b77e58e0b01ec",
+        "src/BotAdaptation.cs": "a58626700a9802ed474f0e7c08d48d5c38aa171a81ba3ef29253a4eb640b54b3"
+      },
+      "samples": [
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.4693,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.5368,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.6390000000000002,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.3642000000000003,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.3719,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.3731,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.4570000000000003,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 10.8149,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.7614,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 9.321200000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.662700000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 9.0965,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 10.0648,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 10.5088,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 61.6409,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 61.7661,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 61.3112,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 61.6049,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 59.110600000000005,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 62.448600000000006,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 0,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 65.2209,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 9.5014,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.119100000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 10.955,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.5893,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 9.2697,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 11.067300000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 9.1411,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 56.5461,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 57.2246,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 59.188100000000006,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 61.730000000000004,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 65.0335,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 61.911500000000004,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 69.2175,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.605,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.5377,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.5075000000000003,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.4938000000000002,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 3.0289,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.593,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 1,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.4797000000000002,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 59.9555,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 56.195600000000006,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 61.159400000000005,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 61.5901,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 58.4493,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 60.0221,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 58.162800000000004,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.4068,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.4312,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.4548,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.4225000000000003,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.5413,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.4336,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.5749,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 9.0129,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.5785,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 9.785300000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 9.0715,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 10.737300000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 10.7024,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 2,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 9.014000000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 0,
+          "elapsed_ms": 2.4507000000000003,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 1,
+          "elapsed_ms": 2.7344,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 2,
+          "elapsed_ms": 2.4983,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 3,
+          "elapsed_ms": 2.9421,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 4,
+          "elapsed_ms": 2.412,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 5,
+          "elapsed_ms": 2.8081,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 24,
+          "batch": 6,
+          "elapsed_ms": 2.3736,
+          "allocated_bytes": 2570400,
+          "iterations": 900,
+          "checksum": 248475
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 0,
+          "elapsed_ms": 10.9709,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 1,
+          "elapsed_ms": 9.5164,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 2,
+          "elapsed_ms": 11.4277,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 3,
+          "elapsed_ms": 11.2199,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 4,
+          "elapsed_ms": 9.386700000000001,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 5,
+          "elapsed_ms": 10.0556,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 96,
+          "batch": 6,
+          "elapsed_ms": 9.3657,
+          "allocated_bytes": 8791200,
+          "iterations": 900,
+          "checksum": 207150
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 0,
+          "elapsed_ms": 65.46430000000001,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 1,
+          "elapsed_ms": 57.557300000000005,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 2,
+          "elapsed_ms": 59.8493,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 3,
+          "elapsed_ms": 59.971000000000004,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 4,
+          "elapsed_ms": 61.7505,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 5,
+          "elapsed_ms": 61.901500000000006,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        },
+        {
+          "run": 3,
+          "offer_size": 600,
+          "batch": 6,
+          "elapsed_ms": 59.106300000000005,
+          "allocated_bytes": 52336800,
+          "iterations": 900,
+          "checksum": 900
+        }
+      ],
+      "scenarios": [
+        {
+          "group": "Combat guardrails",
+          "label": "Fire at an aligned visible opponent",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire when the target is hidden",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire against an ally",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Hold fire against a dead target",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Respect spawn protection",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Wait for aim to align",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Keep extra movement off during protected skill recovery",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Avoid extra jumps without ground contact",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Suppress extra movement on unsafe ground",
+          "passed": true
+        },
+        {
+          "group": "Combat guardrails",
+          "label": "Keep a steering goal inside the hill",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Keep normal movement with no cue to dodge",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Stay grounded when no projectile threatens",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Dodge a threatening windup",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Avoid spending a jump on the windup alone",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Try a grounded jump for an incoming projectile",
+          "passed": true
+        },
+        {
+          "group": "Threat response",
+          "label": "Sprint during quiet travel",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer rapid hits against Safer Spaces",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch to a heavy-hit choice against flat damage reduction",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Avoid relying on a debuff against Blast Shower",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Ignore a teammate's Blast Shower when building",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Consider an unfamiliar legal catalog item",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Choose within the host-filtered offer",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer a DLC cooldown trade for a skill-heavy kit",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Prefer a DLC on-hit item for a rapid attacker",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Take an available early level over weak filler",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch from attack speed to a slow after seeing repeated strafing",
+          "passed": true
+        },
+        {
+          "group": "Build choices",
+          "label": "Switch to a shield against a high-burst opponent",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "24": {
+          "median_us": 2.763055555555556,
+          "median_bytes": 2856.0,
+          "batches": 28,
+          "offers": 25200
+        },
+        "96": {
+          "median_us": 10.695555555555556,
+          "median_bytes": 9768.0,
+          "batches": 28,
+          "offers": 25200
+        },
+        "600": {
+          "median_us": 68.03922222222224,
+          "median_bytes": 58152.0,
+          "batches": 28,
+          "offers": 25200
+        }
+      }
+    }
+  },
+  "harness_sha256": "1d1359698da4fc5e655efeb0f9b13f24c115561aa6c00f4b00b4a5fd3452085c"
+}

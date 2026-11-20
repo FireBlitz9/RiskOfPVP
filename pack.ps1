@@ -34,6 +34,15 @@ $packageFiles = @('manifest.json', 'README.md', 'CHANGELOG.md', 'LICENSE', 'icon
 foreach ($name in $packageFiles) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination (Join-Path $payloadDirectory $name) -Force
 }
+# Thunderstore renders the embedded README on its own domain.
+$readmePath = Join-Path $payloadDirectory 'README.md'
+$figure = "assets/ultra-benchmarks-$($manifest.version_number).png"
+if (Test-Path -LiteralPath (Join-Path $PSScriptRoot $figure)) {
+    $readme = [System.IO.File]::ReadAllText($readmePath)
+    $readme = $readme.Replace("]($figure)", "](https://raw.githubusercontent.com/FireBlitz9/RiskOfPVP/main/$figure)")
+    $readme = $readme.Replace('](benchmarks/README.md)', '](https://github.com/FireBlitz9/RiskOfPVP/blob/main/benchmarks/README.md)')
+    [System.IO.File]::WriteAllText($readmePath, $readme)
+}
 Copy-Item -LiteralPath $dll -Destination $pluginDirectory -Force
 $archiveEntries = @($packageFiles | ForEach-Object { Join-Path $payloadDirectory $_ })
 $archiveEntries += Join-Path $payloadDirectory 'plugins'

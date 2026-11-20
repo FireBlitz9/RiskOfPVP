@@ -172,7 +172,32 @@ internal static class ItemPoolTests
         Check(ArenaBotBuilds.Choose(bot,pool.Available(new[]{0,1},bot.Master.inventory),ItemSelection.Command)==1,"Ultra cannot choose a counter removed by host bans or inventory limits");
         bot.Dead=true;bot.Master.BodyMissing=true;
         Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==0,"Ultra can read opponent inventories and choose its death reward after its old body has been removed");
-        var full=ItemCatalog.Definitions.Concat(Enumerable.Range(6,594).Select(i=>new ItemDef("CustomItem"+i,ItemTier.Tier1,i))).ToArray();
+        var expansion = new ExpansionDef();
+        ItemCatalog.Definitions = ItemCatalog.Definitions.Concat(new[]
+        {
+            new ItemDef("HalfAttackSpeedHalfCooldowns", ItemTier.Lunar, 6) { requiredExpansion = expansion },
+            new ItemDef("WyrmOnHit", ItemTier.Tier3, 7) { requiredExpansion = expansion },
+            new ItemDef("ModdedUtility", ItemTier.Tier1, 8),
+            new ItemDef("HiddenProcItem", ItemTier.Tier1, 9) { hidden = true }
+        }).ToArray();
+        ItemCatalog.Definitions[8].Tags.Add(ItemTag.Utility);
+        ArenaBotBuilds.Reset();
+        opponent.Master.inventory.Counts.Clear();
+        opponent.Master.inventory.Counts[(ItemIndex)9] = 50;
+        bot.BotKit = new BotKit { Range = 25, Reach = 40, OnHit = .3f, SkillUse = 1 };
+        Check(ArenaBotBuilds.Choose(bot, new[] { 6, 7 }, ItemSelection.Draft) == 6,
+            "a DLC cooldown trade is preferred for a skill-heavy kit");
+        bot.BotKit = new BotKit { Range = 25, Reach = 40, OnHit = 1, SkillUse = .4f };
+        Check(ArenaBotBuilds.Choose(bot, new[] { 6, 7 }, ItemSelection.Draft) == 7,
+            "the same offer favors a DLC on-hit item for a rapid attacker");
+        Check(ArenaBotBuilds.Choose(bot, new[] { 8 }, ItemSelection.Command) == 8
+            && ArenaBotBuilds.Choose(bot, new[] { 8 }, ItemSelection.Command, true) == -1,
+            "unknown catalog items remain usable and compete with a legal personal level");
+        var withoutExpansion = new Run { ExpansionEnabled = false };
+        pool = new ItemPool(withoutExpansion, Settings());
+        Check(!pool.All.Contains(6) && !pool.All.Contains(7) && !pool.All.Contains(9) && pool.All.Contains(8),
+            "Ultra uses the normal expansion and visibility-gated offers");
+        var full=ItemCatalog.Definitions.Concat(Enumerable.Range(10,590).Select(i=>new ItemDef("CustomItem"+i,ItemTier.Tier1,i))).ToArray();
         ItemCatalog.Definitions=full;ArenaBotBuilds.Reset();var large=Enumerable.Range(0,600).ToArray();
         ArenaBotBuilds.Choose(bot,large,ItemSelection.Command); // Warm the descriptor cache, as normal repeated rewards do.
         var clock=System.Diagnostics.Stopwatch.StartNew();
@@ -199,6 +224,8 @@ namespace ArenaPvP
         internal bool Connected=true;
         internal CharacterMaster Master;
         internal BotBuildKind BotBuild;
+        internal BotKit BotKit = default(BotKit);
+        internal BotMemory BotMemory = new BotMemory();
         internal int BotOrdinal=0,BotRewards=0,Side;
         internal uint LastAttacker=0,UserId=1;
     }
@@ -243,6 +270,7 @@ namespace RoR2
     public class EquipmentDef : TestObject
     {
         public string name; public EquipmentIndex equipmentIndex; public bool canDrop = true, isLunar = false;
+        public float cooldown = 45f;
         public BuffDef passiveBuffDef = null; public ExpansionDef requiredExpansion = null;
         public EquipmentDef(string n, int i) { name = n; equipmentIndex = (EquipmentIndex)i; }
     }
@@ -331,7 +359,8 @@ namespace RoR2
         public ulong seed = 78123;
         public readonly HashSet<ItemIndex> availableItems = new HashSet<ItemIndex>();
         public readonly HashSet<EquipmentIndex> availableEquipment = new HashSet<EquipmentIndex>();
-        public bool IsExpansionEnabled(ExpansionDef expansion) { return true; }
+        public bool ExpansionEnabled = true;
+        public bool IsExpansionEnabled(ExpansionDef expansion) { return ExpansionEnabled; }
     }
 }
 namespace UnityEngine

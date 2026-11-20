@@ -16,6 +16,7 @@ namespace ArenaPvP
             internal ItemIndex Item;
             internal EquipmentIndex Equipment;
             internal bool Rare, Allowed;
+            internal float Cooldown;
             internal BotItemTraits Traits;
         }
         private static readonly Dictionary<int,Definition> definitions = new Dictionary<int,Definition>();
@@ -37,7 +38,7 @@ namespace ArenaPvP
             if(!master.inventory)return result;
             foreach(var index in master.inventory.itemAcquisitionOrder)
             {
-                var def=ItemCatalog.GetItemDef(index);if(!def)continue;
+                var def=ItemCatalog.GetItemDef(index);if(!def || def.hidden)continue;
                 int count=master.inventory.GetItemCountEffective(index);if(count>0)result.Items[def.name]=count;
             }
             foreach(var location in ArenaEquipment.Locations(master.inventory))
@@ -50,32 +51,44 @@ namespace ArenaPvP
         private static void ReadOpponents(ArenaPlayer bot,CharacterBody body,ArenaMatch match,BotBuildContext context)
         {
             ArenaPlayer first=null,second=null,third=null;float a=float.PositiveInfinity,b=a,c=a;
+            float now = Time.unscaledTime;
             bool humans=false;
             if(BotTacticsRules.ChaseHumans(match.Rules.BotChase,match.Rules.Mode))
                 foreach(var p in match.AllPlayers)if(!p.IsBot && p.Connected && !p.Dead && p.Master && p.Master.GetBody()) { humans=true;break; }
             foreach(var p in match.AllPlayers)
             {
-                if(!p.Connected || p.Dead || !p.Master || !match.AreOpponents(bot,p) || humans && p.IsBot)continue;
-                var enemy=p.Master.GetBody();if(!enemy || !enemy.healthComponent || !enemy.healthComponent.alive)continue;
-                float distance=(enemy.corePosition-(body ? body.corePosition : Vector3.zero)).sqrMagnitude;
-                if(bot.LastAttacker==p.UserId)distance=-1;
-                if(distance<a) { third=second;c=b;second=first;b=a;first=p;a=distance; }
-                else if(distance<b) { third=second;c=b;second=p;b=distance; }
-                else if(distance<c) { third=p;c=distance; }
+                if(!p.Connected || !p.Master || !match.AreOpponents(bot,p) || humans && p.IsBot)continue;
+                var enemy = p.Master.GetBody();
+                var habit = bot.BotMemory?.Find(p.UserId);
+                float score = body && enemy ? Math.Min(3, Vector3.Distance(enemy.corePosition, body.corePosition) / 35f) : 2;
+                if (habit != null) score -= habit.Pressure(now) * 3 + habit.Familiarity(now);
+                if (p.Dead) score += .25f;
+                if(score<a) { third=second;c=b;second=first;b=a;first=p;a=score; }
+                else if(score<b) { third=second;c=b;second=p;b=score; }
+                else if(score<c) { third=p;c=score; }
             }
-            AddOpponent(first,body,context);AddOpponent(second,body,context);AddOpponent(third,body,context);
+            AddOpponent(first, bot, context, now);
+            AddOpponent(second, bot, context, now);
+            AddOpponent(third, bot, context, now);
         }
-        private static void AddOpponent(ArenaPlayer player,CharacterBody body,BotBuildContext context)
+
+        private static void AddOpponent(ArenaPlayer player, ArenaPlayer bot, BotBuildContext context, float now)
         {
             if(player==null)return;
-            var master=player.Master;var enemy=master.GetBody();var loadout=ReadLoadout(master);
+            var loadout=ReadLoadout(player.Master);
             foreach(var item in loadout.Items)
             { int held;context.EnemyInventory.TryGetValue(item.Key,out held);context.EnemyInventory[item.Key]=Math.Max(held,item.Value); }
             foreach(var equipment in loadout.Equipment)context.EnemyEquipment.Add(equipment);
-            context.EnemyArmor=Math.Max(context.EnemyArmor,enemy.armor);
-            context.EnemyMoveSpeed=Math.Max(context.EnemyMoveSpeed,enemy.moveSpeed);
-            context.EnemyHealing=Math.Max(context.EnemyHealing,enemy.regen/Math.Max(1,enemy.maxHealth+enemy.maxShield));
-            context.EnemyDamage=Math.Max(context.EnemyDamage,enemy.damage*Math.Max(.5f,enemy.attackSpeed)/Math.Max(1,body ? body.damage : 12));
+            int shieldBoosters;
+            if (loadout.Items.TryGetValue("ShieldBooster", out shieldBoosters))
+                context.EnemyArmor = Math.Max(context.EnemyArmor, Math.Min(60, shieldBoosters * 15));
+            var habit = bot.BotMemory?.Find(player.UserId);
+            if (habit == null) return;
+            float recency = habit.Familiarity(now);
+            context.EnemyMoveSpeed = Math.Max(context.EnemyMoveSpeed, habit.Speed * recency);
+            context.EnemyHealing = Math.Max(context.EnemyHealing, habit.Sustain * recency);
+            context.EnemyStrafe = Math.Max(context.EnemyStrafe, habit.Strafe * recency);
+            context.EnemyDamage = Math.Max(context.EnemyDamage, 1 + habit.Pressure(now));
         }
         private static Definition Describe(int id)
         {
@@ -91,7 +104,8 @@ namespace ArenaPvP
             result = new Definition { Name=item ? item.name : equipment ? equipment.name : "", Item=item ? item.itemIndex : ItemIndex.None,
                 Equipment=equipment ? equipment.equipmentIndex : EquipmentIndex.None, ConvertsTo=converted ? converted.name : "",
                 Corrupts=item && corruption.TryGetValue(item.itemIndex,out sources) ? sources : new string[0],
-                Rare=equipment || item && (item.tier==ItemTier.Tier3 || item.tier==ItemTier.Boss || item.tier==ItemTier.Lunar), Allowed=!item || !item.ContainsTag(ItemTag.AIBlacklist) };
+                Rare=equipment || item && (item.tier==ItemTier.Tier3 || item.tier==ItemTier.Boss || item.tier==ItemTier.Lunar),
+                Allowed=equipment || item && !item.ContainsTag(ItemTag.AIBlacklist), Cooldown=equipment ? equipment.cooldown : 0 };
             if (item)
             {
                 if(item.ContainsTag(ItemTag.Damage)) result.Traits|=BotItemTraits.Damage;
@@ -103,13 +117,21 @@ namespace ArenaPvP
             }
             definitions.Add(id,result); return result;
         }
-        internal static int Choose(ArenaPlayer bot, int[] offered, ItemSelection mode)
+        internal static int Choose(ArenaPlayer bot, int[] offered, ItemSelection mode, bool mayLevel = false, int level = 1)
         {
             if(offered.Length==0)return -1;
             var inventory=bot.Master.inventory; var body=bot.Master.GetBody(); var match=ArenaMatch.Instance;
-            var context=new BotBuildContext { PreferVoid=(bot.BotOrdinal&1)!=0, Hill=match.Rules.Mode==ArenaMode.KOTH, Ultra=match.Rules.BotIntelligence==BotIntelligence.Ultra };
+            var context=new BotBuildContext { PreferVoid=(bot.BotOrdinal&1)!=0, Hill=match.Rules.Mode==ArenaMode.KOTH,
+                Teams=match.Rules.Mode!=ArenaMode.FFA, Ultra=match.Rules.BotIntelligence==BotIntelligence.Ultra, MayLevel=mayLevel };
             string bodyName=bot.Master.bodyPrefab.name;
             context.AttackAffinity=bodyName=="MageBody" || bodyName=="LoaderBody" || bodyName=="CrocoBody" || bodyName=="SeekerBody" ? .35f : 1f;
+            if (context.Ultra && bot.BotKit.Reach > 0)
+            {
+                var kit = bot.BotMemory?.RefineKit(bot.BotKit, Time.unscaledTime) ?? bot.BotKit;
+                context.AttackAffinity = kit.OnHit;
+                context.SkillUse = kit.SkillUse;
+                context.CloseRange = kit.Range < 12;
+            }
             foreach (var index in inventory.itemAcquisitionOrder)
             {
                 var item=ItemCatalog.GetItemDef(index); if(!item)continue;
@@ -118,6 +140,8 @@ namespace ArenaPvP
             var location=ArenaEquipment.GrantLocation(inventory);
             context.HasEquipment=inventory.GetEquipment(in location).equipmentIndex!=EquipmentIndex.None;
             var current=EquipmentCatalog.GetEquipmentDef(inventory.GetEquipment(in location).equipmentIndex);context.CurrentEquipment=current ? current.name : "";
+            if (context.Ultra && current)
+                context.CurrentGear = new BotBuildItem { Name = current.name, Equipment = true, Cooldown = current.cooldown };
             foreach(var slot in ArenaEquipment.Locations(inventory))
             {
                 var gear=EquipmentCatalog.GetEquipmentDef(inventory.GetEquipment(in slot).equipmentIndex);if(!gear)continue;
@@ -134,15 +158,16 @@ namespace ArenaPvP
             context.Crit=Math.Max(context.Crit,(body ? body.baseCrit : 1)+context.Count("CritGlasses")*10);
             if(context.Count("ShieldOnly")>0)context.Shield=.99f;
             else if(context.Count("PersonalShield")>0)context.Shield=Math.Max(.02f,context.Shield);
+            else if (context.Ultra && context.Count("ShieldBooster") > 0) context.Shield = Math.Max(.04f, context.Shield);
             var candidates=new BotBuildItem[offered.Length];
             for(int i=0;i<offered.Length;i++)
             {
                 var d=Describe(offered[i]); bool equipment=d.Equipment!=EquipmentIndex.None;
                 int held=0;if(equipment)context.EquipmentInventory.TryGetValue(d.Name,out held);else held=inventory.GetItemCountTotal(d.Item);
                 candidates[i]=new BotBuildItem { Pickup=offered[i], Name=d.Name, Owned=held,
-                    Equipment=equipment, Rare=d.Rare, AiAllowed=d.Allowed, Corrupts=d.Corrupts, ConvertsTo=d.ConvertsTo, Traits=d.Traits };
+                    Equipment=equipment, Rare=d.Rare, AiAllowed=d.Allowed, Corrupts=d.Corrupts, ConvertsTo=d.ConvertsTo, Traits=d.Traits, Cooldown=d.Cooldown };
             }
-            return BotTacticsRules.Adaptive(match.Rules.BotIntelligence) ? BotBuildRules.ChooseAdaptive(candidates,context)
+            return BotTacticsRules.Adaptive(match.Rules.BotIntelligence) ? BotBuildRules.ChooseAdaptive(candidates,context,mayLevel,level)
                 : BotBuildRules.Choose(bot.BotBuild,candidates,bot.BotRewards,mode==ItemSelection.Command,context);
         }
     }

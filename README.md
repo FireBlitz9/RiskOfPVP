@@ -1,5 +1,7 @@
 # RiskOfPVP
 
+By **Clay Templar** and **MaTtHeBEST4444**.
+
 Turn Risk of Rain 2 into a PvP arena. Fight everyone, split into red and blue teams, or compete over a moving capture point. Vote for a map, build your survivor with item rewards, and respawn to get back into the fight.
 
 ## Features
@@ -52,9 +54,11 @@ Choice modes can offer **+1 Level** instead of an item. The host sets how the le
 
 Rewards show the usual pickup notification. Falling into the void never grants death or kill rewards. Item selectors show icons and full descriptions, and respect enabled DLCs, host bans and each player's stack limits.
 
-## Scrapper and bots
+## Reward scrapper
 
 The optional Arena scrapper has a marker and an outline visible through walls. Scrap items or equipment for reward points. Weighted, Draft and Random preserve the scrapped pickup's rarity or equipment class; Command keeps unrestricted choices. Item-removal effects still apply.
+
+## AI bots
 
 Set a starting bot count in Match settings, or use **Esc > Arena bots** during a match. Bot controls are host-only. Bots earn rewards, respawn, join balanced teams and choose builds in choice modes. All tiers use safe navigation and prioritize holding the KOTH zone. Inspect their inventories on the normal inventory scoreboard, usually **Tab**. Available survivors depend on registered survivor AI.
 
@@ -66,11 +70,17 @@ Bot intelligence is under **General > Bots**:
 | **Medium** | Standard tactics and fixed builds; the default. |
 | **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
 | **Extra High** | Adaptive builds, predictive aiming, dodging, combat jumps and sprint resets. |
-| **Ultra** | Stronger aim, opponent counter-builds and survivor-specific attack combinations, with the same evasive movement. |
+| **Ultra** | Adapts its spacing, defense, and builds to individual opponents. It can track opponent positions for navigation and reacts to visible attacks. |
 
 **Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
 
-Extra High and Ultra sprint whenever movement and their current skill allow it. They check for safe landings before combat jumps and keep KOTH movement inside the zone. Ultra coordinates setup, burst and finishing skills where supported; complex traversal, scope/reload and custom survivor chains retain their native AI handling.
+Extra High and Ultra sprint when movement and their current skill allow it. Ultra checks line of sight before firing and dodges visible attacks or incoming projectiles with normal movement inputs. It reads its equipped skills and uses native AI for complex traversal, scope/reload, and custom survivor chains. Its builds use the normal reward pool, including eligible DLC items and equipment. [Bot build and combat rules](BOT_BUILDS.md)
+
+### Ultra benchmarks
+
+![Ultra benchmarks. Previous Ultra passed 20 of 27 offline checks and upgraded Ultra passed 27 of 27. At 600 pickups, median reward scoring increased from 62.7 to 68.0 microseconds and allocations increased from 52.1 to 56.8 KiB per offer.](assets/ultra-benchmarks-1.3.2.png)
+
+Both generations ran the same scripted decision checks and scored the same synthetic reward offers. At 600 pickups, upgraded Ultra took about **9% more time** and allocated about **9% more memory** per offer. The game stayed closed. These numbers measure the C# rules and reward chooser; in-game performance and win rates still need playtesting. [Method and raw results](benchmarks/README.md)
 
 ## Settings and controls
 
@@ -107,6 +117,6 @@ In Arena, Aerolt 4.3.1 initializes its menu only after you press its configured 
 
 Built against Risk of Rain 2 **1.5.0#1224**. Automated checks pass. The new bot navigation, survivor-specific AI behaviour and large-lobby combinations still need fresh multiplayer testing.
 
-By **claytemplar**. MIT license.
+MIT license.
 
 [Building from source](BUILDING.md)

@@ -15,6 +15,8 @@ namespace ArenaPvP
         internal int BotOrdinal = -1;
         internal bool BotRemoved;
         internal BotBuildKind BotBuild;
+        internal BotMemory BotMemory;
+        internal BotKit BotKit;
         internal int BotRewards;
         internal bool IsBot { get { return BotOrdinal >= 0; } }
         internal string Name;
@@ -421,7 +423,9 @@ namespace ArenaPvP
             var offer=player.Rewards.First;if(offer==null)return false;
             var choices=AvailableChoices(player,offer.Items);
             bool mayLevel=Rules.AllowLevel && player.Level<Cap;
-            int item=BotBuildRules.WantsLevel(player.BotRewards,player.Level,Cap,mayLevel) ? -1 : ArenaBotBuilds.Choose(player,choices,Rules.Selection);
+            bool ultra = Rules.BotIntelligence == BotIntelligence.Ultra;
+            int item = !ultra && BotBuildRules.WantsLevel(player.BotRewards, player.Level, Cap, mayLevel) ? -1
+                : ArenaBotBuilds.Choose(player, choices, Rules.Selection, ultra && mayLevel, player.Level);
             if(item<0 && !mayLevel)
             {
                 // Keep the credit, let other banked classes be considered, and

@@ -20,19 +20,20 @@ namespace ArenaPvP
         { Clear();nextJump=now+.15f+(identity%7)*.08f;nextDodge=now+(identity%5)*.045f; }
         public void AttackInterruptedSprint() { resetPending=true; }
         public BotMotionIntent Update(float now, BotIntelligence tier, int identity, bool moving, bool grounded, bool combat,
-            bool threatened, bool protectedSkill, bool safe, bool isSprinting, bool previousSprint, bool previousJump,bool sprintBlocked=false)
+            bool threatened, bool protectedSkill, bool safe, bool isSprinting, bool previousSprint, bool previousJump,
+            bool sprintBlocked = false, bool reactive = false, bool projectile = false)
         {
             var result=new BotMotionIntent { Enabled=BotTacticsRules.Adaptive(tier) };
             if(!result.Enabled || !moving || protectedSkill || !safe)return result;
             result.Sprint=true;
-            if(now>=nextDodge && combat && grounded)
+            if(now>=nextDodge && combat && grounded && (!reactive || threatened))
             {
                 serial++;side=((serial*17+identity*7)&1)==0 ? -1 : 1;
                 dodgeUntil=now+(tier==BotIntelligence.Ultra ? .3f : .38f);
                 nextDodge=now+(threatened ? tier==BotIntelligence.Ultra ? .38f : .6f : tier==BotIntelligence.Ultra ? .65f : .95f)+(identity%3)*.04f;
             }
             if(combat && grounded && now<dodgeUntil)result.DodgeSide=side;
-            if(combat && grounded && !previousJump && now>=nextJump)
+            if(combat && grounded && !previousJump && now>=nextJump && (!reactive || projectile))
             { result.Jump=true;nextJump=now+(tier==BotIntelligence.Ultra ? 1.05f : 1.5f)+(identity%4)*.07f; }
             if(sprintBlocked) { result.Sprint=false;return result; }
             if(resetPhase==1)

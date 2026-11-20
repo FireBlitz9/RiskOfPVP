@@ -9,6 +9,7 @@ namespace ArenaPvP
         public int Pickup, Owned;
         public string Name;
         public bool Equipment, Rare, AiAllowed = true;
+        public float Cooldown;
         public string[] Corrupts = new string[0];
         public string ConvertsTo = "";
         public BotItemTraits Traits;
@@ -21,9 +22,12 @@ namespace ArenaPvP
         public readonly Dictionary<string,int> EnemyInventory = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
         public readonly Dictionary<string,int> EquipmentInventory = new Dictionary<string,int>(StringComparer.OrdinalIgnoreCase);
         public readonly HashSet<string> EnemyEquipment = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        public bool PreferVoid, Hill, Ultra, HasEquipment;
+        public bool PreferVoid, Hill, Ultra, HasEquipment, CloseRange;
+        public bool Teams, MayLevel;
         public string CurrentEquipment="";
+        public BotBuildItem CurrentGear;
         public float Health = 1, Shield, Crit, AttackAffinity = 1, ProcPower, MoveSpeed = 7, Armor, EnemyArmor, EnemyHealing, EnemyMoveSpeed=7, EnemyDamage = 1;
+        public float SkillUse = .65f, EnemyStrafe;
         public int Count(string name) { int n; return Inventory.TryGetValue(name, out n) ? n : 0; }
         public int EnemyCount(string name) { int n; return EnemyInventory.TryGetValue(name,out n) ? n : 0; }
     }
@@ -111,7 +115,7 @@ namespace ArenaPvP
             if (source == "BleedOnHit" && kind == BotBuildKind.Critical) return false;
             return source == "Bear" || source == "Missile" || source == "ChainLightning" || source == "BleedOnHit" || source == "Mushroom";
         }
-        public static int ChooseAdaptive(BotBuildItem[] offered, BotBuildContext context)
+        public static int ChooseAdaptive(BotBuildItem[] offered, BotBuildContext context, bool mayLevel = false, int level = 1)
         {
             int best = -1; float score = float.NegativeInfinity;
             foreach (var item in offered)
@@ -120,19 +124,32 @@ namespace ArenaPvP
                 if (float.IsNegativeInfinity(value) || float.IsNaN(value)) continue;
                 if (value > score || value == score && (best < 0 || item.Pickup < best)) { best=item.Pickup; score=value; }
             }
+            if (mayLevel && LevelValue(context, level) > score) return -1;
             return best;
         }
+
+        private static float LevelValue(BotBuildContext context, int level)
+        {
+            // The next level is worth more early, or while losing trades. A
+            // valuable synergy or a counter can still beat it in the same offer.
+            return .105f + .24f / (1 + Math.Max(0, level - 1) * .22f)
+                + Math.Min(.13f, Math.Max(0, context.EnemyDamage - 1) * .13f)
+                + (context.Count("ExtraStatsOnLevelUp") > 0 ? .10f : 0);
+        }
+
+        private static float BuildValue(BotBuildItem item, BotBuildContext context)
+        { return context.Ultra ? CounterValue(item, context, UltraUtility(item, context)) : Utility(item, context); }
+
         public static float AdaptiveScore(BotBuildItem item, BotBuildContext c)
         {
             if (!item.AiAllowed || (item.Traits & BotItemTraits.Interactable) != 0) return float.NegativeInfinity;
             if (item.ConvertsTo.Length > 0 && c.Count(item.ConvertsTo) > 0) return float.NegativeInfinity;
             if (item.Name == "LunarBadLuck" && (c.ProcPower > .1f || c.Crit > 10 || c.Count("Clover") > 0)) return float.NegativeInfinity;
-            float value = Utility(item,c);
-            if (c.Ultra) value=CounterValue(item,c,value);
+            float value = BuildValue(item,c);
             if (item.Equipment && c.HasEquipment && c.CurrentEquipment.Length>0)
             {
-                var current=new BotBuildItem { Name=c.CurrentEquipment,Equipment=true };
-                float currentValue=Utility(current,c);if(c.Ultra)currentValue=CounterValue(current,c,currentValue);
+                var current=c.CurrentGear ?? new BotBuildItem { Name=c.CurrentEquipment,Equipment=true };
+                float currentValue=BuildValue(current,c);
                 if(value<=currentValue*1.1f)return float.NegativeInfinity;
                 value-=currentValue;
             }
@@ -141,7 +158,17 @@ namespace ArenaPvP
             foreach (string source in item.Corrupts)
             {
                 int count = c.Count(source);
-                if (count > 0) value -= count * (source == "FireRing" || source == "IceRing" ? .35f : .12f);
+                if (count == 0) continue;
+                if (c.Ultra)
+                {
+                    var existing = new BotBuildItem { Name = source, Owned = Math.Max(0, count / 2) };
+                    float loss = BuildValue(existing, c) * .7f;
+                    var converted = new BotBuildItem { Name = item.Name, Owned = item.Owned + count, Traits = item.Traits };
+                    // Replacing a stockpile also gains converted stacks. Diminishing
+                    // returns apply in both directions.
+                    value += count * (BuildValue(converted, c) - loss);
+                }
+                else value -= count * (source == "FireRing" || source == "IceRing" ? .35f : .12f);
             }
             return value>0 ? value : float.NegativeInfinity;
         }
@@ -150,9 +177,11 @@ namespace ArenaPvP
             float once=1f/(1+i.Owned);
             bool multiHit=c.EnemyCount("BearVoid")>0 || c.EnemyCount("Bear")>=3;
             bool flatArmor=c.EnemyCount("ArmorPlate")>=2;
-            bool mobility=c.EnemyMoveSpeed>12 || c.EnemyCount("Hoof")>=3 || c.EnemyCount("SprintBonus")>=2 || c.EnemyCount("MushroomVoid")>0;
+            bool mobility=c.EnemyMoveSpeed>12 || c.EnemyStrafe>.65f || c.EnemyCount("Hoof")>=3 || c.EnemyCount("SprintBonus")>=2
+                || c.EnemyCount("AttackSpeedAndMoveSpeed")>=3;
             bool healing=c.EnemyHealing>.02f || c.EnemyCount("IncreaseHealing")>0 || c.EnemyCount("HealOnCrit")>0 || c.EnemyCount("Seed")>=2 || c.EnemyCount("MushroomVoid")>0 || c.EnemyEquipment.Contains("Fruit");
-            bool burst=c.EnemyCount("CritDamage")>0 || c.EnemyCount("FireRing")>0 || c.EnemyCount("IceRing")>0 || c.EnemyCount("CritGlasses")>=6;
+            bool burst=c.EnemyDamage>1.30f || c.EnemyCount("CritDamage")>0 || c.EnemyCount("FireRing")>0
+                || c.EnemyCount("IceRing")>0 || c.EnemyCount("CritGlasses")>=6;
             bool procs=c.EnemyCount("MissileVoid")>0 || c.EnemyCount("ChainLightningVoid")>0 || c.EnemyCount("BleedOnHit")>=4;
             if(multiHit && (i.Name=="Syringe" || i.Name=="MissileVoid" || i.Name=="ChainLightningVoid"))value=value*1.8f+.25f*once;
             if(flatArmor && (i.Name=="Syringe" || i.Name=="BleedOnHit" || i.Name=="BleedOnHitVoid"))value*=.6f;
@@ -161,9 +190,65 @@ namespace ArenaPvP
             if(mobility && (i.Name=="SlowOnHit" || i.Name=="SlowOnHitVoid"))
                 value+=(c.Count("SlowOnHit")+c.Count("SlowOnHitVoid")==0 ? .6f : .1f)*once;
             if(healing && (i.Name=="BleedOnHitVoid" || i.Name=="ChainLightningVoid" || i.Name=="BleedOnHit"))value+=.25f*once;
-            if(burst && (i.Name=="BearVoid" || i.Name=="OutOfCombatArmor" || i.Name=="Knurl"))value+=.35f*once;
+            if(burst && (i.Name=="BearVoid" || i.Name=="OutOfCombatArmor" || i.Name=="Knurl"
+                || i.Name=="DelayedDamage" || i.Name=="ShieldBooster" || i.Name=="BarrierOnCooldown"))value+=.35f*once;
+            if (mobility && i.Name == "GroundEnemies") value += .24f * once;
             if(procs && (i.Name=="ArmorPlate" || i.Name=="Bear"))value+=.3f*once;
             if(c.EnemyEquipment.Contains("Cleanse") && (i.Name=="BleedOnHit" || i.Name=="BleedOnHitVoid" || i.Name=="DeathMark"))value*=.65f;
+            return value;
+        }
+
+        private static float UltraUtility(BotBuildItem item, BotBuildContext c)
+        {
+            float stacks = item.Owned;
+            float danger = 1 + Math.Min(1, Math.Max(0, 1 - c.Health) + (c.EnemyDamage - 1) * .55f);
+            float skill = c.SkillUse;
+            switch (item.Name)
+            {
+                case "AttackSpeedAndMoveSpeed":
+                    return (.19f * c.AttackAffinity + (c.MoveSpeed < 12 ? .22f : .06f)) / (1 + stacks * .24f);
+                case "HalfAttackSpeedHalfCooldowns":
+                    return Math.Max(.01f, .66f * skill - .46f * c.AttackAffinity) / (1 + stacks);
+                case "PrimarySkillShuriken":
+                    return (.17f + .27f * c.AttackAffinity) / (1 + stacks * .4f);
+                case "PermanentDebuffOnHit":
+                    return (.39f + c.AttackAffinity * .11f) / (1 + stacks * .6f);
+                case "EquipmentMagazineVoid":
+                    return (c.HasEquipment ? .49f : .07f) / (1 + stacks * .5f);
+                case "IncreasePrimaryDamage":
+                    return (.12f + .29f * c.AttackAffinity) / (1 + stacks * .35f);
+                case "AttackSpeedPerNearbyAllyOrEnemy":
+                    return (.24f * c.AttackAffinity + (c.CloseRange || c.Hill ? .16f : .02f)) / (1 + stacks * .35f);
+                case "DelayedDamage":
+                    return .27f * danger / (1 + stacks * .5f);
+                case "ExtraStatsOnLevelUp":
+                    return (c.MayLevel ? .34f : .12f) / (1 + stacks * .65f);
+                case "StunAndPierce":
+                    return (.16f + .26f * c.AttackAffinity) / (1 + stacks * .45f);
+                case "BarrierOnCooldown":
+                    return (.20f + .13f * skill) * danger / (1 + stacks * .4f);
+                case "ShieldBooster":
+                    return (.20f + (c.Shield > 0 ? .14f : 0)) * danger / (1 + stacks * .35f);
+                case "ShockDamageAura":
+                    return ((c.Teams ? .23f : .13f) + c.AttackAffinity * .09f
+                        + (c.Count("ChainLightning") + c.Count("StunAndPierce") > 0 ? .13f : 0)) / (1 + stacks * .5f);
+                case "WyrmOnHit":
+                    return (.2f + .29f * c.AttackAffinity) / (1 + stacks * .4f);
+                case "Parry":
+                    return .32f * danger;
+                case "GroundEnemies":
+                    return c.CloseRange || c.Hill ? .28f : .12f;
+                case "DroneShockDamage":
+                    return .26f + .22f * c.AttackAffinity;
+                case "BossHunter": case "MultiShopCard": case "LunarPortalOnUse": case "HealAndRevive":
+                    return .002f;
+            }
+            float value = Utility(item, c);
+            if (item.Equipment && value <= .055f && item.Cooldown > 0)
+                return Math.Min(.24f, .10f + 3f / Math.Max(5, item.Cooldown)) / (1 + stacks);
+            if (item.Name == "SecondarySkillMagazine" || item.Name == "UtilitySkillMagazine" || item.Name == "AlienHead")
+                return value * (.65f + skill * .60f);
+            if ((item.Traits & BotItemTraits.Healing) != 0 && c.EnemyDamage > 1.15f) value *= 1.13f;
             return value;
         }
         private static float Utility(BotBuildItem i, BotBuildContext c)
