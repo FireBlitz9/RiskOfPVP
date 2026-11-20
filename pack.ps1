@@ -36,13 +36,19 @@ foreach ($name in $packageFiles) {
 }
 # Thunderstore renders the embedded README on its own domain.
 $readmePath = Join-Path $payloadDirectory 'README.md'
-$figure = "assets/ultra-benchmarks-$($manifest.version_number).png"
-if (Test-Path -LiteralPath (Join-Path $PSScriptRoot $figure)) {
-    $readme = [System.IO.File]::ReadAllText($readmePath)
-    $readme = $readme.Replace("]($figure)", "](https://raw.githubusercontent.com/FireBlitz9/RiskOfPVP/main/$figure)")
-    $readme = $readme.Replace('](benchmarks/README.md)', '](https://github.com/FireBlitz9/RiskOfPVP/blob/main/benchmarks/README.md)')
-    [System.IO.File]::WriteAllText($readmePath, $readme)
+$readme = [System.IO.File]::ReadAllText($readmePath)
+$figures = @(
+    "assets/ultra-benchmarks-$($manifest.version_number).png",
+    'assets/ultra-tactics-benchmarks.png',
+    'assets/ultra-reward-generations.png'
+)
+foreach ($figure in $figures) {
+    if (Test-Path -LiteralPath (Join-Path $PSScriptRoot $figure)) {
+        $readme = $readme.Replace("]($figure)", "](https://raw.githubusercontent.com/FireBlitz9/RiskOfPVP/main/$figure)")
+    }
 }
+$readme = $readme.Replace('](benchmarks/README.md', '](https://github.com/FireBlitz9/RiskOfPVP/blob/main/benchmarks/README.md')
+[System.IO.File]::WriteAllText($readmePath, $readme)
 Copy-Item -LiteralPath $dll -Destination $pluginDirectory -Force
 $archiveEntries = @($packageFiles | ForEach-Object { Join-Path $payloadDirectory $_ })
 $archiveEntries += Join-Path $payloadDirectory 'plugins'

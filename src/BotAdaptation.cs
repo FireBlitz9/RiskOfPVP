@@ -15,6 +15,8 @@ namespace ArenaPvP
         private float dealt, taken, burst, lastTrade;
         private float lastSeen, lastHealth;
         private int body, observations;
+        private float rushEvidence, strafeEvidence, sustainEvidence, burstEvidence, evidenceAt;
+        private BotCastWindow casts;
         public float Speed { get; private set; }
         public float Approach { get; private set; }
         public float Strafe { get; private set; }
@@ -28,7 +30,15 @@ namespace ArenaPvP
             Approach += (approach - Approach) * weight;
             Strafe += (strafe - Strafe) * weight;
             if (continuous)
-                Sustain += (BotAdaptation.Clamp((health - lastHealth) / Math.Max(.08f, now - lastSeen), 0, 1) - Sustain) * .16f;
+            {
+                float interval = now - lastSeen;
+                float gain = BotAdaptation.Clamp((health - lastHealth) / Math.Max(.08f, interval), 0, 1);
+                Sustain += (gain - Sustain) * .16f;
+                DecayEvidence(now);
+                rushEvidence = Math.Min(4f, rushEvidence + Math.Max(0, approach - .32f) * interval * 1.4f);
+                strafeEvidence = Math.Min(4f, strafeEvidence + Math.Max(0, strafe - .42f) * interval * 1.4f);
+                sustainEvidence = Math.Min(4f, sustainEvidence + (gain > .18f ? interval * 2.2f * gain : 0));
+            }
             body = bodyId;
             lastSeen = now;
             lastHealth = health;
@@ -46,6 +56,11 @@ namespace ArenaPvP
             {
                 taken = Math.Min(2f, taken + fraction);
                 burst = Math.Max(burst, fraction);
+                if (fraction >= .15f)
+                {
+                    DecayEvidence(now);
+                    burstEvidence = Math.Min(4f, burstEvidence + Math.Min(1.1f, fraction * 2));
+                }
             }
             else dealt = Math.Min(2f, dealt + fraction);
         }
@@ -54,7 +69,24 @@ namespace ArenaPvP
         public float Trade(float now) { return (dealt - taken) * Decay(now); }
         public float Pressure(float now) { return (taken * .4f + burst) * Decay(now); }
         public float Familiarity(float now) { return observations > 0 ? Math.Max(0, 1 - (now - lastSeen) / 25f) : 0; }
-        internal void NewLife() { dealt = taken = burst = 0; }
+        private float EvidenceDecay(float now) { return (float)Math.Exp(-Math.Max(0, now - evidenceAt) / 18f); }
+        private void DecayEvidence(float now)
+        {
+            float decay = EvidenceDecay(now);
+            rushEvidence *= decay; strafeEvidence *= decay; sustainEvidence *= decay; burstEvidence *= decay;
+            evidenceAt = now;
+        }
+        public float MobilityEvidence(float now) { return Evidence(Math.Max(rushEvidence, strafeEvidence), now); }
+        public float SustainEvidence(float now) { return Evidence(sustainEvidence, now); }
+        public float BurstEvidence(float now) { return Evidence(burstEvidence, now); }
+        private float Evidence(float value, float now) { return BotAdaptation.Clamp((value * EvidenceDecay(now) - 1f) * .45f, 0, 1); }
+        internal void ObserveCast(int bodyId, int slot, int skill, float now, float interval, int stock, int token)
+        {
+            if (casts == null) casts = new BotCastWindow();
+            casts.Observe(bodyId, slot, skill, now, interval, stock, token);
+        }
+        internal bool HasOpening(int bodyId, float now) { return casts != null && casts.IsOpen(bodyId, now); }
+        internal void NewLife() { dealt = taken = burst = 0; casts?.Clear(); }
     }
 
     public sealed class BotMemory

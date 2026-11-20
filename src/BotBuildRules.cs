@@ -28,6 +28,7 @@ namespace ArenaPvP
         public BotBuildItem CurrentGear;
         public float Health = 1, Shield, Crit, AttackAffinity = 1, ProcPower, MoveSpeed = 7, Armor, EnemyArmor, EnemyHealing, EnemyMoveSpeed=7, EnemyDamage = 1;
         public float SkillUse = .65f, EnemyStrafe;
+        public float MobilityEvidence, SustainEvidence, BurstEvidence;
         public int Count(string name) { int n; return Inventory.TryGetValue(name, out n) ? n : 0; }
         public int EnemyCount(string name) { int n; return EnemyInventory.TryGetValue(name,out n) ? n : 0; }
     }
@@ -194,6 +195,23 @@ namespace ArenaPvP
                 || i.Name=="DelayedDamage" || i.Name=="ShieldBooster" || i.Name=="BarrierOnCooldown"))value+=.35f*once;
             if (mobility && i.Name == "GroundEnemies") value += .24f * once;
             if(procs && (i.Name=="ArmorPlate" || i.Name=="Bear"))value+=.3f*once;
+            // Longer-lived evidence is separate from the current inventory and
+            // the most recent trade. A brief change never erases a whole pattern.
+            switch (i.Name)
+            {
+                case "SlowOnHit": case "SlowOnHitVoid": case "GroundEnemies":
+                    value += c.MobilityEvidence * .32f * once;
+                    break;
+                case "Hoof": case "AttackSpeedAndMoveSpeed":
+                    value += c.MobilityEvidence * (c.CloseRange ? .29f : .12f) * once;
+                    break;
+                case "Crowbar": case "FireRing": case "IceRing": case "Behemoth":
+                    value += c.SustainEvidence * (.24f + c.SkillUse * .17f) * once;
+                    break;
+                case "BearVoid": case "OutOfCombatArmor": case "DelayedDamage": case "ShieldBooster": case "BarrierOnCooldown":
+                    value += c.BurstEvidence * .36f * once;
+                    break;
+            }
             if(c.EnemyEquipment.Contains("Cleanse") && (i.Name=="BleedOnHit" || i.Name=="BleedOnHitVoid" || i.Name=="DeathMark"))value*=.65f;
             return value;
         }

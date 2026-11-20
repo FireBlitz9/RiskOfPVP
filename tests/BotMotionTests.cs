@@ -69,6 +69,44 @@ internal static class BotMotionTests
             && BotAdaptation.LeadTime(60, 900, 100, 0) > .5f
             && BotAdaptation.LeadTime(30, 900, 1600, 1200) == 0, "prediction handles stationary, lateral and unreachable targets");
 
+        var firstRoute = new BotRouteOption { Node = 6, FirstHop = 3, Travel = 8, Range = 24, HasShot = true };
+        var sameCorridor = new BotRouteOption { Node = 8, FirstHop = 3, Travel = 8, Range = 24, HasShot = true };
+        var alternate = new BotRouteOption { Node = 9, FirstHop = 4, Travel = 13, Range = 24, HasShot = true };
+        var routes = new BotRoutePlanner();
+        routes.SetGoal(firstRoute, 0, 8);
+        routes.Progress(1.4f, 8, false);
+        check(routes.Score(firstRoute, BotEngagement.Press, 24, 0, 1.4f) > routes.Score(alternate, BotEngagement.Press, 24, 0, 1.4f),
+            "native skill recovery is not interpreted as failed navigation");
+        routes.Progress(2.6f, 8, true);
+        check(routes.Score(alternate, BotEngagement.Press, 24, 0, 2.6f) > routes.Score(sameCorridor, BotEngagement.Press, 24, 0, 2.6f),
+            "a long stall makes the bot try a different connected corridor");
+        routes.SetGoal(alternate, 2.6f, 13);
+        routes.Progress(3.8f, 13, true);
+        var thirdRoute = new BotRouteOption { Node = 10, FirstHop = 5, Travel = 18, Range = 24, HasShot = true };
+        check(routes.Score(thirdRoute, BotEngagement.Press, 24, 0, 3.8f) > routes.Score(firstRoute, BotEngagement.Press, 24, 0, 3.8f),
+            "a second blockage does not immediately send the bot back into the first one");
+        check(routes.Score(firstRoute, BotEngagement.Press, 24, 0, 6) > routes.Score(alternate, BotEngagement.Press, 24, 0, 6),
+            "a re-opened corridor may be used after the penalty expires");
+
+        var casts = new BotCastWindow();
+        casts.Observe(3, 1, 7, 1, 8, 1, token: 4);
+        casts.Observe(3, 1, 7, 1.8f, 8, 1, token: 4);
+        check(!casts.IsOpen(3, 1.2f) && casts.IsOpen(3, 1.7f) && casts.IsOpen(3, 2.1f) && !casts.IsOpen(4, 2.1f),
+            "a cast estimate is delayed, body-specific and unaffected by seeing the same cast again");
+        casts.Observe(3, 1, 7, 2.3f, 8, 1, token: 5);
+        check(!casts.IsOpen(3, 2.9f), "a fast recast shortens the next estimated opening");
+        casts.Observe(3, 1, 7, 3, 8, 2, token: 6);
+        check(!casts.IsOpen(3, 3.7f), "multi-stock skills do not imply an empty slot");
+
+        var timing = new BotFightTiming();
+        var tempo = timing.Decide(0, .44f, .9f, 24, kit, -.4f, .7f, 1, 0, false, true, true, true, false);
+        check(tempo.Engagement == BotEngagement.Recover && tempo.ReserveEscape, "a losing fight preserves the last native escape");
+        check(timing.Decide(.6f, .55f, 1, 24, kit, 0, 0, 0, 0, false, true, true, false, false).Engagement == BotEngagement.Recover,
+            "cover breaking sight does not end an active retreat");
+        check(timing.Decide(1.4f, .7f, .9f, 24, kit, 0, .1f, 1, 0, false, true, true, true, true).Engagement == BotEngagement.Press
+            && timing.Decide(1.8f, .7f, .9f, 24, kit, 0, .1f, 3, 0, false, true, true, true, true).Engagement != BotEngagement.Press,
+            "a ready attack can exploit an opening without overriding a numerical disadvantage");
+
         var plan=BotComboRules.Plan("CommandoBody");var sequence=new BotComboState();
         check(sequence.Pick(plan,0,1,15,10,1,false)==BotAction.Secondary,"combo begins at its survivor-specific setup");
         check(sequence.Pick(plan,.1f,1,15,10,1,false)==BotAction.Secondary,"requests without activation retain the same step");

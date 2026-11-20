@@ -36,11 +36,16 @@ namespace ArenaPvP
         private struct RankedTarget { internal BotTarget Target; internal float Priority; }
         private readonly List<RankedTarget> candidates = new List<RankedTarget>();
         private readonly EntityStates.EntityState[] threatStates = new EntityStates.EntityState[4];
+        private readonly RoR2.Skills.SkillDef[] observedCast = new RoR2.Skills.SkillDef[2];
+        private readonly int[] observedCastToken = new int[2];
         private float acquiredAt, sightUntil, dodgeAt, dodgeUntil;
         private bool clearSight;
         private Vector3 projectileDirection;
         private float projectileAt = -100;
         private BotEngagement engagement;
+        private ArenaBotRoutes routes;
+        private readonly BotFightTiming timing = new BotFightTiming();
+        private bool reserveEscape;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
 
@@ -76,22 +81,31 @@ namespace ArenaPvP
         {
             if(!hasGoal || !goal || player==null || !player.Connected || player.Dead || !ai.body || ai.body.currentVehicle) return false;
             var driver=ai.skillDriverEvaluation.dominantSkillDriver;
-            return !driver || driver.skillSlot!=SkillSlot.Utility && driver.skillSlot!=SkillSlot.Special;
+            return !driver || driver.skillSlot!=SkillSlot.Utility && driver.skillSlot!=SkillSlot.Special
+                || tier == BotIntelligence.Ultra && reserveEscape && ArenaBotKit.ReserveUtility(ai.body, driver);
         }
         internal void Think(ArenaMatch match,List<BotTarget> targets,float now)
         {
             NextThink=now+Mathf.Clamp(match.Rules.BotThinkSeconds,.1f,2f);
             if(!player.Connected || player.Dead || !player.Master || !goal) { hasGoal=false; Enemy=null; return; }
             var body=player.Master.GetBody(); if(!body || !body.healthComponent || !body.healthComponent.alive)return;
-            tier=match.Rules.BotIntelligence;
-            if (kitBody != body)
+            var nextTier = match.Rules.BotIntelligence;
+            bool bodyChanged = kitBody != body;
+            if (bodyChanged)
             {
-                kitBody = body;
                 player.BotMemory.NewLife();
+                kitBody = body;
                 Enemy = null; enemyPlayer = null; seenAt = -100;
                 projectileAt = -100;
                 ResetSight(now);
             }
+            if (bodyChanged || tier != nextTier)
+            {
+                routes?.Clear();
+                timing.Clear();
+                reserveEscape = false;
+            }
+            tier = nextTier;
             foreach(var ai in ais)if(ai)
             { ai.fullVision=tier>=BotIntelligence.High; ai.aimVectorDampTime=BotTacticsRules.AimDamping(tier); ai.aimVectorMaxSpeed=BotTacticsRules.AimSpeed(tier); }
             var hill=match.Rules.Mode==ArenaMode.KOTH ? match.Hill.View(match.Rules) : null;
@@ -215,7 +229,7 @@ namespace ArenaPvP
                 if (target.Player.ProtectionUntil > match.Clock || !Visible(body, enemy)) continue;
                 float distance = Vector3.Distance(origin, enemy.footPosition);
                 if (distance < 28 && !target.Summon) nearbyEnemies++;
-                bool onHill = objective && InHill(hill, enemy.footPosition);
+                bool onHill = objective && ArenaBotRoutes.InHill(hill, enemy.footPosition);
                 var known = player.BotMemory.Find(target.Player.UserId);
                 float pressure = known == null ? 0 : known.Pressure(now);
                 float health = enemy.healthComponent.combinedHealthFraction;
@@ -229,11 +243,25 @@ namespace ArenaPvP
             if (Enemy != currentEnemy) ResetSight(now);
             ApplyEnemy(match);
             ObserveProjectiles(match, body, now);
+            HillView zone = objective ? hill : null;
+            bool holding = zone != null && ArenaBotRoutes.InHill(zone, origin);
+            float healthNow = body.healthComponent.combinedHealthFraction;
+            bool attackReady = ArenaBotKit.Ready(body);
+            bool escapeReady = ArenaBotKit.EscapeReady(body);
             if (!Enemy)
             {
                 // Ultra may know an opponent's location for routing. The native AI
                 // remains without an attack target until it has line of sight.
-                Vector3 desired = candidates.Count > 0 ? candidates[0].Target.Body.footPosition : SearchGoal(match, body, now);
+                var hidden = candidates.Count > 0 ? candidates[0].Target.Body : null;
+                var search = timing.Decide(now, healthNow, 1, kit.Range, kit, 0, 0, 0, allies,
+                    holding, attackReady, escapeReady, false, false);
+                engagement = search.Engagement;
+                reserveEscape = search.ReserveEscape;
+                if ((hidden || zone != null) && Route(body, hidden ? hidden.corePosition : origin, hidden,
+                    zone, targets, BotAdaptation.Spacing(kit, engagement, 0, 0, 1), now)) return;
+                // Losing sight while backing toward cover is part of the retreat.
+                if (engagement == BotEngagement.Recover && zone == null) return;
+                Vector3 desired = hidden ? hidden.footPosition : SearchGoal(match, body, now);
                 if (objective) desired = HillGoal(hill, desired);
                 Vector3 safe;
                 ApplyGoal(ProjectGround(body, desired, out safe) ? safe : origin);
@@ -255,10 +283,28 @@ namespace ArenaPvP
                     Mathf.Abs(Vector3.Dot(velocity, Vector3.Cross(Vector3.up, away))) / 10f, enemyHealth);
             }
             float pressureNow = profile.Pressure(now);
-            engagement = BotAdaptation.Engage(body.healthComponent.combinedHealthFraction, enemyHealth, separation.magnitude,
-                kit, profile.Trade(now), pressureNow, nearbyEnemies, allies, objective && InHill(hill, origin), ArenaBotKit.Ready(body));
+            var tempo = timing.Decide(now, healthNow, enemyHealth, separation.magnitude, kit, profile.Trade(now), pressureNow,
+                nearbyEnemies, allies, holding, attackReady, escapeReady, true,
+                !selected.Summon && profile.HasOpening(Enemy.GetInstanceID(), now));
+            engagement = tempo.Engagement;
+            reserveEscape = tempo.ReserveEscape;
             float spacing = BotAdaptation.Spacing(kit, engagement, profile.Approach, pressureNow, enemyHealth);
-            ApplyGoal(FightGoal(body, Enemy, away, spacing, hill, objective));
+            if (!Route(body, Enemy.corePosition, true, zone, targets, spacing, now))
+                ApplyGoal(FightGoal(body, Enemy, away, spacing, hill, objective));
+        }
+
+        private bool Route(CharacterBody body, Vector3 enemy, bool hasEnemy, HillView hill, List<BotTarget> targets, float range, float now)
+        {
+            if (routes == null) routes = new ArenaBotRoutes();
+            bool moving = false;
+            foreach (var ai in ais)
+                if (ai && CanSteer(ai)) { moving = true; break; }
+            moving = moving && !actions.Protected(body, default(BaseAI.BodyInputs));
+            Vector3 waypoint;
+            if (!routes.Choose(body, enemy, hasEnemy, hill, player, targets, engagement, range, now, moving, Destination, out waypoint))
+                return false;
+            ApplyGoal(waypoint);
+            return true;
         }
 
         private static float SearchPriority(BotTarget target, Vector3 origin, CharacterBody current, bool chase)
@@ -274,12 +320,6 @@ namespace ArenaPvP
             if (points == null || points.Count == 0) return body.footPosition;
             if ((Destination - body.footPosition).sqrMagnitude < 16) patrol++;
             return points[patrol % points.Count];
-        }
-
-        private static bool InHill(HillView hill, Vector3 point)
-        {
-            Vector3 offset = point - hill.To;
-            return Mathf.Abs(offset.y) <= 8 && offset.x * offset.x + offset.z * offset.z <= hill.Radius * hill.Radius;
         }
 
         private static Vector3 HillGoal(HillView hill, Vector3 point)
@@ -303,7 +343,7 @@ namespace ArenaPvP
                 Vector3 desired = enemy.footPosition + (Quaternion.Euler(0, angle, 0) * away) * spacing;
                 if (objective) desired = HillGoal(hill, desired);
                 Vector3 safe;
-                if (!ProjectGround(body, desired, out safe) || (objective && !InHill(hill, safe))) continue;
+                if (!ProjectGround(body, desired, out safe) || (objective && !ArenaBotRoutes.InHill(hill, safe))) continue;
                 bool covered = Physics.Linecast(safe + (body.corePosition - origin), enemyPoint, LayerIndex.world.mask, QueryTriggerInteraction.Ignore);
                 float score = -(safe - origin).magnitude * .3f - Mathf.Abs(Vector3.Distance(safe, enemy.footPosition) - spacing) * .45f;
                 score += (engagement == BotEngagement.Recover ? covered : !covered) ? 8 : 0;
@@ -325,6 +365,7 @@ namespace ArenaPvP
             sightTarget = null; sightUntil = 0; clearSight = false;
             acquiredAt = now; dodgeAt = dodgeUntil = 0;
             Array.Clear(threatStates, 0, threatStates.Length);
+            Array.Clear(observedCast, 0, observedCast.Length);
         }
 
         private bool HasClearSight(CharacterBody body, float now)
@@ -376,14 +417,22 @@ namespace ArenaPvP
 
         private bool AttackThreat(CharacterBody body, bool visible, float now)
         {
-            if (!visible || !Enemy || !Enemy.skillLocator || !Enemy.inputBank) return false;
+            if (!visible || !Enemy || !Enemy.skillLocator || !Enemy.inputBank)
+            {
+                observedCast[0] = observedCast[1] = null;
+                return false;
+            }
             bool aimedAtBot = Vector3.Dot(Enemy.inputBank.aimDirection, (body.corePosition - Enemy.aimOrigin).normalized) > .88f;
             bool newAttack = false;
             for (int i = 0; i < threatStates.Length; i++)
             {
                 var skill = Enemy.skillLocator.GetSkill((SkillSlot)i);
                 var state = skill && skill.isCombatSkill && skill.stateMachine && !skill.stateMachine.IsInMainState() ? skill.stateMachine.state : null;
-                if (state != null && state != threatStates[i]) newAttack = true;
+                if (state != null && state != threatStates[i])
+                    newAttack = true;
+                int slot = i == (int)SkillSlot.Secondary ? 0 : i == (int)SkillSlot.Special ? 1 : -1;
+                if (slot >= 0 && enemyPlayer != null && Enemy.master == enemyPlayer.Master)
+                    ObserveRecovery(slot, skill, state, state != threatStates[i], now);
                 threatStates[i] = state;
             }
             if (newAttack && aimedAtBot && now >= dodgeUntil)
@@ -394,14 +443,35 @@ namespace ArenaPvP
             return now >= dodgeAt && now < dodgeUntil;
         }
 
+        private void ObserveRecovery(int slot, GenericSkill skill, EntityStates.EntityState state, bool changed, float now)
+        {
+            if (!skill || !skill.skillDef || !skill.stateMachine) { observedCast[slot] = null; return; }
+            if (state != null && changed && state.GetType() == skill.activationState.stateType
+                && state.GetType().Assembly == typeof(CharacterBody).Assembly)
+            {
+                observedCast[slot] = skill.skillDef;
+                observedCastToken[slot] = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(state);
+            }
+            var cast = observedCast[slot];
+            if (!cast) return;
+            if (cast != skill.skillDef) { observedCast[slot] = null; return; }
+            if (state != null || !skill.stateMachine.IsInMainState()) return;
+            observedCast[slot] = null;
+            player.BotMemory.For(enemyPlayer.UserId).ObserveCast(Enemy.GetInstanceID(), slot, cast.skillIndex,
+                now, cast.baseRechargeInterval, cast.baseMaxStock, observedCastToken[slot]);
+        }
+
         private Vector3 DodgeDirection(CharacterBody body, Vector3 threat, int preferredSide, bool sprint)
         {
             threat.y = 0;
             var side = Vector3.Cross(Vector3.up, threat.normalized) * preferredSide;
             if (side.sqrMagnitude < .1f) return Vector3.zero;
+            var towardRoute = Destination - body.footPosition;
+            towardRoute.y = 0;
+            if (towardRoute.sqrMagnitude > 4 && Vector3.Dot(side, towardRoute.normalized) < -.3f) side = -side;
+            var alternative = -side;
             if (KeepInObjective(body, ref side) && SupportedAhead(body, side, sprint)) return side;
-            side = Vector3.Cross(Vector3.up, threat.normalized) * -preferredSide;
-            return KeepInObjective(body, ref side) && SupportedAhead(body, side, sprint) ? side : Vector3.zero;
+            return KeepInObjective(body, ref alternative) && SupportedAhead(body, alternative, sprint) ? alternative : Vector3.zero;
         }
 
         private bool UseUltraEquipment(CharacterBody body, EquipmentDef equipment, bool fire, bool visible,
@@ -495,6 +565,8 @@ namespace ArenaPvP
             }
             if(BotTacticsRules.Adaptive(tier) || actions.HasHold)
                 actions.Combo(ai,ref input,previous,Enemy,fire && (!ultra || engagement != BotEngagement.Recover),tier);
+            if (ultra && reserveEscape && !previous.pressSkill3 && ArenaBotKit.ReserveUtility(body, dominant))
+                input.pressSkill3 = false;
             bool incoming = ultra && now - projectileAt >= .08f && now - projectileAt < .35f;
             bool attackThreat = ultra && AttackThreat(body, visible, now);
             bool threatened = attackThreat || incoming;

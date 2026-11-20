@@ -1,0 +1,7523 @@
+{
+  "harness_sha256": "bc016b18682761345d6d9aa4cd773e2da83a86e7ddc83472eb6c3a113c80bfd8",
+  "versions": {
+    "Ultra V1": {
+      "source": "53b5fc90b4e8191c7f5fc14ee07b63725d0ae8a0",
+      "files": {
+        "src/ArenaRules.cs": "3d82c1880dd1672d5bd0e1c64763f16d7b5f553e01639af0b2a748086c9b8e45",
+        "src/PickupRules.cs": "dda0b08d8982dc1744c18b09958f7124e30c73aa190ff3c79c9f63ed84143412",
+        "src/BotTacticsRules.cs": "1f47e4d799a39ef4a7c86e165d915494021cb70cd190b4ffd54bccb07a9a6c98",
+        "src/BotBuildRules.cs": "690265f8d48c985f6b72e2c5e0dae16e2e86b9f82b1fe6a449aea2316273a719"
+      },
+      "samples": [
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0964,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.099,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0932,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.0932,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.093,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7642,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.8674000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.7805000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.771,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7601,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.7619,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.7636000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.2102,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.2795,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.3106,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.2404,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.2714000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.6607000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.4193000000000002,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7623000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.758,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.762,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.7583000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7824,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.7571,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.758,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.4237,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.2354000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.2373000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.3192,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.2485,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.4170000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.3454,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0932,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.09570000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.09680000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.0959,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.1044,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0956,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.0954,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.3024,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.2464,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.2504,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.7993,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.7788,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.2350000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.2357,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.09340000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0935,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.09620000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.09340000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.09330000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.09330000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.09330000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7603000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.8374,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.8508,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.775,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7651,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.7605000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.8733000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0971,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.09340000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.09280000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.09280000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.09280000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7627,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.7609,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.7643000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.7551,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7595000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.8741,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.8822000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.2501,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.3816,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.1713,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.3549,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.2442,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.3326000000000002,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.3759,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7717,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.7651,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.8912,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.7604000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7594000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.8342,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.7685000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.2377000000000002,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.2471,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.2763,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.2413000000000003,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.2248,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.339,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.2405,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.097,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0932,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.09280000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 0,
+          "ms": 2.3591,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 1,
+          "ms": 2.2387,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 2,
+          "ms": 2.222,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 3,
+          "ms": 2.2768,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 4,
+          "ms": 2.2456,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 5,
+          "ms": 2.2336,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 6,
+          "ms": 2.2284,
+          "ticks": 1800,
+          "checksum": 38845
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0959,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.0931,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.09290000000000001,
+          "ticks": 1800,
+          "checksum": 1621
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.7625000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.7644000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.7604000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.7628,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.7598,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.7589,
+          "ticks": 1800,
+          "checksum": 12951
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.7575000000000001,
+          "ticks": 1800,
+          "checksum": 12951
+        }
+      ],
+      "cases": [
+        {
+          "group": "Corner chase",
+          "seed": 0,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 0,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 0,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 0,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 0,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 1,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 1,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 1,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 1,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 1,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 2,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 2,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 2,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 2,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 2,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 3,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 3,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 3,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 3,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 3,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 4,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 4,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 4,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 4,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 4,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 5,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 5,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 5,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 5,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 5,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 6,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 6,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 6,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 6,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 6,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 7,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 7,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 7,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 7,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 7,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 8,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 8,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 8,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 8,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 8,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 9,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 9,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 9,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 9,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 9,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 10,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 10,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 10,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 10,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 10,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 11,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 11,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 11,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 11,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 11,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 12,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 12,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 12,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 12,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 12,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 13,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 13,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 13,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 13,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 13,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 14,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 14,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 14,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 14,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 14,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 15,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 15,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 15,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 15,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 15,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 16,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 16,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 16,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 16,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 16,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 17,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 17,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 17,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 17,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 17,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 18,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 18,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 18,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 18,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 18,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 19,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 19,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 19,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 19,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 19,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 20,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 20,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 20,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 20,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 20,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 21,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 21,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 21,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 21,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 21,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 22,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 22,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 22,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 22,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 22,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 23,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 23,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 23,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 23,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 23,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 24,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 24,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 24,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 24,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 24,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 25,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 25,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 25,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 25,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 25,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 26,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 26,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 26,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 26,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 26,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 27,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 27,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 27,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 27,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 27,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 28,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 28,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 28,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 28,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 28,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 29,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 29,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 29,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 29,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 29,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 30,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 30,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 30,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 30,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 30,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 31,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 31,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 31,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 31,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 31,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 32,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 32,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 32,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 32,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 32,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 33,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 33,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 33,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 33,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 33,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 34,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 34,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 34,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 34,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 34,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 35,
+          "success": false,
+          "metric": 3.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 35,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 35,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 35,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 35,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 36,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 36,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 36,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 36,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 36,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 37,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 37,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 37,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 37,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 37,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 38,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 38,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 38,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 38,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 38,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 39,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 39,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 39,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 39,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 39,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 40,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 40,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 40,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 40,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 40,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 41,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 41,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 41,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 41,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 41,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 42,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 42,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 42,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 42,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 42,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 43,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 43,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 43,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 43,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 43,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 44,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 44,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 44,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 44,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 44,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 45,
+          "success": false,
+          "metric": 1.80000007
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 45,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 45,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 45,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 45,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 46,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 46,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 46,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 46,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 46,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 47,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 47,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 47,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 47,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 47,
+          "success": false,
+          "metric": 2.0
+        }
+      ],
+      "summary": {
+        "Corner chase": {
+          "passed": 14,
+          "total": 48,
+          "mean_metric": 2.4416666681250003
+        },
+        "Retreat under pressure": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 1.2
+        },
+        "Contested hill lanes": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 0.8958333333333334
+        },
+        "Combat timing": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 0.6869791666666667
+        },
+        "Counter-build over time": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 2.0
+        }
+      },
+      "timing": {
+        "1": {
+          "median_us_per_tick": 0.05177777777777778,
+          "p95_us_per_tick": 0.05394444444444445,
+          "batches": 42
+        },
+        "8": {
+          "median_us_per_tick": 0.42375,
+          "p95_us_per_tick": 0.4856111111111111,
+          "batches": 42
+        },
+        "24": {
+          "median_us_per_tick": 1.250138888888889,
+          "p95_us_per_tick": 1.4781666666666669,
+          "batches": 42
+        }
+      }
+    },
+    "Ultra V2": {
+      "source": "167e4a8fe4a8a3d08dff32a4dca5b956ecc1fbf2",
+      "files": {
+        "src/ArenaRules.cs": "3d82c1880dd1672d5bd0e1c64763f16d7b5f553e01639af0b2a748086c9b8e45",
+        "src/PickupRules.cs": "dda0b08d8982dc1744c18b09958f7124e30c73aa190ff3c79c9f63ed84143412",
+        "src/BotTacticsRules.cs": "1f47e4d799a39ef4a7c86e165d915494021cb70cd190b4ffd54bccb07a9a6c98",
+        "src/BotBuildRules.cs": "b395125212e7e248c5ebbd5190c5d07c0a6a079efdd6c6baa3f0761498e7ec7f",
+        "src/BotAdaptation.cs": "a58626700a9802ed474f0e7c08d48d5c38aa171a81ba3ef29253a4eb640b54b3"
+      },
+      "samples": [
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0529,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.047400000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0494,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.048400000000000006,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.048400000000000006,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0492,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.0485,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.4169,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.395,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.4179,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.3972,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.3947,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.3895,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.5713,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.1488,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.0952,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.0997000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.1984000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.1843000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.3635000000000002,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.165,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.40040000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.38530000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.39590000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.41490000000000005,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.41200000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.3991,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.388,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.1959,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.1715,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.194,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.1760000000000002,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.587,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.6593,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.1491,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.053200000000000004,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0492,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.048400000000000006,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.049,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.0485,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.049300000000000004,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.047900000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.1567,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.1669,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.1259000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.2193,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.1705,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.2649000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.3506,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0575,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0562,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.051000000000000004,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.051000000000000004,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.0546,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.049100000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.0658,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.4157,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.42650000000000005,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.4408,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.40490000000000004,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.4162,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.4001,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.4823,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.052500000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.051300000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0506,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.050800000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.050800000000000005,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0512,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.0517,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.43410000000000004,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.4222,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.43660000000000004,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.4359,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.4179,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.43720000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.4025,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.2159,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.2169,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.2347000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.1919,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.2024000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.2665,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.2899,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.3946,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.3902,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.4142,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.41490000000000005,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.38580000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.4031,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.39490000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.129,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.1437000000000002,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.1296000000000002,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.1416,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.2550000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.1528,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.1587,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.048400000000000006,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.0516,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0483,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.0485,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.048,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0483,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.0511,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 0,
+          "ms": 1.1522000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 1,
+          "ms": 1.3094000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 2,
+          "ms": 1.1680000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 3,
+          "ms": 1.1440000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 4,
+          "ms": 1.1537,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 5,
+          "ms": 1.1517,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 6,
+          "ms": 1.1380000000000001,
+          "ticks": 1800,
+          "checksum": 73800
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.0487,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.048400000000000006,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.0519,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.049,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.0482,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.0483,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.048100000000000004,
+          "ticks": 1800,
+          "checksum": 3000
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 0,
+          "ms": 0.3895,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 1,
+          "ms": 0.39680000000000004,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 2,
+          "ms": 0.4131,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 3,
+          "ms": 0.38630000000000003,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 4,
+          "ms": 0.3821,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 5,
+          "ms": 0.3947,
+          "ticks": 1800,
+          "checksum": 24600
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 6,
+          "ms": 0.39,
+          "ticks": 1800,
+          "checksum": 24600
+        }
+      ],
+      "cases": [
+        {
+          "group": "Corner chase",
+          "seed": 0,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 0,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 0,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 0,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 0,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 1,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 1,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 1,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 1,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 1,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 2,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 2,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 2,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 2,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 2,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 3,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 3,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 3,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 3,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 3,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 4,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 4,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 4,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 4,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 4,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 5,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 5,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 5,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 5,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 5,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 6,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 6,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 6,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 6,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 6,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 7,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 7,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 7,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 7,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 7,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 8,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 8,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 8,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 8,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 8,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 9,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 9,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 9,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 9,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 9,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 10,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 10,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 10,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 10,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 10,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 11,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 11,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 11,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 11,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 11,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 12,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 12,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 12,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 12,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 12,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 13,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 13,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 13,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 13,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 13,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 14,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 14,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 14,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 14,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 14,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 15,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 15,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 15,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 15,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 15,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 16,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 16,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 16,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 16,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 16,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 17,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 17,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 17,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 17,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 17,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 18,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 18,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 18,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 18,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 18,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 19,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 19,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 19,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 19,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 19,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 20,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 20,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 20,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 20,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 20,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 21,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 21,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 21,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 21,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 21,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 22,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 22,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 22,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 22,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 22,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 23,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 23,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 23,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 23,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 23,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 24,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 24,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 24,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 24,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 24,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 25,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 25,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 25,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 25,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 25,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 26,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 26,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 26,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 26,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 26,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 27,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 27,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 27,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 27,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 27,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 28,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 28,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 28,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 28,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 28,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 29,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 29,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 29,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 29,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 29,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 30,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 30,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 30,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 30,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 30,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 31,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 31,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 31,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 31,
+          "success": false,
+          "metric": 0.6
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 31,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 32,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 32,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 32,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 32,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 32,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 33,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 33,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 33,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 33,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 33,
+          "success": false,
+          "metric": 3.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 34,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 34,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 34,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 34,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 34,
+          "success": false,
+          "metric": 3.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 35,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 35,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 35,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 35,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 35,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 36,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 36,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 36,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 36,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 36,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 37,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 37,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 37,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 37,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 37,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 38,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 38,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 38,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 38,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 38,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 39,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 39,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 39,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 39,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 39,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 40,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 40,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 40,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 40,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 40,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 41,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 41,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 41,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 41,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 41,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 42,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 42,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 42,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 42,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 42,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 43,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 43,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 43,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 43,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 43,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 44,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 44,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 44,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 44,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 44,
+          "success": false,
+          "metric": 3.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 45,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 45,
+          "success": false,
+          "metric": 0.8
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 45,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 45,
+          "success": false,
+          "metric": 0.875
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 45,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 46,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 46,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 46,
+          "success": false,
+          "metric": 0.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 46,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 46,
+          "success": false,
+          "metric": 2.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 47,
+          "success": false,
+          "metric": 3.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 47,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 47,
+          "success": false,
+          "metric": 1.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 47,
+          "success": false,
+          "metric": 0.75
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 47,
+          "success": false,
+          "metric": 2.0
+        }
+      ],
+      "summary": {
+        "Corner chase": {
+          "passed": 15,
+          "total": 48,
+          "mean_metric": 2.45
+        },
+        "Retreat under pressure": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 0.9375
+        },
+        "Contested hill lanes": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 0.22916666666666666
+        },
+        "Combat timing": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 0.6869791666666667
+        },
+        "Counter-build over time": {
+          "passed": 0,
+          "total": 48,
+          "mean_metric": 2.0625
+        }
+      },
+      "timing": {
+        "1": {
+          "median_us_per_tick": 0.027333333333333334,
+          "p95_us_per_tick": 0.031222222222222224,
+          "batches": 42
+        },
+        "8": {
+          "median_us_per_tick": 0.2237777777777778,
+          "p95_us_per_tick": 0.2448888888888889,
+          "batches": 42
+        },
+        "24": {
+          "median_us_per_tick": 0.6505555555555556,
+          "p95_us_per_tick": 0.7575000000000002,
+          "batches": 42
+        }
+      }
+    },
+    "Ultra V3": {
+      "source": "working tree",
+      "files": {
+        "src/ArenaRules.cs": "3d82c1880dd1672d5bd0e1c64763f16d7b5f553e01639af0b2a748086c9b8e45",
+        "src/PickupRules.cs": "dda0b08d8982dc1744c18b09958f7124e30c73aa190ff3c79c9f63ed84143412",
+        "src/BotTacticsRules.cs": "1f47e4d799a39ef4a7c86e165d915494021cb70cd190b4ffd54bccb07a9a6c98",
+        "src/BotBuildRules.cs": "d00ecef7f940d34586c92420c3807586381cc915b7b267ee1118a4885866cd7c",
+        "src/BotAdaptation.cs": "457d03710cd0bb8331664bed69fe2cef9af6000def7e80aefaf6f798332eaed1",
+        "src/BotBattlePlan.cs": "dffc08de9f1d22b42768ad83ef99493eab604cca9fe70838898ea8379146147c"
+      },
+      "samples": [
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.3482,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.38680000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.3618,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.37020000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.3654,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.37070000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.3612,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 0,
+          "ms": 3.2646,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 1,
+          "ms": 3.1902000000000004,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 2,
+          "ms": 3.0372000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 3,
+          "ms": 3.1629,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.0528,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.1625,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 8,
+          "batch": 6,
+          "ms": 2.9897,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.3993,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.5623,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 2,
+          "ms": 9.0524,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 3,
+          "ms": 9.2508,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.3498,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.356200000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 0,
+          "bots": 24,
+          "batch": 6,
+          "ms": 9.2722,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 0,
+          "ms": 3.2097,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 1,
+          "ms": 3.3485,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 2,
+          "ms": 3.057,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 3,
+          "ms": 3.0912,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.0083,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.0073000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 8,
+          "batch": 6,
+          "ms": 3.0615,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.9021,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.2911,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 2,
+          "ms": 10.1227,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 3,
+          "ms": 10.868500000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.7454,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.206900000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 24,
+          "batch": 6,
+          "ms": 9.512400000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.3831,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.3763,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.3639,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.3622,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.37170000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.3639,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 1,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.36200000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.532300000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.304400000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 2,
+          "ms": 9.0692,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 3,
+          "ms": 9.3679,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.496,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.1544,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 24,
+          "batch": 6,
+          "ms": 9.152800000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.37260000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.39980000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.3618,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.3608,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.3607,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.3667,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.36050000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 0,
+          "ms": 2.9215,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 1,
+          "ms": 3.1493,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 2,
+          "ms": 2.9712,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 3,
+          "ms": 3.6135,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.0254000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.0811,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 2,
+          "bots": 8,
+          "batch": 6,
+          "ms": 3.0338000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.3645,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.36970000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.3643,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.40030000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.36150000000000004,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.36410000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.3609,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 0,
+          "ms": 3.1751,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 1,
+          "ms": 3.3708,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 2,
+          "ms": 3.0298000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 3,
+          "ms": 2.9717000000000002,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.3666,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.5253,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 8,
+          "batch": 6,
+          "ms": 3.5285,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.5488,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.159500000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 2,
+          "ms": 9.1364,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 3,
+          "ms": 9.4266,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.0686,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.608600000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 3,
+          "bots": 24,
+          "batch": 6,
+          "ms": 9.755600000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 0,
+          "ms": 3.0514,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 1,
+          "ms": 2.9263000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 2,
+          "ms": 3.2774,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 3,
+          "ms": 3.2172,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.0123,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.0096000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 8,
+          "batch": 6,
+          "ms": 3.0285,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.089500000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.154200000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 2,
+          "ms": 9.174100000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 3,
+          "ms": 9.5855,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.4977,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.188600000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 24,
+          "batch": 6,
+          "ms": 8.9208,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.3597,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.5622,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.4743,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.45740000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.3709,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.37320000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 4,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.3703,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 0,
+          "ms": 9.2871,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 1,
+          "ms": 9.264000000000001,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 2,
+          "ms": 9.4891,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 3,
+          "ms": 9.2321,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 4,
+          "ms": 9.1751,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 5,
+          "ms": 9.1963,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 24,
+          "batch": 6,
+          "ms": 9.5587,
+          "ticks": 1800,
+          "checksum": 114456
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 0,
+          "ms": 0.3619,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 1,
+          "ms": 0.36210000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 2,
+          "ms": 0.36210000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 3,
+          "ms": 0.37220000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 4,
+          "ms": 0.36110000000000003,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 5,
+          "ms": 0.3664,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 1,
+          "batch": 6,
+          "ms": 0.3452,
+          "ticks": 1800,
+          "checksum": 4498
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 0,
+          "ms": 3.1342000000000003,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 1,
+          "ms": 3.2422,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 2,
+          "ms": 3.2395,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 3,
+          "ms": 3.0309,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 4,
+          "ms": 3.0413,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 5,
+          "ms": 3.0688,
+          "ticks": 1800,
+          "checksum": 38152
+        },
+        {
+          "run": 5,
+          "bots": 8,
+          "batch": 6,
+          "ms": 3.0926,
+          "ticks": 1800,
+          "checksum": 38152
+        }
+      ],
+      "cases": [
+        {
+          "group": "Corner chase",
+          "seed": 0,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 0,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 0,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 0,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 0,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 1,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 1,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 1,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 1,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 1,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 2,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 2,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 2,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 2,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 2,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 3,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 3,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 3,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 3,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 3,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 4,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 4,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 4,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 4,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 4,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 5,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 5,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 5,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 5,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 5,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 6,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 6,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 6,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 6,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 6,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 7,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 7,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 7,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 7,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 7,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 8,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 8,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 8,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 8,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 8,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 9,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 9,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 9,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 9,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 9,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 10,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 10,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 10,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 10,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 10,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 11,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 11,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 11,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 11,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 11,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 12,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 12,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 12,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 12,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 12,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 13,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 13,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 13,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 13,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 13,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 14,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 14,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 14,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 14,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 14,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 15,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 15,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 15,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 15,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 15,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 16,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 16,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 16,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 16,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 16,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 17,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 17,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 17,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 17,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 17,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 18,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 18,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 18,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 18,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 18,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 19,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 19,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 19,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 19,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 19,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 20,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 20,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 20,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 20,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 20,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 21,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 21,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 21,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 21,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 21,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 22,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 22,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 22,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 22,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 22,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 23,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 23,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 23,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 23,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 23,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 24,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 24,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 24,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 24,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 24,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 25,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 25,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 25,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 25,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 25,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 26,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 26,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 26,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 26,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 26,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 27,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 27,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 27,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 27,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 27,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 28,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 28,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 28,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 28,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 28,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 29,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 29,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 29,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 29,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 29,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 30,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 30,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 30,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 30,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 30,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 31,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 31,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 31,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 31,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 31,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 32,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 32,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 32,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 32,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 32,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 33,
+          "success": false,
+          "metric": 2.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 33,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 33,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 33,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 33,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 34,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 34,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 34,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 34,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 34,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 35,
+          "success": true,
+          "metric": 1.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 35,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 35,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 35,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 35,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 36,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 36,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 36,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 36,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 36,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 37,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 37,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 37,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 37,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 37,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 38,
+          "success": true,
+          "metric": 1.4
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 38,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 38,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 38,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 38,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 39,
+          "success": false,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 39,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 39,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 39,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 39,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 40,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 40,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 40,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 40,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 40,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 41,
+          "success": true,
+          "metric": 1.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 41,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 41,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 41,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 41,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 42,
+          "success": false,
+          "metric": 2.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 42,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 42,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 42,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 42,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 43,
+          "success": true,
+          "metric": 1.4
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 43,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 43,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 43,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 43,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 44,
+          "success": true,
+          "metric": 0.6
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 44,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 44,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 44,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 44,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 45,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 45,
+          "success": true,
+          "metric": 0.0
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 45,
+          "success": true,
+          "metric": 2.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 45,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 45,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 46,
+          "success": true,
+          "metric": 1.2
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 46,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 46,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 46,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 46,
+          "success": true,
+          "metric": 4.0
+        },
+        {
+          "group": "Corner chase",
+          "seed": 47,
+          "success": true,
+          "metric": 1.4
+        },
+        {
+          "group": "Retreat under pressure",
+          "seed": 47,
+          "success": true,
+          "metric": 0.2
+        },
+        {
+          "group": "Contested hill lanes",
+          "seed": 47,
+          "success": true,
+          "metric": 3.0
+        },
+        {
+          "group": "Combat timing",
+          "seed": 47,
+          "success": true,
+          "metric": 1.0
+        },
+        {
+          "group": "Counter-build over time",
+          "seed": 47,
+          "success": true,
+          "metric": 4.0
+        }
+      ],
+      "summary": {
+        "Corner chase": {
+          "passed": 45,
+          "total": 48,
+          "mean_metric": 1.1208333333333333
+        },
+        "Retreat under pressure": {
+          "passed": 48,
+          "total": 48,
+          "mean_metric": 0.04583333333333334
+        },
+        "Contested hill lanes": {
+          "passed": 48,
+          "total": 48,
+          "mean_metric": 2.875
+        },
+        "Combat timing": {
+          "passed": 48,
+          "total": 48,
+          "mean_metric": 1.0
+        },
+        "Counter-build over time": {
+          "passed": 48,
+          "total": 48,
+          "mean_metric": 4.0
+        }
+      },
+      "timing": {
+        "1": {
+          "median_us_per_tick": 0.20244444444444445,
+          "p95_us_per_tick": 0.2541111111111111,
+          "batches": 42
+        },
+        "8": {
+          "median_us_per_tick": 1.7083055555555555,
+          "p95_us_per_tick": 1.9585000000000001,
+          "batches": 42
+        },
+        "24": {
+          "median_us_per_tick": 5.165416666666667,
+          "p95_us_per_tick": 5.501166666666667,
+          "batches": 42
+        }
+      }
+    }
+  }
+}

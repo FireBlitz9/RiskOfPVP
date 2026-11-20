@@ -70,6 +70,36 @@ namespace ArenaPvP
                 || special && special.isCombatSkill && special.CanExecute();
         }
 
+        internal static bool EscapeReady(CharacterBody body)
+        {
+            var utility = body.skillLocator ? body.skillLocator.utility : null;
+            if (!utility || !utility.CanExecute()) return false;
+            var state = utility.activationState.stateType;
+            if (state == null || state.Assembly != typeof(CharacterBody).Assembly) return false;
+            switch (state.FullName)
+            {
+                case "EntityStates.Commando.DodgeState":
+                case "EntityStates.Commando.CombatDodge":
+                case "EntityStates.Commando.SlideState":
+                case "EntityStates.Huntress.BlinkState":
+                case "EntityStates.Huntress.MiniBlinkState":
+                case "EntityStates.Bandit2.StealthMode":
+                case "EntityStates.Merc.Assaulter":
+                case "EntityStates.Merc.PrepAssaulter2":
+                case "EntityStates.Croco.Leap":
+                case "EntityStates.Croco.ChainableLeap":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        internal static bool ReserveUtility(CharacterBody body, AISkillDriver driver)
+        {
+            return driver && driver.skillSlot == SkillSlot.Utility && TargetsEnemy(driver) && EscapeReady(body)
+                && body.skillLocator.utility.stock <= 1;
+        }
+
         internal static float ProjectileSpeed(CharacterBody body, AISkillDriver driver, float fallback)
         {
             if (!body.skillLocator || fallback <= 0 || !driver || driver.skillSlot == SkillSlot.None) return 0;

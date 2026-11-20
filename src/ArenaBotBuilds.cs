@@ -67,12 +67,12 @@ namespace ArenaPvP
                 else if(score<b) { third=second;c=b;second=p;b=score; }
                 else if(score<c) { third=p;c=score; }
             }
-            AddOpponent(first, bot, context, now);
-            AddOpponent(second, bot, context, now);
-            AddOpponent(third, bot, context, now);
+            AddOpponent(first, bot, context, now, 1f);
+            AddOpponent(second, bot, context, now, .65f);
+            AddOpponent(third, bot, context, now, .45f);
         }
 
-        private static void AddOpponent(ArenaPlayer player, ArenaPlayer bot, BotBuildContext context, float now)
+        private static void AddOpponent(ArenaPlayer player, ArenaPlayer bot, BotBuildContext context, float now, float priority)
         {
             if(player==null)return;
             var loadout=ReadLoadout(player.Master);
@@ -89,6 +89,10 @@ namespace ArenaPvP
             context.EnemyHealing = Math.Max(context.EnemyHealing, habit.Sustain * recency);
             context.EnemyStrafe = Math.Max(context.EnemyStrafe, habit.Strafe * recency);
             context.EnemyDamage = Math.Max(context.EnemyDamage, 1 + habit.Pressure(now));
+            float weight = priority * (habit.Trade(now) < -.15f ? 1f : .85f);
+            context.MobilityEvidence = Math.Max(context.MobilityEvidence, habit.MobilityEvidence(now) * weight);
+            context.SustainEvidence = Math.Max(context.SustainEvidence, habit.SustainEvidence(now) * weight);
+            context.BurstEvidence = Math.Max(context.BurstEvidence, habit.BurstEvidence(now) * weight);
         }
         private static Definition Describe(int id)
         {

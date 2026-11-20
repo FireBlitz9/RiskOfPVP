@@ -78,9 +78,17 @@ Extra High and Ultra sprint when movement and their current skill allow it. Ultr
 
 ### Ultra benchmarks
 
-![Ultra benchmarks. Previous Ultra passed 20 of 27 offline checks and upgraded Ultra passed 27 of 27. At 600 pickups, median reward scoring increased from 62.7 to 68.0 microseconds and allocations increased from 52.1 to 56.8 KiB per offer.](assets/ultra-benchmarks-1.3.2.png)
+**Ultra V1** is the bot from v1.3.1, **Ultra V2** is from v1.3.2, and **Ultra V3** is the newest generation in this comparison.
 
-Both generations ran the same scripted decision checks and scored the same synthetic reward offers. At 600 pickups, upgraded Ultra took about **9% more time** and allocated about **9% more memory** per offer. The game stayed closed. These numbers measure the C# rules and reward chooser; in-game performance and win rates still need playtesting. [Method and raw results](benchmarks/README.md)
+#### Tactics
+
+![Ultra V1 passed 14 of 240 scripted tactical sequences, Ultra V2 passed 15, and Ultra V3 passed 237. The chart also compares time spent stalled, time exposed during retreat, and time spent making decisions.](assets/ultra-tactics-benchmarks.png)
+
+#### Reward scoring
+
+![The 27 original decision checks, median reward scoring time, and managed memory allocated per offer for Ultra V1, Ultra V2, and Ultra V3.](assets/ultra-reward-generations.png)
+
+All three ran the same scripted cases and scored the same synthetic offers. The game stayed closed. Live performance and win rates remain unmeasured. [Method and raw results](benchmarks/README.md#tactical-sequences)
 
 ## Settings and controls
 
