@@ -40,6 +40,11 @@ namespace ArenaPvP
         { return names[(int)Tier(value)]; }
         public static bool Adaptive(BotIntelligence tier) { return tier >= BotIntelligence.ExtraHigh; }
         public static bool ChaseHumans(bool enabled, ArenaMode mode) { return enabled && mode == ArenaMode.FFA; }
+        internal static bool CanFinish(float damage, float armor, float remainingHealth)
+        {
+            float armorFactor = armor >= 0 ? 100f / (100f + armor) : 2f - 100f / (100f - armor);
+            return remainingHealth > 0 && damage * armorFactor >= remainingHealth * 1.08f;
+        }
         public static float SightRange(BotIntelligence tier) { return sight[(int)tier]; }
         public static float AimDamping(BotIntelligence tier) { return damping[(int)tier]; }
         public static float AimSpeed(BotIntelligence tier) { return aimSpeed[(int)tier]; }

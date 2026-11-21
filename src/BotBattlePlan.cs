@@ -58,6 +58,8 @@ namespace ArenaPvP
             goal=corridor=BotRouteOption.NoNode;
         }
 
+        public void MarkBlocked(float now) => Block(now);
+
         public void Progress(float now, float remaining, bool canMove)
         {
             if (goal == BotRouteOption.NoNode) return;

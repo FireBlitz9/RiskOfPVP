@@ -47,6 +47,7 @@ internal static class RouteTests
             var isolated=new NodeGraph();isolated.Positions.Add(body.footPosition);SceneInfo.instance.groundNodes=isolated;routes.Clear();
             Check(!routes.Choose(body,enemy,true,null,player,roster,BotEngagement.Press,12,4,true,body.footPosition,out waypoint),"an isolated start node returns control to fallback navigation instead of a fake movement route");
             Locomotion();
+            CombatFootwork();
             Pursuit();
             Crossfire();
             Console.WriteLine("PASS: "+checks+" production graph-route assertions.");return 0;
@@ -82,6 +83,55 @@ internal static class RouteTests
         Check(ArenaBotLocomotion.ClearTravelCorridor(body, Vector3.forward, 20, null), "a clear supported corridor permits a mobility skill");
         var heldHill = new HillView { Ready = true, To = body.footPosition, Radius = 8 };
         Check(!ArenaBotLocomotion.ClearTravelCorridor(body, Vector3.forward, 20, heldHill), "a charge cannot leave a held KOTH zone");
+        var launch = new Vector3(26, 8, 0);
+        var east = new Vector3(1, 0, 0);
+        Check(ArenaBotLocomotion.ClearBoostArc(body, body.footPosition, launch, east, null), "an advancing launch with a supported destination passes the physical checks");
+        Check(!ArenaBotLocomotion.ClearBoostArc(body, body.footPosition, launch, east, heldHill), "a predicted launch cannot carry the bot off a held hill");
+        Physics.Wall = true;
+        Check(!ArenaBotLocomotion.ClearBoostArc(body, body.footPosition, launch, east, null), "an obstruction along the launch arc rejects the launch");
+        Physics.Wall = false;
+    }
+
+    private static void CombatFootwork()
+    {
+        var bot = new ArenaBotFootwork();
+        var body = new CharacterBody();
+        var opponent = new Vector3(0, 0, 24);
+        bot.Reset(3, 0);
+        var sideways = new Vector3(1, 0, 0);
+        for (int i = 0; i < 30; i++)
+        {
+            var move = bot.Steer(body, opponent, sideways, null, 5, true, i % 2 == 0, false, false, i * .075f);
+            body.footPosition += move * .35f;
+        }
+        Check(body.footPosition.z > 8 && Math.Abs(body.footPosition.x) > .1f,
+            "successive combat arcs keep gaining distance toward the opponent, even with lateral native input");
+        bot.Reset(3, 0);
+        Check(!bot.ApproachStalled(Vector3.zero, opponent, true, 0)
+            && !bot.ApproachStalled(new Vector3(3, 2, 0), opponent, true, .4f)
+            && bot.ApproachStalled(new Vector3(6, 0, 0), opponent, true, 1),
+            "sideways displacement and an ordinary jump do not satisfy approach progress after reaching a local waypoint");
+        bot.Reset(7, 0);
+        body.footPosition = Vector3.zero;
+        var orbitTarget = new Vector3(0, 0, 4.3f);
+        var orbit = bot.Steer(body, orbitTarget, Vector3.zero, null, 3, false, false, true, true, .1f);
+        var strike = bot.Steer(body, orbitTarget, Vector3.zero, null, 3, false, false, true, true, .4f);
+        body.footPosition = new Vector3(0, 0, 1.8f);
+        var peel = bot.Steer(body, orbitTarget, Vector3.zero, null, 3, false, false, true, false, .5f);
+        Check(Math.Abs(orbit.x) > .85f && strike.z > .8f && peel.z < -.4f && Math.Abs(peel.x) > .45f,
+            "melee orbits, enters on a ready attack and peels out along a moving arc during recovery");
+        var close = new Vector3(0, 0, 5);
+        body.footPosition = Vector3.zero;
+        bot.Reset(4, 0);
+        var first = bot.Steer(body, close, Vector3.zero, null, 5, false, false, false, true, .1f);
+        bool varied = false;
+        for (int i = 1; i <= 8; i++)
+        {
+            var move = bot.Steer(body, close, Vector3.zero, null, 5, false, false, false, true, i * .84f);
+            varied |= Math.Abs(move.z - first.z) > .2f;
+            if (move.sqrMagnitude < .85f || move.z <= 0) throw new Exception("ranged footwork must keep moving forward on a clear arc");
+        }
+        Check(varied, "ranged footwork varies the arc rather than tracing the same circle indefinitely");
     }
 
     private static void Pursuit()

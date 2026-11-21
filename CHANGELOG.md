@@ -1,3 +1,10 @@
+# 1.3.8
+
+- Ultra measures closing progress against the opponent even after it reaches a local waypoint. Sideways movement and ordinary jumps cannot hide a stall. When the approach stalls, it drops the local commitment and searches for a fresh pursuit route.
+- Ranged bots stay on moving arcs, mix in forward cuts and vary their flanks while aiming at the opponent. Melee bots circle outside reach, close for a ready attack and peel out to recover.
+- Railgunner can set up a moving concussion-mine boost when the predicted route and landing are safe. Engineer looks for valid turret positions beside terrain that afford both cover and a shot, and uses native placement inputs while moving.
+- Bandit looks for native on-kill opportunities with Lights Out and Desperado. It accounts for armor, barrier, current damage and the host's PvP damage multiplier.
+
 # 1.3.7
 
 - Decisions per tick now applies to each bot. A due bot can run a main tactical pass and up to two extra passes to refine its approach or firing angle. The default is two passes and a 0.1-second interval. The minimum interval is 0.05 seconds.

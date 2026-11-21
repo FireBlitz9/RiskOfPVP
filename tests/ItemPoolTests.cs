@@ -321,7 +321,7 @@ namespace RoR2
         public CharacterBody GetBody() { return BodyMissing ? null : Body; }
     }
     public class BodyPrefab { public string name="CommandoBody"; }
-    public class HealthComponent : TestObject { public bool alive=true;public float combinedHealthFraction=1,combinedHealth=100,fullCombinedHealth=100; }
+    public class HealthComponent : TestObject { public bool alive=true;public float combinedHealthFraction=1,combinedHealth=100,fullCombinedHealth=100,barrier=0; }
     public class CharacterBody : TestObject
     {
         public readonly HealthComponent healthComponent=new HealthComponent();
@@ -358,6 +358,7 @@ namespace RoR2
         public bool CanExecute() { return Ready && stateMachine.Main; }
     }
     public class NativeShot:EntityStates.EntityState { }
+    public class NativeBanditFinisher : EntityStates.EntityState { }
     public class NativeChargeBomb:EntityStates.EntityState { }
     public class NativeScope:EntityStates.EntityState { }
     public class SkillLocator : TestObject

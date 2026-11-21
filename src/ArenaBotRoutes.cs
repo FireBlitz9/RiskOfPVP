@@ -52,6 +52,13 @@ namespace ArenaPvP
             commitUntil=0;
         }
 
+        internal void BreakCommitment(float now)
+        {
+            planner.MarkBlocked(now);
+            commitUntil = rebuildAt = 0;
+            planned = false;
+        }
+
         internal bool Choose(CharacterBody body, Vector3 enemy, bool hasEnemy, HillView hill,
             ArenaPlayer player, List<BotTarget> roster, BotEngagement intent, float spacing, float now,
             bool canMove, Vector3 previousWaypoint, out Vector3 waypoint, List<BotExposure> threats = null)

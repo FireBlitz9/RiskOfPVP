@@ -390,6 +390,21 @@ internal static class ApiAudit
                     || recoveryCode.Any(i=>i.Operand is MethodReference && new[]{"set_velocity","set_position","TeleportBody","SetNextState"}.Contains(((MethodReference)i.Operand).Name)))
                     throw new Exception("Local recovery must use bounded collision/ground probes and ordinary movement, never forced displacement.");
                 Console.WriteLine("PASS: native aim-to-fire ordering, learned skill arbitration, registered-data observation, read-only server telemetry and physical obstacle recovery audited.");
+                var nativeTurret = game.MainModule.GetType("EntityStates.Engi.EngiWeapon.PlaceTurret")
+                    .Methods.Single(m => m.Name == "FixedUpdate");
+                var nativeTurretCalls = nativeTurret.Body.Instructions.Where(i => i.Operand is MethodReference)
+                    .Select(i => ((MethodReference)i.Operand).Name).ToArray();
+                if (!nativeTurretCalls.Contains("SendConstructTurret") || !nativeTurretCalls.Contains("DeductStock"))
+                    throw new Exception("Engineer placement must use the game's blueprint, stock deduction and construction pipeline.");
+                var techniques = plugin.MainModule.GetType("ArenaPvP.ArenaBotTechniques");
+                var techniqueCalls = techniques.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions)
+                    .Where(i => i.Operand is MethodReference).Select(i => ((MethodReference)i.Operand).Name).ToArray();
+                if (techniqueCalls.Any(n => new[]{"SendConstructTurret", "SetNextState", "DeductStock", "ApplyForceImpulse", "set_velocity"}.Contains(n))
+                    || !techniqueCalls.Contains("ClearBoostArc") || !techniqueCalls.Contains("CheckCapsule")
+                    || !techniqueCalls.Contains("TravelUtility")
+                    || !brainInput.Body.Instructions.Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="ArenaBotFootwork"))
+                    throw new Exception("Bot techniques must drive ordinary input and validate movement and placement geometry.");
+                Console.WriteLine("PASS: continuous footwork and native turret and mine inputs audited.");
                 Console.WriteLine("PASS: mode profile capture, compressed settings, native headings, bounded bot tactics and saved build catalog identifiers audited.");
                 var suppression = plugin.MainModule.GetType("ArenaPvP.BlockSkillsWhileChoosing");
                 if (suppression.Methods.Any(m => m.Name == "Prefix") || !suppression.Methods.Any(m => m.Name == "Postfix"))

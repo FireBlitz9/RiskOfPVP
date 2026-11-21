@@ -257,6 +257,13 @@ namespace ArenaPvP
                 }
                 else if (KeepNativeRequest(ref input, previous, body, BotAction.Utility, now)) return;
             }
+            var special = Skill(body, BotAction.Special);
+            float finisher = special && special.CanExecute()
+                ? ArenaCombatLearning.FinisherCoefficient(body, special.activationState.stateType) : 0;
+            bool canFinish = finisher > 0 && BotTacticsRules.CanFinish(finisher * body.damage * ArenaCombatLearning.DamageScale,
+                enemy.armor, enemy.healthComponent.combinedHealth + enemy.healthComponent.barrier);
+            bool saveFinisher = finisher > 0 && !canFinish && input.pressSkill1;
+            if (saveFinisher) input.pressSkill4 = false;
             for(int i=1;i<4;i++)
             {
                 if(!Pressed(input,(BotAction)i) || !Eligible(ai,body,enemy,(BotAction)i))continue;
@@ -275,6 +282,7 @@ namespace ArenaPvP
             float primaryValue = 0;
             for(int i=0;i<4;i++)
             {
+                if (i == 3 && saveFinisher) continue;
                 if(now<retryAfter[i] || !Eligible(ai,body,enemy,(BotAction)i))continue;
                 var model=ArenaCombatLearning.Model(body,i);if(model==null)continue;
                 if(model.NativeSequence)continue;
@@ -288,6 +296,7 @@ namespace ArenaPvP
                 if(model.Healing>0)value+=model.Healing*Math.Max(0,1-body.healthComponent.combinedHealthFraction)*40;
                 if(i>0 && !model.KnownDamage && self!=null && self.Untried(i) && body.healthComponent.combinedHealthFraction>.65f)value+=8;
                 if(model.Deployable)value*=.5f;
+                if (i == 3 && canFinish) value = Mathf.Max(value, finisher / Mathf.Max(.3f, model.Duration)) + 24;
                 value+=i==1 ? .05f : i==3 ? .04f : 0;
                 if (i == 0) primaryValue = Mathf.Max(0, value);
                 else if (value > 0 && input.pressSkill1 && !Shares(Skill(body, BotAction.Primary), Skill(body, (BotAction)i)))

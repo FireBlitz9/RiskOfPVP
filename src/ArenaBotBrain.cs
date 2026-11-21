@@ -61,6 +61,9 @@ namespace ArenaPvP
         private float nextDodgeProbe,nextDirectProbe;
         private Vector3 cachedDodge,cachedDirect,directGoal;
         private readonly ArenaBotLocomotion locomotion=new ArenaBotLocomotion();
+        private readonly ArenaBotFootwork footwork = new ArenaBotFootwork();
+        private readonly ArenaBotTechniques techniques = new ArenaBotTechniques();
+        private float forceApproachUntil;
         private float nextQuietReport;
         private float nextTravelProbe, probedTravelSpan;
         private Vector3 probedTravelOrigin, probedTravelDirection;
@@ -131,6 +134,9 @@ namespace ArenaPvP
                 projectileAt = -100;
                 nextDodgeProbe=nextDirectProbe=0;cachedDodge=cachedDirect=Vector3.zero;
                 locomotion.Clear();nextQuietReport=now+5;
+                techniques.Clear();
+                footwork.Reset(player.BotOrdinal, now);
+                forceApproachUntil = 0;
                 nextTravelProbe = 0;
                 lastVisibleEnemy = null;
                 ResetSight(now);
@@ -343,7 +349,7 @@ namespace ArenaPvP
 
             // The known location is for navigation. Fire still requires
             // native visibility, a clear ray and a valid hostile target.
-            if (zone == null && engagement != BotEngagement.Recover && !atCombatDistance)
+            if (zone == null && engagement != BotEngagement.Recover && (!atCombatDistance || now < forceApproachUntil))
             {
                 var target = PursuitTarget(now);
                 if (target)
@@ -550,6 +556,11 @@ namespace ArenaPvP
         {
             sightTarget = null; sightUntil = 0; clearSight = false;
             acquiredAt = Enemy && Enemy == lastVisibleEnemy && now - lastVisibleAt < .35f ? lastVisibleAcquisition : now;
+            if (Enemy && Enemy != lastVisibleEnemy)
+            {
+                footwork.Reset(player.BotOrdinal, now);
+                forceApproachUntil = 0;
+            }
             dodgeAt = dodgeUntil = 0;
             Array.Clear(threatStates, 0, threatStates.Length);
             Array.Clear(observedCast, 0, observedCast.Length);
@@ -865,7 +876,8 @@ namespace ArenaPvP
                     threatened || style!=null && style.Strafe>.35f,incoming || style!=null && style.Jumping>.25f);
                 if(!protectedSkill)
                 {
-                    if(intent.DodgeSide!=0 && body.characterMotor.isGrounded)
+                    if(intent.DodgeSide!=0 && body.characterMotor.isGrounded
+                        && (!ultra || !visible || engagement == BotEngagement.Recover))
                     {
                         if (ultra)
                         {
@@ -894,6 +906,32 @@ namespace ArenaPvP
                     wantsCombatJump=intent.Jump;
                 }
             }
+            bool canTrackFootwork = ultra && visible && CanSteer(ai) && body.characterMotor
+                && !body.isFlying && engagement != BotEngagement.Recover
+                && (movementHill == null || !movementHill.Ready || ArenaBotRoutes.InHill(movementHill, body.footPosition));
+            if (canTrackFootwork)
+            {
+                float spacing = Mathf.Max(1.5f, player.BotKit.Range);
+                bool melee = spacing <= 7.5f;
+                var opponent = Enemy.footPosition;
+                Vector3 horizontal = opponent - body.footPosition;
+                horizontal.y = 0;
+                float approachThreshold = melee ? spacing + 3.5f : spacing * 1.18f + .5f;
+                bool closing = horizontal.sqrMagnitude > approachThreshold * approachThreshold;
+                if (!pursuitTarget && footwork.ApproachStalled(body.footPosition, opponent, closing, now))
+                {
+                    routes?.BreakCommitment(now);
+                    forceApproachUntil = now + 1.6f;
+                }
+                if (!pursuitTarget && !plannedJump && body.characterMotor.isGrounded)
+                {
+                    input.moveVector = footwork.Steer(body, opponent, input.moveVector, movementHill, spacing,
+                        closing, threatened, melee, melee && ArenaBotKit.Ready(body), now);
+                    if (input.pressSprint && (body.bodyFlags & CharacterBody.BodyFlags.SprintAnyDirection) == 0
+                        && !SprintDirection(body, input.moveVector)) input.pressSprint = false;
+                }
+            }
+            else footwork.PauseProgress();
             if(!plannedJump && body.characterMotor && body.characterMotor.isGrounded && !body.isFlying && !body.currentVehicle && input.moveVector.sqrMagnitude>.01f)
             {
                 var direction=input.moveVector.normalized;
@@ -925,7 +963,12 @@ namespace ArenaPvP
             }
             else locomotion.Pause();
             if (ultra && !plannedJump && match.WarmupRemaining <= 0)
-                TryTravelUtility(ai, body, ref input, previous, visible, now);
+            {
+                bool shot = visible && Vector3.Distance(body.corePosition, Enemy.corePosition) <= Mathf.Max(3, player.BotKit.Range * 1.15f);
+                bool usingTech = techniques.Apply(body, ref input, previous, visible ? Enemy : null, Destination, movementHill,
+                    CanSteer(ai) && player.ProtectionUntil <= match.Clock, shot, actions, now);
+                if (!usingTech) TryTravelUtility(ai, body, ref input, previous, visible, now);
+            }
             if(ultra && visible && match.WarmupRemaining<=0 && now>=nextQuietReport && now-acquiredAt>4)
             {
                 var observed=ArenaCombatLearning.Find(body);

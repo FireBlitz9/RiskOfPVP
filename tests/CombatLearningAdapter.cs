@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using RoR2;
 
 // Native catalog/telemetry access is adapted here. Policy, input arbitration,
@@ -8,6 +9,8 @@ namespace ArenaPvP
     internal static class ArenaCombatLearning
     {
         internal static float DamageScale=1;
+        internal static float FinisherCoefficient(CharacterBody body, Type activation)
+            => activation == typeof(RoR2.NativeBanditFinisher) ? 8 : 0;
         internal sealed class Actor
         {
             internal readonly BotSkillKnowledge[] Skills=new BotSkillKnowledge[4];

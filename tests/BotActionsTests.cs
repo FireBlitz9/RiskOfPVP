@@ -134,6 +134,26 @@ internal static class BotActionsTests
         SustainedPressure(check);
         LearnedSkills(check);
         ContinuousAttackFallbacks(check);
+        BanditFinisher(check);
+    }
+    private static void BanditFinisher(Action<bool, string> check)
+    {
+        var body = new CharacterBody();
+        var controller = Controller("Bandit2Body", body, out var ai, out var enemy);
+        body.skillLocator.special.activationState = new SerializableEntityStateType(typeof(NativeBanditFinisher));
+        body.skillLocator.secondary.Ready = body.skillLocator.utility.Ready = false;
+        enemy.healthComponent.combinedHealth = 75;
+        enemy.healthComponent.barrier = 50;
+        var input = Step(controller, ai, enemy, 0);
+        check(input.pressSkill1 && !input.pressSkill4, "Bandit saves a finisher when barrier would absorb its kill");
+        enemy.healthComponent.barrier = 0;
+        enemy.armor = 100;
+        input = Step(controller, ai, enemy, .1f);
+        check(input.pressSkill1 && !input.pressSkill4, "Bandit saves a finisher against armor that would prevent the kill");
+        enemy.armor = 0;
+        input = Step(controller, ai, enemy, .2f);
+        check(!input.pressSkill1 && input.pressSkill4, "Bandit spends the finisher when it can earn its native on-kill effect");
+        controller.Dispose();
     }
     private static void ContinuousAttackFallbacks(Action<bool, string> check)
     {

@@ -7,8 +7,8 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-[assembly: System.Reflection.AssemblyVersion("1.3.7.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("1.3.7")]
+[assembly: System.Reflection.AssemblyVersion("1.3.8.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.3.8")]
 [assembly: System.Reflection.AssemblyCompany("claytemplar")]
 
 namespace ArenaPvP
@@ -25,7 +25,7 @@ namespace ArenaPvP
         public const string Guid = "com.fireb.arenapvp";
         public const string Name = "RiskOfArena";
         public const string OptionsName = "RiskOfPVP";
-        public const string Version = "1.3.7";
+        public const string Version = "1.3.8";
         internal static Plugin Instance;
         internal static ArenaConfig Settings;
         internal static DifficultyIndex ArenaDifficulty = DifficultyIndex.Invalid;

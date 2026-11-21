@@ -222,16 +222,39 @@ namespace ArenaPvP
             Configure(profile);return profile.Knowledge;
         }
 
-        internal static float RegisteredDuration(Type type)
+        internal static float RegisteredDuration(Type type) => RegisteredNumber(type, "baseDuration");
+
+        private static float RegisteredNumber(Type type, string fieldName)
         {
             if (!configurations.TryGetValue(type, out var config)) return 0;
             var fields = config.serializedFieldsCollection.serializedFields;
             if (fields == null) return 0;
             foreach (var field in fields)
-                if (string.Equals(field.fieldName, "baseDuration", StringComparison.OrdinalIgnoreCase)
+                if (string.Equals(field.fieldName, fieldName, StringComparison.OrdinalIgnoreCase)
                     && float.TryParse(field.fieldValue.stringValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float duration)
                     && duration > 0 && !float.IsInfinity(duration)) return duration;
             return 0;
+        }
+
+        internal static float FinisherCoefficient(CharacterBody body, Type activation)
+        {
+            if (activation == typeof(EntityStates.Bandit2.Weapon.PrepSidearmResetRevolver))
+                return RegisteredNumber(typeof(EntityStates.Bandit2.Weapon.FireSidearmResetRevolver), "damageCoefficient");
+            if (activation == typeof(EntityStates.Bandit2.Weapon.PrepSidearmSkullRevolver))
+                return RegisteredNumber(typeof(EntityStates.Bandit2.Weapon.FireSidearmSkullRevolver), "damageCoefficient")
+                    * (1f + .1f * body.GetBuffCount(RoR2Content.Buffs.BanditSkull));
+            return 0;
+        }
+
+        internal static GameObject RegisteredProjectile(Type type)
+        {
+            if (!configurations.TryGetValue(type, out var config)) return null;
+            var fields = config.serializedFieldsCollection.serializedFields;
+            if (fields == null) return null;
+            foreach (var field in fields)
+                if (string.Equals(field.fieldName, "projectilePrefab", StringComparison.OrdinalIgnoreCase))
+                    return field.fieldValue.objectValue as GameObject;
+            return null;
         }
         internal static void SeedDrivers(CharacterBody body,AISkillDriver[] drivers)
         {

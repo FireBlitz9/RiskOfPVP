@@ -53,7 +53,7 @@ namespace ArenaPvP
             float radius=Mathf.Clamp(body.radius*.7f,.2f,.75f);
             return Physics.SphereCast(body.footPosition+Vector3.up*(radius+.2f),radius,direction,out hit,2.2f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
         }
-        private static bool Safe(CharacterBody body,Vector3 direction,HillView hill)
+        internal static bool Safe(CharacterBody body,Vector3 direction,HillView hill)
         {
             if(direction.sqrMagnitude<.1f)return false;
             RaycastHit hit;
@@ -84,6 +84,35 @@ namespace ArenaPvP
                 var probe = origin + direction * (distance * i / samples) + Vector3.up * 1.8f;
                 if (!Physics.Raycast(probe, Vector3.down, out var ground, 4f, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)
                     || ground.normal.y <= .5f) return false;
+            }
+            return true;
+        }
+
+        internal static bool ClearBoostArc(CharacterBody body, Vector3 launchPoint, Vector3 velocity, Vector3 forward, HillView hill)
+        {
+            float gravity = Mathf.Max(1f, -Physics.gravity.y);
+            if (velocity.y < 2f) return false;
+            float time = 2f * velocity.y / gravity;
+            if (time < .2f || time > 2.25f) return false;
+            var horizontal = velocity;
+            horizontal.y = 0;
+            Vector3 displacement = horizontal * time;
+            if (Vector3.Dot(displacement, forward) < 7f || displacement.sqrMagnitude > 60f * 60f) return false;
+            var expected = launchPoint + displacement;
+            if (hill != null && hill.Ready && ArenaBotRoutes.InHill(hill, body.footPosition)
+                && !ArenaBotRoutes.InHill(hill, expected)) return false;
+            if (!Physics.Raycast(expected + Vector3.up * 3, Vector3.down, out var landing, 7,
+                LayerIndex.world.mask, QueryTriggerInteraction.Ignore) || landing.normal.y < .55f) return false;
+            var previous = launchPoint + (body.corePosition - body.footPosition);
+            for (int i = 1; i <= 6; i++)
+            {
+                float t = time * i / 6;
+                var point = launchPoint + (body.corePosition - body.footPosition)
+                    + velocity * t - Vector3.up * (gravity * t * t * .5f);
+                var segment = point - previous;
+                if (Physics.SphereCast(previous, Mathf.Clamp(body.radius * .65f, .22f, .65f),
+                    segment.normalized, out _, segment.magnitude, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) return false;
+                previous = point;
             }
             return true;
         }

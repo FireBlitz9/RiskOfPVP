@@ -82,6 +82,13 @@ namespace ArenaPvP
     internal static class ArenaBotKit { internal static bool TargetsEnemy(RoR2.CharacterAI.AISkillDriver d)=>true; }
 }
 namespace EntityStates { public class EntityState { } }
+namespace EntityStates.Bandit2.Weapon
+{
+    public class PrepSidearmResetRevolver : EntityStates.EntityState { }
+    public class PrepSidearmSkullRevolver : EntityStates.EntityState { }
+    public class FireSidearmResetRevolver : EntityStates.EntityState { }
+    public class FireSidearmSkullRevolver : EntityStates.EntityState { }
+}
 namespace UnityEngine
 {
     public class Object { public static implicit operator bool(Object value)=>value!=null; }
@@ -111,6 +118,7 @@ namespace RoR2
         public float moveSpeed=7,damage=12,crit=0,critMultiplier=2,armor=0;public bool isSprinting=false;public Vector3 corePosition;
         public readonly GameObject gameObject=new GameObject();
         public CharacterBody() { gameObject.Ref.Body=this; }
+        public int GetBuffCount(object buff) => 0;
         public event Action<GenericSkill> onSkillActivatedServer;
         public int Subscribers=>onSkillActivatedServer?.GetInvocationList().Length ?? 0;
         public void Activate(GenericSkill skill,float now) { Time.unscaledTime=now;onSkillActivatedServer?.Invoke(skill); }
@@ -121,7 +129,7 @@ namespace RoR2
     public class Inventory:UnityEngine.Object { public int GetItemCountEffective(ItemDef item)=>0; }
     public class HealthComponent:UnityEngine.Object { public float fullCombinedHealth=100,barrier=0; }
     public class ItemDef:UnityEngine.Object { }
-    public static class RoR2Content { public static class Items { public static ItemDef Missile,ChainLightning,BleedOnHit,StickyBomb; } }
+    public static class RoR2Content { public static class Items { public static ItemDef Missile,ChainLightning,BleedOnHit,StickyBomb; } public static class Buffs { public static readonly object BanditSkull = new object(); } }
     public static class DLC1Content { public static class Items { public static ItemDef MissileVoid,ChainLightningVoid; } }
     public enum SkillSlot { None=-1,Primary,Secondary,Utility,Special }
     public struct SerializableEntityStateType { public Type stateType;public SerializableEntityStateType(Type type) { stateType=type; } }
