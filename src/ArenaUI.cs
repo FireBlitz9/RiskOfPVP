@@ -113,7 +113,8 @@ namespace ArenaPvP
             if (lobby && !wasLobby) { voting = false; picker = false; signature = ""; }
             wasLobby = lobby;
             if (!ArenaLobbyOptions.IsOpen && Plugin.Settings.VoteKey.Value.IsDown() && lobby) { voting = !voting; signature = ""; }
-            if (Plugin.Settings.PickerKey.Value.IsDown() && Plugin.Active) { picker = !picker; voting = false; pickerClose.Reset(); rewardArrival.Dismiss(); signature = ""; }
+            if (Plugin.Active && RewardShortcutPressed(Plugin.Settings.PickerKey.Value))
+            { picker = !picker; voting = false; pickerClose.Reset(); rewardArrival.Dismiss(); signature = ""; }
             if (Plugin.Settings.BoardKey.Value.IsDown() && Plugin.Active) board = !board;
             if (!lobby) voting = false;
             var view = View;
@@ -378,6 +379,14 @@ namespace ArenaPvP
             submittedOffer = view.OfferId; submittedAt = Time.unscaledTime; ArenaNetwork.Choose(Selected, view.OfferId, action);
         }
         private bool Pending(MatchView v) { return submittedOffer == v.OfferId && Time.unscaledTime - submittedAt < 0.65f; }
+        private static bool RewardShortcutPressed(BepInEx.Configuration.KeyboardShortcut shortcut)
+        {
+            // BepInEx's exact chord rejects unrelated held keys, including movement.
+            if (shortcut.MainKey == KeyCode.None || !Input.GetKeyDown(shortcut.MainKey)) return false;
+            foreach (var modifier in shortcut.Modifiers)
+                if (!Input.GetKey(modifier)) return false;
+            return true;
+        }
         private bool AutomaticPickerBlocked()
         {
             if (UnityEngine.Networking.NetworkManager.IsSceneLoadingAsynchronously || !Stage.instance) return true;

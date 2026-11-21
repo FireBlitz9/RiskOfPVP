@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace ArenaPvP
 {
+    internal struct BotExposure
+    {
+        internal Vector3 Position;
+        internal float Weight;
+    }
+
     internal sealed class ArenaBotRoutes
     {
         private struct Visit
@@ -48,7 +54,7 @@ namespace ArenaPvP
 
         internal bool Choose(CharacterBody body, Vector3 enemy, bool hasEnemy, HillView hill,
             ArenaPlayer player, List<BotTarget> roster, BotEngagement intent, float spacing, float now,
-            bool canMove, Vector3 previousWaypoint, out Vector3 waypoint)
+            bool canMove, Vector3 previousWaypoint, out Vector3 waypoint, List<BotExposure> threats = null)
         {
             waypoint = body.footPosition;
             bool grounded = !body.isFlying && body.characterMotor && body.characterMotor.isGrounded;
@@ -110,6 +116,7 @@ namespace ArenaPvP
                     HasShot = hasShot,
                     FirstHopExposed = firstExposed,
                     HasCoverExit = !firstExposed && visit.FirstHop != visit.Node.nodeIndex,
+                    Crossfire = threats == null ? 0 : ExposureAt(threats, visit.Position + eyeOffset),
                     Approach=hasEnemy ? Mathf.Min(Vector3.Distance(origin,enemy)-route.Range,
                         Mathf.Max(0,Vector3.Distance(origin,enemy)-spacing*.85f)) : 0,
                 };
@@ -196,6 +203,15 @@ namespace ArenaPvP
             if (!exposure.TryGetValue(node, out result))
                 exposure.Add(node, result = !Physics.Linecast(eye, enemy, LayerIndex.world.mask, QueryTriggerInteraction.Ignore));
             return result;
+        }
+
+        internal static float ExposureAt(List<BotExposure> threats, Vector3 eye)
+        {
+            float exposure = 0;
+            foreach (var threat in threats)
+                if (!Physics.Linecast(eye, threat.Position, LayerIndex.world.mask, QueryTriggerInteraction.Ignore))
+                    exposure += threat.Weight;
+            return exposure;
         }
 
         internal static bool InHill(HillView hill, Vector3 point)

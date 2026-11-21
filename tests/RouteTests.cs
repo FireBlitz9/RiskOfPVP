@@ -47,6 +47,8 @@ internal static class RouteTests
             var isolated=new NodeGraph();isolated.Positions.Add(body.footPosition);SceneInfo.instance.groundNodes=isolated;routes.Clear();
             Check(!routes.Choose(body,enemy,true,null,player,roster,BotEngagement.Press,12,4,true,body.footPosition,out waypoint),"an isolated start node returns control to fallback navigation instead of a fake movement route");
             Locomotion();
+            Pursuit();
+            Crossfire();
             Console.WriteLine("PASS: "+checks+" production graph-route assertions.");return 0;
         }
         catch(Exception e) { Console.Error.WriteLine(e);return 1; }
@@ -74,6 +76,65 @@ internal static class RouteTests
         Check(repaired.sqrMagnitude==0 && !wantsJump,"recovery does not invent a route or jump when every sampled landing has no floor");
         Physics.NoFloor=false;
     }
+
+    private static void Pursuit()
+    {
+        var graph = new NodeGraph();
+        // The corridor first runs away from the target before looping around
+        // a wall. A local scan or following straight-line distance misses it.
+        graph.Positions.Add(Vector3.zero);
+        for (int i = 1; i <= 100; i++)
+        {
+            graph.Positions.Add(new Vector3(-10 + i * .1f, 0, i * 3));
+            graph.Connect(i - 1, i);
+        }
+        graph.Positions.Add(new Vector3(280, 0, 300));
+        graph.Connect(100, 101);
+        SceneInfo.instance = new SceneInfo { groundNodes = graph };
+        var body = new CharacterBody();
+        var target = new CharacterBody { footPosition = graph.Positions[101] };
+        var pursuit = new ArenaBotPursuit();
+        pursuit.Track(body, target, 0);
+        pursuit.Step(body, 0, 8);
+        Check(!pursuit.TryWaypoint(body, 0, true, out _) && !pursuit.Failed(0),
+            "a distant pursuit stays pending when the current graph-search slice is spent");
+        for (int i = 1; i < 14; i++) pursuit.Step(body, i * .02f, 8);
+        Check(pursuit.TryWaypoint(body, .28f, true, out var next) && next.x < 0,
+            "full graph pursuit takes the connected detour to an opponent beyond the old awareness radius");
+        body.footPosition = next;
+        Check(pursuit.TryWaypoint(body, .3f, true, out next) && next.z == 6,
+            "a reached milestone advances immediately to the next route leg");
+        graph.DisabledStart = 1;
+        Check(!pursuit.TryWaypoint(body, .32f, true, out _), "a closed gate invalidates the next committed link");
+        pursuit.Step(body, .34f);
+        Check(pursuit.Failed(.34f), "a disconnected target can be temporarily deprioritized after its graph search actually fails");
+        graph.DisabledStart = -1;
+        pursuit.Track(body, target, 2);
+        pursuit.Step(body, 2, 128);
+        Check(pursuit.TryWaypoint(body, 2, true, out _), "a reopened route can be planned after the retry window");
+    }
+
+    private static void Crossfire()
+    {
+        var graph = new NodeGraph();
+        graph.Positions.AddRange(new[] { Vector3.zero, new Vector3(5, 0, -5), new Vector3(5, 0, 5) });
+        graph.Connect(0, 1);
+        graph.Connect(0, 2);
+        SceneInfo.instance = new SceneInfo { groundNodes = graph };
+        var primary = new Vector3(18, 1, 0);
+        var secondary = new Vector3(3, 1, -12);
+        Physics.LineBlocked = (eye, target) => target.z == -12 && eye.z > 0;
+        try
+        {
+            var routes = new ArenaBotRoutes();
+            var threats = new List<BotExposure> { new BotExposure { Position = secondary, Weight = 1 } };
+            var body = new CharacterBody();
+            Check(routes.Choose(body, primary, true, null, new ArenaPlayer(), new List<BotTarget>(),
+                BotEngagement.Hold, 14, 0, true, body.footPosition, out var point, threats) && point.z > 0,
+                "a crossfire route keeps the main opponent visible while taking cover from a second opponent");
+        }
+        finally { Physics.LineBlocked = null; }
+    }
 }
 namespace ArenaPvP
 {
@@ -88,7 +149,7 @@ namespace RoR2
     public enum HullMask { Human=1 }
     public class CharacterMotor:TestObject { public bool isGrounded=true;public Vector3 velocity=Vector3.zero; }
     public class CharacterBody:TestObject
-    { public bool isFlying=false;public float radius=.5f,moveSpeed=7,acceleration=80;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
+    { public bool isFlying=false;public float radius=.5f,moveSpeed=7,acceleration=80,jumpPower=12;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
     public class SceneInfo:TestObject { public static SceneInfo instance;public NodeGraph groundNodes; }
     public struct LayerIndex { public int mask;public static LayerIndex world=new LayerIndex { mask=1 }; }
 }
@@ -99,15 +160,19 @@ namespace RoR2.Navigation
         public struct NodeIndex { public int nodeIndex; }
         public struct LinkIndex { public int index; }
         public readonly List<Vector3> Positions=new List<Vector3>();
+        public int DisabledStart = -1;
         private readonly List<int[]> edges=new List<int[]>();
         public void Connect(int a,int b) { edges.Add(new[]{a,b});edges.Add(new[]{b,a}); }
         public NodeIndex FindClosestNode(Vector3 point,RoR2.HullClassification hull,float max)
         { int best=-1;float score=max*max;for(int i=0;i<Positions.Count;i++) { float d=(point-Positions[i]).sqrMagnitude;if(d<=score) { score=d;best=i; } }return new NodeIndex { nodeIndex=best }; }
+        public NodeIndex FindClosestNodeWithRaycast(Vector3 point,RoR2.HullClassification hull,float max,int rays) => FindClosestNode(point,hull,max);
         public bool GetNodePosition(NodeIndex node,out Vector3 point) { point=node.nodeIndex<0 ? Vector3.zero : Positions[node.nodeIndex];return node.nodeIndex>=0; }
         public void GetActiveNodeLinks(NodeIndex node,List<LinkIndex> result) { for(int i=0;i<edges.Count;i++)if(edges[i][0]==node.nodeIndex)result.Add(new LinkIndex { index=i }); }
-        public bool IsLinkSuitableForHull(LinkIndex link,RoR2.HullClassification hull) { return true; }
+        public bool IsLinkSuitableForHull(LinkIndex link,RoR2.HullClassification hull) { return edges[link.index][0] != DisabledStart; }
         public bool GetLinkNeedsJump(LinkIndex link,RoR2.HullMask mask) { return false; }
         public NodeIndex GetLinkEndNode(LinkIndex link) { return new NodeIndex { nodeIndex=edges[link.index][1] }; }
+        public NodeIndex GetLinkStartNode(LinkIndex link) { return new NodeIndex { nodeIndex=edges[link.index][0] }; }
+        public bool GetNodeTraversalPenalty(NodeIndex node, out float penalty) { penalty = 0; return true; }
     }
 }
 namespace UnityEngine
@@ -136,12 +201,14 @@ namespace UnityEngine
     public static class Physics
     {
         public static int Queries;public static bool Wall=false,NoFloor=false;
+        public static Vector3 gravity = new Vector3(0,-30,0);
+        public static Func<Vector3,Vector3,bool> LineBlocked;
         public static bool CrossesWall(Vector3 from,Vector3 to)
         {
             if(!Wall || (from.x-.8f)*(to.x-.8f)>=0 || Math.Abs(to.x-from.x)<.0001f)return false;
             float t=(.8f-from.x)/(to.x-from.x);return Math.Abs(from.z+(to.z-from.z)*t)<2.5f;
         }
-        public static bool Linecast(Vector3 a,Vector3 b,int mask,QueryTriggerInteraction query) { Queries++;return false; }
+        public static bool Linecast(Vector3 a,Vector3 b,int mask,QueryTriggerInteraction query) { Queries++;return LineBlocked?.Invoke(a,b) ?? false; }
         public static bool SphereCast(Vector3 from,float radius,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)
         { Queries++;var to=from+direction*distance;bool blocked=CrossesWall(from,to);hit=new RaycastHit { normal=new Vector3(from.x<=.8f ? -1 : 1,0,0) };return blocked; }
         public static bool Raycast(Vector3 from,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)

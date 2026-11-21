@@ -6,7 +6,7 @@ namespace ArenaPvP
     {
         public const int NoNode = -1;
         public int Node, FirstHop;
-        public float Travel, Range, HillDistance, AllyDistance, Sector, Approach;
+        public float Travel, Range, HillDistance, AllyDistance, Sector, Approach, Crossfire;
         public bool HasShot, FirstHopExposed, HasCoverExit;
     }
 
@@ -95,6 +95,7 @@ namespace ArenaPvP
                 score += option.HasShot ? 12f : -5f;
             if(mode!=BotEngagement.Recover)score+=Math.Max(-8,Math.Min(8,option.Approach))*(mode==BotEngagement.Press ? .75f : .55f);
             if (option.HasCoverExit) score += mode == BotEngagement.Press ? 1f : 4f;
+            score -= option.Crossfire * (mode == BotEngagement.Recover ? 18f : 13f);
             if (onHill)
             {
                 float outside = Math.Max(0, option.HillDistance - hillRadius * .80f);
@@ -182,6 +183,37 @@ namespace ArenaPvP
             // escape once the old fight has gone stale.
             bool reserve = escapeReady && (risk || mode == BotEngagement.Recover || (visible && !window && !attackReady));
             return new BotTempo { Engagement = mode, ReserveEscape = reserve && now - lastSeen < 2f };
+        }
+    }
+
+    public sealed class BotEngagementPolicy
+    {
+        private float coverUntil, reconsiderAt;
+
+        public void Clear() { coverUntil = reconsiderAt = 0; }
+
+        public BotTempo Decide(float now, float health, float lethalFraction, float recentDamage, int attackers,
+            bool holdingHill, bool escapeReady, bool hasUsableShot, bool canFinish, bool opening)
+        {
+            if (holdingHill)
+                return new BotTempo { Engagement = BotEngagement.Hold, ReserveEscape = escapeReady && attackers > 0 };
+
+            // Numbers alone favor taking an angle, not running away. Retreat
+            // costs pressure and is reserved for a credible immediate loss.
+            bool imminent = attackers > 0 && (lethalFraction >= health * 1.08f
+                || health <= .22f && recentDamage >= .14f
+                || health <= .36f && attackers >= 2 && recentDamage >= .43f);
+            if (imminent && now >= reconsiderAt && (!canFinish || lethalFraction >= health * 1.45f))
+            {
+                coverUntil = now + .95f;
+                reconsiderAt = now + 1.35f;
+            }
+            if (now < coverUntil)
+                return new BotTempo { Engagement = BotEngagement.Recover, ReserveEscape = escapeReady };
+
+            var intent = !hasUsableShot || canFinish || opening && attackers <= 1 ? BotEngagement.Press
+                : attackers > 1 ? BotEngagement.Hold : BotEngagement.Trade;
+            return new BotTempo { Engagement = intent, ReserveEscape = escapeReady && (attackers > 1 || imminent) };
         }
     }
 }

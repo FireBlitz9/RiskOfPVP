@@ -115,6 +115,7 @@ namespace ArenaPvP
                 if (brain)
                 {
                     if(now>=brain.NextThink)brain.Think(match,targets,now);
+                    if (decisionBudget.Elapsed.TotalMilliseconds < 2) brain.AdvancePursuit(now);
                     var player=brain.Participant;
                     if(player!=null && player.Rewards.First!=null && (now>=brain.NextChoice || player.Rewards.ArrivalRevision!=brain.ChoiceArrival))
                     { brain.ChoiceArrival=player.Rewards.ArrivalRevision;brain.NextChoice=now+(match.SpendBotReward(player) ? .05f : .25f); }

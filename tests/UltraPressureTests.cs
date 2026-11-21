@@ -70,6 +70,17 @@ internal static class UltraPressureTests
         check(BotBuildRules.AdaptiveScore(plate,learned)>normalPlate,"observed high-proc skills raise repeat-hit mitigation even without an enemy proc-item list");
         check(BotBuildRules.AdaptiveScore(barrier,learned)>normalBarrier,"observed skill burst raises burst protection before the first defeat");
         check(BotBuildRules.AdaptiveScore(cleanse,learned)>normalCleanse,"observed native damage-over-time skills raise cleanse utility");
+        var engagement = new BotEngagementPolicy();
+        var surrounded = engagement.Decide(0, .85f, .28f, .1f, 3, false, true, true, false, false);
+        check(surrounded.Engagement == BotEngagement.Hold && surrounded.ReserveEscape,
+            "a healthy outnumbered bot fights for an angle and saves its escape instead of retreating");
+        check(engagement.Decide(1, .33f, .5f, .6f, 2, false, true, true, false, false).Engagement == BotEngagement.Recover,
+            "simultaneous attacks that threaten remaining health trigger cover");
+        check(engagement.Decide(1.5f, .33f, 0, 0, 0, false, true, false, false, false).Engagement == BotEngagement.Recover
+            && engagement.Decide(2, .33f, 0, 0, 0, false, true, false, false, false).Engagement == BotEngagement.Press,
+            "brief cover commitment survives lost sight then resumes pursuit");
+        check(engagement.Decide(3, .1f, .5f, .7f, 3, true, true, true, false, false).Engagement == BotEngagement.Hold,
+            "the hill remains the priority under lethal pressure");
         Console.WriteLine("INFO: sustained-pressure build simulation: "+protection+" defence / "+offense+" offence rewards.");
     }
 }

@@ -19,8 +19,15 @@ namespace ArenaPvP
     {
         private static void Postfix(RoR2.UI.Nameplate __instance, CharacterBody ___body)
         {
-            if (!Plugin.Active || !ArenaTeams.IsCombatantBody(___body)) return;
-            if (!Plugin.Settings.ShowNametags.Value && __instance.label) __instance.label.enabled = false;
+            if (!Plugin.Active || !___body) return;
+            string botName;
+            bool bot = ArenaIndicatorAssets.TryBotName(___body.master, out botName);
+            if (!bot && !ArenaTeams.IsCombatantBody(___body)) return;
+            if (__instance.label)
+            {
+                if (bot) __instance.label.text = botName;
+                if (!Plugin.Settings.ShowNametags.Value) __instance.label.enabled = false;
+            }
             int side = ArenaTeams.SideOf(___body.master);
             if (side >= 0)
             {
@@ -45,9 +52,14 @@ namespace ArenaPvP
         private static bool Prefix(TeamComponent __instance, ref GameObject ___defaultIndicatorPrefab, out GameObject __state)
         {
             __state = ___defaultIndicatorPrefab;
-            if (!Plugin.Active || !ArenaTeams.IsCombatantBody(__instance.body)) return true;
+            if (!Plugin.Active || !__instance.body) return true;
+            string botName;
+            bool bot = ArenaIndicatorAssets.TryBotName(__instance.body.master, out botName);
+            if (!bot && !ArenaTeams.IsCombatantBody(__instance.body)) return true;
+            if (bot && __instance.body.healthComponent && !__instance.body.healthComponent.alive) return false;
             var prefab = ArenaIndicatorAssets.PlayerIndicator;
             if (!prefab) return ArenaIndicatorAssets.Failed; // Await async; use native fallback after a load failure.
+            if (bot) return !ArenaIndicatorAssets.InstallBotIndicator(__instance, prefab);
             ___defaultIndicatorPrefab = prefab;
             return true;
         }

@@ -70,7 +70,7 @@ Bot intelligence is under **General > Bots**:
 | **Medium** | Standard tactics and fixed builds; the default. |
 | **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
 | **Extra High** | Adaptive builds, predictive aiming, dodging, combat jumps and sprint resets. |
-| **Ultra** | Learns skill damage, range, proc values and opponents' habits; sustains fire, seeks cover and adapts its movement and defensive build. |
+| **Ultra** | Tracks opponents across the map, plans routes and isolates firing angles in group fights. Learns skill damage, range, proc values and opponents' habits. |
 
 **Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
 

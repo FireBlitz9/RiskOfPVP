@@ -1,3 +1,10 @@
+# 1.3.5
+
+- Ultra tracks hostile positions across the map and searches the connected navigation graph for routes around walls and elevation changes. It can pursue a hidden opponent while reserving attacks for clear sightlines.
+- In group fights, Ultra looks for an angle on its target where terrain covers it from other attackers. It reserves a short retreat for credible lethal pressure and keeps the KOTH zone as its priority.
+- The reward picker shortcut works while movement or other unrelated keys are held. Configured modifiers and the double-tap close gesture still apply.
+- Remote clients reconcile bot nameplates as body, team and roster data arrive, so the first life uses the bot's name.
+
 # 1.3.4
 
 - Fixed an Ultra firing deadlock: movement and utility drivers could keep hitscan aim pointing sideways, preventing the firing gate from ever opening. Target aim now updates while the bot turns, including while its other skills recharge.

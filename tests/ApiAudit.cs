@@ -493,6 +493,25 @@ internal static class ApiAudit
                 var indicators = plugin.MainModule.GetType("ArenaPvP.ArenaPlayerPositionIndicators");
                 if (indicators.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName == "RoR2.LegacyResourcesAPI"))
                     throw new Exception("Arena indicators must not introduce synchronous legacy loads during character setup.");
+                var nativeIndicator = game.MainModule.GetType("RoR2.TeamComponent").Properties.Single(p => p.Name == "indicator");
+                if (nativeIndicator.SetMethod == null || nativeIndicator.PropertyType.FullName != "UnityEngine.GameObject")
+                    throw new Exception("Bot nameplates require the native TeamComponent indicator lifecycle slot.");
+                var indicatorAssets = plugin.MainModule.GetType("ArenaPvP.ArenaIndicatorAssets");
+                if (!indicatorAssets.Methods.Single(m => m.Name == "TryBotName").Body.Instructions
+                    .Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "TryFindBot")
+                    || !indicatorAssets.Methods.Single(m => m.Name == "Update").Body.Instructions
+                    .Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "RebuildIndicator")
+                    || !indicators.Methods.Single(m => m.Name == "Prefix").Body.Instructions
+                    .Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "InstallBotIndicator"))
+                    throw new Exception("First-spawn bot nameplates must reconcile replicated identities into native indicators.");
+                var arenaUi = plugin.MainModule.GetType("ArenaPvP.ArenaUI");
+                var shortcut = arenaUi.Methods.Single(m => m.Name == "RewardShortcutPressed").Body.Instructions
+                    .Where(i => i.Operand is MethodReference).Select(i => ((MethodReference)i.Operand).Name).ToArray();
+                if (!new[]{"get_MainKey", "get_Modifiers", "GetKeyDown", "GetKey"}.All(shortcut.Contains)
+                    || shortcut.Contains("IsDown") || !arenaUi.Methods.Single(m => m.Name == "UpdateSafe").Body.Instructions
+                        .Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "RewardShortcutPressed"))
+                    throw new Exception("The reward picker must accept the configured chord while other keys are held.");
+                Console.WriteLine("PASS: replicated bot indicator repair and movement-compatible reward hotkey wiring audited.");
                 var nativeRunStart = game.MainModule.GetType("RoR2.Run").Methods.Single(m => m.Name == "Start");
                 if (nativeRunStart.Body.Instructions.Count(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "Invoke" && ((MethodReference)i.Operand).DeclaringType.FullName == "System.Action`1<RoR2.Run>") != 1)
                     throw new Exception("Native Run startup callback shape changed; timing replacement is unsafe.");

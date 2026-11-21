@@ -86,6 +86,8 @@ namespace ArenaPvP
         private static readonly HashSet<NetworkClient> registeredClients = new HashSet<NetworkClient>();
         private static bool serverRegistered;
         private static PlayerView[] roster = new PlayerView[0];
+        private static readonly Dictionary<uint, PlayerView> botRoster = new Dictionary<uint, PlayerView>();
+        internal static bool TryFindBot(uint masterId, out PlayerView bot) => botRoster.TryGetValue(masterId, out bot);
 
         // A listen-server host is a participant even without a remote client
         // connection. This also applies while running alone in a multiplayer lobby.
@@ -144,6 +146,10 @@ namespace ArenaPvP
                 var view = JsonUtility.FromJson<RosterView>(message.ReadMessage<MatchSnapshotMessage>().Json);
                 if (view == null || view.RunId != Run.instance.netId.Value || view.Players == null) return;
                 roster = view.Players;
+                botRoster.Clear();
+                foreach (var player in roster)
+                    if (player != null && player.IsBot && player.Online && player.MasterId != 0)
+                        botRoster[player.MasterId] = player;
                 foreach (var match in Views.Values) match.Players = roster;
             }
             catch (Exception) { }
@@ -231,7 +237,7 @@ namespace ArenaPvP
             }
         }
 
-        internal static void ClearViews() { Views.Clear(); roster = new PlayerView[0]; ArenaHostSettings.Clear(); }
+        internal static void ClearViews() { Views.Clear(); roster = new PlayerView[0]; botRoster.Clear(); ArenaHostSettings.Clear(); }
         internal static void Shutdown()
         {
             if (NetworkServer.active && serverRegistered) { NetworkServer.UnregisterHandler(ChooseId); NetworkServer.UnregisterHandler(ContinueVoteId); NetworkServer.UnregisterHandler(ArenaLobby.VoteId); NetworkServer.UnregisterHandler(ArenaHostSettings.RequestId); }
@@ -239,6 +245,7 @@ namespace ArenaPvP
             registeredClients.Clear(); serverRegistered = false; Views.Clear();
             ArenaHostSettings.Clear();
             roster = new PlayerView[0];
+            botRoster.Clear();
         }
     }
 }
