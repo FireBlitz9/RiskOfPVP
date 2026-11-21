@@ -13,6 +13,7 @@ namespace ArenaPvP
         public float Healing, HealthCost;
         public bool Dot, NativeSequence;
         public float FalloffStart,FalloffEnd,MinimumDamage=1;
+        internal float TravelDuration, TravelSpeedCoefficient, TravelStartCoefficient, TravelEndCoefficient;
         public int Samples;
         private float driverRange;
         public void DriverRange(float minimum,float maximum)
@@ -35,7 +36,15 @@ namespace ArenaPvP
             else if(key.Contains("proccoefficient"))Proc=Math.Min(10,value);
             else if(key=="bulletcount" || key=="shotcount" || key=="projectilecount" || key=="attackcount")Hits=Math.Max(1,Math.Min(64,value));
             else if(key.Contains("chargeduration") || key.Contains("chargeupduration")) { ChargeTime=Math.Max(.1f,value);Charge=true; }
-            else if(key=="baseduration" || key=="duration" || key=="firefrequency") { if(key!="firefrequency")Duration=Math.Max(.08f,value); }
+            else if (key == "duration")
+            {
+                Duration = Math.Max(.08f, value);
+                TravelDuration = value;
+            }
+            else if (key == "baseduration") Duration = Math.Max(.08f, value);
+            else if (key == "speedcoefficient") TravelSpeedCoefficient = value;
+            else if (key == "initialspeedcoefficient") TravelStartCoefficient = value;
+            else if (key == "finalspeedcoefficient") TravelEndCoefficient = value;
             else if(key=="maxdistance" || key=="maxrange" || key=="maxbulletdistance" || key=="bulletmaxdistance" || key=="attackrange")
             { if(value>0) { Range=Math.Max(.5f,Math.Min(1000,value));ConfiguredRange=true; } }
             else if(key=="radius" || key=="blastradius" || key=="attackradius")Radius=Math.Min(100,value);

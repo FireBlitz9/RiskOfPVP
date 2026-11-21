@@ -133,6 +133,68 @@ internal static class BotActionsTests
         controller.Dispose();
         SustainedPressure(check);
         LearnedSkills(check);
+        ContinuousAttackFallbacks(check);
+    }
+    private static void ContinuousAttackFallbacks(Action<bool, string> check)
+    {
+        var body = new CharacterBody();
+        var controller = Controller("CommandoBody", body, out var ai, out var enemy);
+        body.skillLocator.secondary.Ready = body.skillLocator.special.Ready = false;
+        var native = new BaseAI.BodyInputs { pressSkill3 = true };
+        var previous = default(BaseAI.BodyInputs);
+        for (int tick = 0; tick < 10; tick++)
+        {
+            Time.unscaledTime = tick * .02f;
+            // The driver asks for a utility that reports readiness but never
+            // activates. It cannot keep the aim or shared weapon indefinitely.
+            var input = native;
+            controller.Combo(ai, ref input, previous, enemy, tick >= 8, BotIntelligence.Ultra);
+            previous = input;
+        }
+        check(previous.pressSkill1 && !previous.pressSkill3 && !controller.NativeUtilityAvailable(body, .18f),
+            "a stale native utility times out even before aim locks, allowing shared primary damage");
+        controller.Dispose();
+
+        body = new CharacterBody();
+        controller = Controller("CommandoBody", body, out ai, out enemy);
+        ArenaCombatLearning.Model(body, 1).Speed = 25;
+        var shot = Step(controller, ai, enemy, 0);
+        check(controller.AimSlotFor(body) == 1, "a ready projectile secondary prepares its own lead");
+        body.skillLocator.secondary.Ready = false;
+        check(controller.AimSlotFor(body) == 0, "a cooled-down projectile cannot keep the aiming slot");
+        body.skillLocator.special.Ready = false;
+        shot = Step(controller, ai, enemy, .02f, shot);
+        check(shot.pressSkill1, "hitscan primary resumes as soon as the projectile becomes unavailable");
+        controller.Dispose();
+
+        body = new CharacterBody();
+        controller = Controller("CommandoBody", body, out ai, out enemy, false);
+        body.skillLocator.special.Ready = body.skillLocator.utility.Ready = false;
+        ArenaCombatLearning.Model(body, 0).Damage = 12;
+        ArenaCombatLearning.Model(body, 1).Damage = 1;
+        shot = Step(controller, ai, enemy, 0);
+        check(shot.pressSkill1 && shot.pressSkill2, "a weaker independent shot adds damage without displacing a stronger primary");
+        controller.Dispose();
+
+        body = new CharacterBody();
+        controller = Controller("CommandoBody", body, out ai, out enemy);
+        var travel = default(BaseAI.BodyInputs);
+        check(controller.TravelUtility(ref travel, default, body, 0) && travel.pressSkill3,
+            "a ready travel ability uses normal input without a combat target");
+        body.skillLocator.utility.Ready = false;
+        check(!controller.TravelUtility(ref travel, default, body, .02f) && !travel.pressSkill3,
+            "travel input does not bypass the skill's cooldown");
+        controller.Dispose();
+
+        body = new CharacterBody();
+        controller = Controller("CommandoBody", body, out ai, out enemy);
+        body.healthComponent.combinedHealthFraction = .3f;
+        var sustain = ArenaCombatLearning.Model(body, 2);
+        sustain.Healing = .3f;
+        var healInput = default(BaseAI.BodyInputs);
+        controller.Combo(ai, ref healInput, default, null, false, BotIntelligence.Ultra);
+        check(healInput.pressSkill3 && !healInput.pressSkill1, "an injured bot can use a known safe self-heal without an opponent");
+        controller.Dispose();
     }
     private static void LearnedSkills(Action<bool,string> check)
     {

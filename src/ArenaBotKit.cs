@@ -109,6 +109,49 @@ namespace ArenaPvP
                 && body.skillLocator.utility.stock <= 1;
         }
 
+        internal static float TravelDistance(CharacterBody body, GenericSkill utility, out bool needsAim)
+        {
+            needsAim = false;
+            var type = utility.activationState.stateType;
+            float speed = body.moveSpeed;
+            float distance;
+            if (type == typeof(EntityStates.Merc.Assaulter))
+            {
+                needsAim = true;
+                distance = speed * EntityStates.Merc.Assaulter.speedCoefficient * EntityStates.Merc.Assaulter.dashDuration;
+            }
+            else if (type == typeof(EntityStates.Merc.PrepAssaulter2))
+            {
+                needsAim = true;
+                float duration = ArenaCombatLearning.RegisteredDuration(typeof(EntityStates.Merc.Assaulter2));
+                distance = speed * EntityStates.Merc.Assaulter2.speedCoefficient * duration / Mathf.Max(.5f, body.attackSpeed);
+            }
+            else if (type == typeof(EntityStates.Huntress.BlinkState) || type == typeof(EntityStates.Huntress.MiniBlinkState))
+            {
+                needsAim = type == typeof(EntityStates.Huntress.BlinkState);
+                var model = ArenaCombatLearning.Model(body, 2);
+                distance = model == null || model.TravelDuration <= 0 || model.TravelSpeedCoefficient <= 0
+                    ? speed * 7.5f : speed * model.TravelDuration * model.TravelSpeedCoefficient;
+            }
+            else if (type == typeof(EntityStates.Commando.DodgeState) || type == typeof(EntityStates.Commando.CombatDodge))
+            {
+                var model = ArenaCombatLearning.Model(body, 2);
+                distance = model == null ? 0 : speed * model.TravelDuration * (model.TravelStartCoefficient + model.TravelEndCoefficient) * .5f;
+            }
+            else if (type == typeof(EntityStates.Commando.SlideState))
+            {
+                var curve = EntityStates.Commando.SlideState.forwardSpeedCoefficientCurve;
+                if (curve == null) return 0;
+                float peak = 0;
+                for (int i = 0; i <= 8; i++) peak = Mathf.Max(peak, curve.Evaluate(i / 8f));
+                distance = speed * peak * EntityStates.Commando.SlideState.slideDuration;
+            }
+            else return 0;
+
+            // Include coasting and one extra physics step in the safety probe.
+            return distance > 2 && !float.IsInfinity(distance) ? distance * 1.16f + body.radius + 1f : 0;
+        }
+
         internal static float ProjectileSpeed(CharacterBody body, AISkillDriver driver, float fallback)
         {
             if (!body.skillLocator || fallback <= 0 || !driver || driver.skillSlot == SkillSlot.None) return 0;

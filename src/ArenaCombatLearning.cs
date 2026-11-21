@@ -221,6 +221,18 @@ namespace ArenaPvP
             }
             Configure(profile);return profile.Knowledge;
         }
+
+        internal static float RegisteredDuration(Type type)
+        {
+            if (!configurations.TryGetValue(type, out var config)) return 0;
+            var fields = config.serializedFieldsCollection.serializedFields;
+            if (fields == null) return 0;
+            foreach (var field in fields)
+                if (string.Equals(field.fieldName, "baseDuration", StringComparison.OrdinalIgnoreCase)
+                    && float.TryParse(field.fieldValue.stringValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float duration)
+                    && duration > 0 && !float.IsInfinity(duration)) return duration;
+            return 0;
+        }
         internal static void SeedDrivers(CharacterBody body,AISkillDriver[] drivers)
         {
             if(!body || !body.skillLocator)return;

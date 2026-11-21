@@ -134,7 +134,7 @@ namespace ArenaPvP
                     "Low: simple tactics and fixed builds. Medium: standard tactics. High: nearest-enemy awareness and fixed builds. Extra High: adaptive builds, predictive aim, dodging, combat jumps and sprint resets. Ultra: stronger aim, opponent counter-builds and survivor-specific attack combinations. Every tier seeks KOTH objectives and uses cliff avoidance. Host-controlled and live.", new AcceptableValueRange<int>(0,4));
                 Add(new ArenaBotIntelligenceOption(BotIntelligence));
                 BotThinkSeconds = General("Bots", "Decision interval", BotTacticsRules.DefaultDecisionInterval,
-                    "Seconds between tactical decisions for each bot. Lower values react sooner and use more CPU. Applies live.",
+                    "Seconds between decision batches for each bot. Lower values react sooner and use more CPU. Applies live.",
                     new AcceptableValueRange<float>(BotTacticsRules.MinimumDecisionInterval, BotTacticsRules.MaximumDecisionInterval),
                     new ConfigDefinition(SettingsLayout.Profile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
                     new ConfigDefinition(SettingsLayout.LegacyProfile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
@@ -142,7 +142,7 @@ namespace ArenaPvP
                 Add(new StepSliderOption(BotThinkSeconds, new StepSliderConfig { name = "Decision interval",
                     min = BotTacticsRules.MinimumDecisionInterval, max = BotTacticsRules.MaximumDecisionInterval, increment = .05f }));
                 BotDecisionsPerTick = General("Bots", "Decisions per tick", BotTacticsRules.DefaultDecisionsPerTick,
-                    "Maximum tactical decisions in one server physics tick. A shared CPU budget can defer decisions to later ticks. Applies live.",
+                    "Maximum tactical passes per bot on a physics tick when its decision interval has elapsed. Extra passes refine pursuit or firing position when there is CPU time. Applies live.",
                     new AcceptableValueRange<int>(1, BotTacticsRules.MaximumDecisionsPerTick));
                 Add(new IntSliderOption(BotDecisionsPerTick, new IntSliderConfig { name = "Decisions per tick",
                     min = 1, max = BotTacticsRules.MaximumDecisionsPerTick }));

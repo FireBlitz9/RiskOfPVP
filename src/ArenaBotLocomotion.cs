@@ -65,5 +65,27 @@ namespace ArenaPvP
                 && Physics.Raycast(body.footPosition+direction*(distance*.5f)+Vector3.up*1.5f,Vector3.down,out hit,3.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.5f
                 && Physics.Raycast(end+Vector3.up*1.5f,Vector3.down,out hit,3.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.5f;
         }
+
+        internal static bool ClearTravelCorridor(CharacterBody body, Vector3 direction, float distance, HillView hill)
+        {
+            var origin = body.footPosition;
+            var landing = origin + direction * distance;
+            if (hill != null && hill.Ready && ArenaBotRoutes.InHill(hill, origin)
+                && !ArenaBotRoutes.InHill(hill, landing)) return false;
+            float radius = Mathf.Clamp(body.radius * .7f, .25f, .85f);
+            if (Physics.SphereCast(origin + Vector3.up * (radius + .4f), radius, direction, out _, distance,
+                LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) return false;
+
+            // Travel skills can cover much more ground than a walking
+            // input. Confirm support along the entire swept corridor.
+            int samples = Mathf.Clamp(Mathf.CeilToInt(distance / 4f), 3, 18);
+            for (int i = 1; i <= samples; i++)
+            {
+                var probe = origin + direction * (distance * i / samples) + Vector3.up * 1.8f;
+                if (!Physics.Raycast(probe, Vector3.down, out var ground, 4f, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)
+                    || ground.normal.y <= .5f) return false;
+            }
+            return true;
+        }
     }
 }

@@ -4,29 +4,24 @@ namespace ArenaPvP
 {
     public enum BotIntelligence { Low, Medium, High, ExtraHigh, Ultra }
 
-    internal struct BotDecisionBatch
+    internal struct BotDecisionPasses
     {
-        private int cursor;
-        private int count, visited, allowance;
+        private readonly int limit;
+        private int completed;
 
-        internal void Begin(int botCount, int limit)
+        internal BotDecisionPasses(int limit)
         {
-            count = botCount;
-            visited = 0;
-            allowance = Math.Max(1, Math.Min(limit, BotTacticsRules.MaximumDecisionsPerTick));
+            this.limit = Math.Max(1, Math.Min(limit, BotTacticsRules.MaximumDecisionsPerTick));
+            completed = 0;
         }
 
-        internal bool TryNext(out int index)
+        internal bool TryNext(bool hasTime, out int pass)
         {
-            index = -1;
-            if (visited >= count || allowance == 0) return false;
-            index = cursor % count;
-            cursor = index + 1;
-            visited++;
+            pass = completed;
+            if (completed >= limit || completed != 0 && !hasTime) return false;
+            completed++;
             return true;
         }
-
-        internal void RecordDecision() { allowance--; }
     }
 
     public static class BotTacticsRules

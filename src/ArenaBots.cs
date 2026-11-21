@@ -14,8 +14,7 @@ namespace ArenaPvP
         private bool initialSpawned;
         private int startingRemaining;
         private float nextRoster, nextSpawn;
-        private int nextMaintenance;
-        private BotDecisionBatch decisionBatch;
+        private int nextMaintenance, nextDecision;
         private const double TickBudgetMilliseconds = 2.0;
         private const double MaintenanceSliceMilliseconds = .6;
         private readonly System.Diagnostics.Stopwatch decisionBudget = new System.Diagnostics.Stopwatch();
@@ -32,7 +31,7 @@ namespace ArenaPvP
         internal string Status = "";
         private void Awake() { Instance = this; }
         private void OnDestroy() { Reset(); Instance = null; }
-        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextMaintenance = 0; decisionBatch = default; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); ArenaCombatLearning.Reset(); Status = ""; }
+        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextMaintenance = nextDecision = 0; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); ArenaCombatLearning.Reset(); Status = ""; }
         private BotSurvivor[] Survivors
         {
             get
@@ -127,15 +126,19 @@ namespace ArenaPvP
                 }
                 if (decisionBudget.Elapsed.TotalMilliseconds >= maintenanceDeadline) break;
             }
-            decisionBatch.Begin(brains.Count, match.Rules.BotDecisionsPerTick);
             bool decided = false;
-            while ((!decided || decisionBudget.Elapsed.TotalMilliseconds < TickBudgetMilliseconds)
-                && decisionBatch.TryNext(out int index))
+            for (int remaining = brains.Count; remaining > 0; remaining--)
             {
-                var brain = brains[index];
-                if (!brain || !brain.DecisionDue(now, match.Rules.BotThinkSeconds) || !brain.Think(match, targets, now)) continue;
-                decisionBatch.RecordDecision();
+                if (decided && decisionBudget.Elapsed.TotalMilliseconds >= TickBudgetMilliseconds) break;
+                nextDecision %= brains.Count;
+                var brain = brains[nextDecision++];
+                if (!brain || !brain.DecisionDue(now, match.Rules.BotThinkSeconds)) continue;
+                var passes = new BotDecisionPasses(match.Rules.BotDecisionsPerTick);
+                passes.TryNext(true, out _);
+                if (!brain.Think(match, targets, now)) continue;
                 decided = true;
+                while (passes.TryNext(decisionBudget.Elapsed.TotalMilliseconds < TickBudgetMilliseconds, out int pass))
+                    if (!brain.RefineDecision(now, pass)) break;
             }
         }
         internal bool Add(bool starting = false)

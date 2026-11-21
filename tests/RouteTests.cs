@@ -74,7 +74,14 @@ internal static class RouteTests
         Vector3 repaired=Vector3.zero;bool wantsJump=false;
         for(int i=0;i<13;i++) { Time.frameCount=100+i;repaired=motor.Resolve(body,new Vector3(1,0,0),new Vector3(12,0,0),null,i*.1f,out wantsJump); }
         Check(repaired.sqrMagnitude==0 && !wantsJump,"recovery does not invent a route or jump when every sampled landing has no floor");
+        Check(!ArenaBotLocomotion.ClearTravelCorridor(body, Vector3.forward, 20, null), "travel rejects a clear path with an unsupported floor");
         Physics.NoFloor=false;
+        Physics.Wall=true;
+        Check(!ArenaBotLocomotion.ClearTravelCorridor(body, new Vector3(1, 0, 0), 20, null), "travel checks the swept corridor for walls");
+        Physics.Wall=false;
+        Check(ArenaBotLocomotion.ClearTravelCorridor(body, Vector3.forward, 20, null), "a clear supported corridor permits a mobility skill");
+        var heldHill = new HillView { Ready = true, To = body.footPosition, Radius = 8 };
+        Check(!ArenaBotLocomotion.ClearTravelCorridor(body, Vector3.forward, 20, heldHill), "a charge cannot leave a held KOTH zone");
     }
 
     private static void Pursuit()
@@ -104,7 +111,11 @@ internal static class RouteTests
         body.footPosition = next;
         Check(pursuit.TryWaypoint(body, .3f, true, out next) && next.z == 6,
             "a reached milestone advances immediately to the next route leg");
+        Check(pursuit.ForwardRunway(body.footPosition, Vector3.forward) >= 40,
+            "a straight chain of native waypoints offers a longer runway than the next waypoint");
         graph.DisabledStart = 1;
+        Check(pursuit.ForwardRunway(body.footPosition, Vector3.forward) == 0,
+            "a closed gate also cuts off the mobility runway");
         Check(!pursuit.TryWaypoint(body, .32f, true, out _), "a closed gate invalidates the next committed link");
         pursuit.Step(body, .34f);
         Check(pursuit.Failed(.34f), "a disconnected target can be temporarily deprioritized after its graph search actually fails");
@@ -195,7 +206,7 @@ namespace UnityEngine
         public static Vector3 Cross(Vector3 a,Vector3 b)=>new Vector3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
     }
     public struct Quaternion { private float angle;public static Quaternion Euler(float x,float y,float z)=>new Quaternion { angle=y*(float)Math.PI/180 };public static Vector3 operator *(Quaternion q,Vector3 v)=>new Vector3(v.x*(float)Math.Cos(q.angle)+v.z*(float)Math.Sin(q.angle),v.y,v.z*(float)Math.Cos(q.angle)-v.x*(float)Math.Sin(q.angle)); }
-    public static class Mathf { public static float Min(float a,float b)=>Math.Min(a,b);public static int Min(int a,int b)=>Math.Min(a,b);public static float Max(float a,float b)=>Math.Max(a,b);public static float Abs(float n)=>Math.Abs(n);public static float Sqrt(float n)=>(float)Math.Sqrt(n);public static float Clamp01(float n)=>Math.Max(0,Math.Min(1,n));public static float Clamp(float n,float a,float b)=>Math.Max(a,Math.Min(b,n)); }
+    public static class Mathf { public static float Min(float a,float b)=>Math.Min(a,b);public static int Min(int a,int b)=>Math.Min(a,b);public static float Max(float a,float b)=>Math.Max(a,b);public static float Abs(float n)=>Math.Abs(n);public static float Sqrt(float n)=>(float)Math.Sqrt(n);public static float Clamp01(float n)=>Math.Max(0,Math.Min(1,n));public static float Clamp(float n,float a,float b)=>Math.Max(a,Math.Min(b,n));public static int Clamp(int n,int a,int b)=>Math.Max(a,Math.Min(b,n));public static int CeilToInt(float n)=>(int)Math.Ceiling(n); }
     public enum QueryTriggerInteraction { Ignore }
     public struct RaycastHit { public Vector3 normal,point; }
     public static class Physics

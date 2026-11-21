@@ -1,3 +1,10 @@
+# 1.3.7
+
+- Decisions per tick now applies to each bot. A due bot can run a main tactical pass and up to two extra passes to refine its approach or firing angle. The default is two passes and a 0.1-second interval. The minimum interval is 0.05 seconds.
+- Ultra falls back to ready weapons when a native utility keeps requesting input without activating. Projectile aim returns to the primary when the selected skill becomes unavailable, and independent attacks can add damage alongside the primary.
+- Brief breaks in sight preserve reaction time for the same target. Clear sight, range and native skill readiness still govern firing.
+- Ultra uses supported Mercenary, Huntress and Commando movement skills to pursue or reposition without a combat target. It checks the full travel corridor before committing and can use known self-heals while out of combat.
+
 # 1.3.6
 
 - Bot decision intervals can go down to 0.05 seconds. New configs default to 0.1 seconds and saved intervals carry over.

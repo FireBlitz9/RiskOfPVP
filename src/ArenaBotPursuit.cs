@@ -36,6 +36,7 @@ namespace ArenaPvP
         private CharacterBody requestedTarget;
         private bool unreachable;
         internal bool AtDestination => graph && !unreachable && frontier.Count == 0 && route.Count <= leg;
+        internal bool SearchPending => frontier.Count > 0;
 
         internal void Clear()
         {
@@ -195,6 +196,23 @@ namespace ArenaPvP
         }
 
         internal bool Failed(float now) => requestedTarget && unreachable && now < retryAt;
+
+        internal float ForwardRunway(Vector3 origin, Vector3 direction)
+        {
+            if (!graph) return 0;
+            float runway = 0;
+            var mask = (HullMask)(1 << (int)hull);
+            for (int i = leg; i < route.Count && i < leg + 20; i++)
+            {
+                var next = route[i];
+                if (!graph.IsLinkSuitableForHull(next.Link, hull) || graph.GetLinkNeedsJump(next.Link, mask)) break;
+                var offset = next.Position - origin;
+                float forward = Vector3.Dot(offset, direction);
+                if (forward < runway || (offset - direction * forward).sqrMagnitude > 9) break;
+                runway = forward;
+            }
+            return runway;
+        }
 
         private void Push(Visit value)
         {

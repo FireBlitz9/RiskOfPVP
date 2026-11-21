@@ -34,6 +34,8 @@ namespace ArenaPvP
         private readonly ArenaBotActions actions=new ArenaBotActions();
         private HillView movementHill;
         private CharacterBody kitBody, sightTarget;
+        private CharacterBody lastVisibleEnemy;
+        private float lastVisibleAt, lastVisibleAcquisition;
         private struct RankedTarget { internal BotTarget Target; internal float Priority, Distance; }
         private struct ActiveThreat { internal CharacterBody Body; internal BotExposure Exposure; }
         private readonly List<RankedTarget> candidates = new List<RankedTarget>();
@@ -60,6 +62,9 @@ namespace ArenaPvP
         private Vector3 cachedDodge,cachedDirect,directGoal;
         private readonly ArenaBotLocomotion locomotion=new ArenaBotLocomotion();
         private float nextQuietReport;
+        private float nextTravelProbe, probedTravelSpan;
+        private Vector3 probedTravelOrigin, probedTravelDirection;
+        private bool travelClear;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
 
@@ -126,6 +131,8 @@ namespace ArenaPvP
                 projectileAt = -100;
                 nextDodgeProbe=nextDirectProbe=0;cachedDodge=cachedDirect=Vector3.zero;
                 locomotion.Clear();nextQuietReport=now+5;
+                nextTravelProbe = 0;
+                lastVisibleEnemy = null;
                 ResetSight(now);
             }
             if (bodyChanged || tier != nextTier)
@@ -445,6 +452,51 @@ namespace ArenaPvP
             if (pursuit.TryWaypoint(body, now, !actions.MovementLocked(body), out var waypoint)) ApplyGoal(waypoint, true);
         }
 
+        internal bool RefineDecision(float now, int pass)
+        {
+            if (pursuitTarget && pursuit.SearchPending)
+            {
+                AdvancePursuit(now);
+                return true;
+            }
+            if (!Enemy || !hasGoal || engagement == BotEngagement.Recover) return false;
+            var body = player.Master.GetBody();
+            if (!body || !body.characterMotor || !body.characterMotor.isGrounded || actions.MovementLocked(body)) return false;
+
+            // The main pass plans a route. Check a distinct nearby firing
+            // angle using the same target and threat assessment on this tick.
+            var origin = body.footPosition;
+            var toward = Enemy.footPosition - origin;
+            toward.y = 0;
+            float distance = toward.magnitude;
+            if (distance < .1f) return false;
+            float spacing = Mathf.Max(1, player.BotKit.Range);
+            float side = player.BotOrdinal % 2 == 0 ? 1 : -1;
+            float angle = pass == 1 ? side * 22f : -side * 48f;
+            Vector3 direction = Quaternion.Euler(0, angle, 0) * (toward / distance);
+            if (distance < spacing * .8f) direction = Vector3.Cross(Vector3.up, toward.normalized) * (pass == 1 ? side : -side);
+            Vector3 desired = origin + direction * Mathf.Clamp(body.moveSpeed * .55f, 2, 5);
+            if (!ProjectGround(body, desired, out var candidate)) return true;
+            if (Mathf.Abs(candidate.y - origin.y) > 1.5f || (candidate - desired).sqrMagnitude > 4) return true;
+            if (movementHill != null && movementHill.Ready
+                && (!ArenaBotRoutes.InHill(movementHill, origin) || !ArenaBotRoutes.InHill(movementHill, candidate))) return true;
+            var eyeOffset = body.corePosition - origin;
+            if (Physics.Linecast(body.corePosition, candidate + eyeOffset, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)
+                || !SupportedAhead(body, direction, false)) return true;
+            var targetPoint = Enemy.mainHurtBox ? Enemy.mainHurtBox.transform.position : Enemy.corePosition;
+            float gain = FiringPositionScore(candidate, candidate + eyeOffset, origin, targetPoint, spacing)
+                - FiringPositionScore(Destination, Destination + eyeOffset, origin, targetPoint, spacing);
+            if (gain > 2f) ApplyGoal(candidate);
+            return true;
+        }
+
+        private float FiringPositionScore(Vector3 position, Vector3 eye, Vector3 origin, Vector3 target, float spacing)
+        {
+            bool blocked = Physics.Linecast(eye, target, LayerIndex.world.mask, QueryTriggerInteraction.Ignore);
+            return (blocked ? -14 : 14) - Mathf.Abs(Vector3.Distance(eye, target) - spacing) * .9f
+                - Vector3.Distance(position, origin) * .25f - ArenaBotRoutes.ExposureAt(sideThreats, eye) * 11;
+        }
+
         private Vector3 SearchGoal(ArenaMatch match, CharacterBody body, float now)
         {
             if (now - seenAt < 3 && (body.footPosition - lastSeen).sqrMagnitude > 12) return lastSeen;
@@ -497,7 +549,8 @@ namespace ArenaPvP
         private void ResetSight(float now)
         {
             sightTarget = null; sightUntil = 0; clearSight = false;
-            acquiredAt = now; dodgeAt = dodgeUntil = 0;
+            acquiredAt = Enemy && Enemy == lastVisibleEnemy && now - lastVisibleAt < .35f ? lastVisibleAcquisition : now;
+            dodgeAt = dodgeUntil = 0;
             Array.Clear(threatStates, 0, threatStates.Length);
             Array.Clear(observedCast, 0, observedCast.Length);
         }
@@ -710,6 +763,12 @@ namespace ArenaPvP
             bool targetVisible=alive && Enemy.GetVisibilityLevel(body)==VisibilityLevel.Visible;
             bool visible=ultra ? targetVisible && HasClearSight(body,now)
                 : targetVisible && ai.currentEnemy!=null && ai.currentEnemy.gameObject==Enemy.gameObject && ai.currentEnemy.hasLoS;
+            if (ultra && visible)
+            {
+                lastVisibleEnemy = Enemy;
+                lastVisibleAt = now;
+                lastVisibleAcquisition = acquiredAt;
+            }
             if(ultra && ai.currentEnemy!=null)
             {
                 // Ultra owns its chosen hostile target and the physical LoS
@@ -729,8 +788,9 @@ namespace ArenaPvP
             if(visible)
             {
                 Vector3 point=Enemy.mainHurtBox ? Enemy.mainHurtBox.transform.position : Enemy.corePosition;
-                var attackModel=ultra ? ArenaCombatLearning.Model(body,actions.AimSlot) : null;
-                float speed=ultra ? attackModel!=null && attackModel.Speed>0 ? attackModel.Speed : actions.AimSlot==0 ? projectileSpeed : 0 : projectileSpeed;
+                int aimSlot = ultra ? actions.AimSlotFor(body) : 0;
+                var attackModel=ultra ? ArenaCombatLearning.Model(body,aimSlot) : null;
+                float speed=ultra ? attackModel!=null && attackModel.Speed>0 ? attackModel.Speed : aimSlot==0 ? projectileSpeed : 0 : projectileSpeed;
                 if(tier>=BotIntelligence.ExtraHigh && speed>0 && Enemy.characterMotor && (ultra || !dominant || dominant.skillSlot==SkillSlot.Primary || dominant.skillSlot==SkillSlot.Secondary))
                 {
                     Vector3 velocity = Vector3.ClampMagnitude(Enemy.characterMotor.velocity, 45);
@@ -751,9 +811,9 @@ namespace ArenaPvP
                 float error=(1-style.Skill)*.025f;
                 aim=(aim+Vector3.Cross(Vector3.up,aim)*Mathf.Sin(now*2.7f+player.BotOrdinal)*error+Vector3.up*Mathf.Sin(now*1.9f)*error*.35f).normalized;
             }
-            var utility=body.skillLocator ? body.skillLocator.utility : null;
             var utilityModel=ultra ? ArenaCombatLearning.Model(body,2) : null;
-            bool movementAim=ultra && (actions.MovementLocked(body) || input.pressSkill3 && utility && utility.CanExecute()
+            bool offensive=dominant && (dominant.aimType==AISkillDriver.AimType.AtCurrentEnemy || dominant.moveTargetType==AISkillDriver.TargetType.CurrentEnemy);
+            bool movementAim=ultra && (actions.TraversalOwnsAim(body) || !offensive && input.pressSkill3 && actions.NativeUtilityAvailable(body, now)
                 && (ArenaBotKit.EscapeReady(body) || utilityModel!=null && utilityModel.Movement || dominant && dominant.skillSlot==SkillSlot.Utility && dominant.aimType!=AISkillDriver.AimType.AtCurrentEnemy));
             bool fire=ultra ? ArenaBotAim.Apply(ref input,body.inputBank.aimDirection,aim,alive,hostile,visible,
                 enemyPlayer!=null && enemyPlayer.ProtectionUntil>match.Clock,movementAim,match.WarmupRemaining<=0,now-acquiredAt,
@@ -763,7 +823,6 @@ namespace ArenaPvP
                 visible ? Vector3.Dot(body.inputBank.aimDirection,aim) : -1,tier);
             if(ultra && style!=null) { ai.aimVectorDampTime=style.AimDamping;ai.aimVectorMaxSpeed=style.AimSpeed; }
             input.pressSkill1 &= fire || ultra && NativeHold(body, dominant, SkillSlot.Primary, previous.pressSkill1);
-            bool offensive=dominant && (dominant.aimType==AISkillDriver.AimType.AtCurrentEnemy || dominant.moveTargetType==AISkillDriver.TargetType.CurrentEnemy);
             if(offensive)
             {
                 input.pressSkill2 &= fire || ultra && NativeHold(body, dominant, SkillSlot.Secondary, previous.pressSkill2);
@@ -865,6 +924,8 @@ namespace ArenaPvP
                 else input.moveVector=repaired;
             }
             else locomotion.Pause();
+            if (ultra && !plannedJump && match.WarmupRemaining <= 0)
+                TryTravelUtility(ai, body, ref input, previous, visible, now);
             if(ultra && visible && match.WarmupRemaining<=0 && now>=nextQuietReport && now-acquiredAt>4)
             {
                 var observed=ArenaCombatLearning.Find(body);
@@ -878,6 +939,60 @@ namespace ArenaPvP
                 }
             }
             return input;
+        }
+
+        private void TryTravelUtility(BaseAI ai, CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, bool visible, float now)
+        {
+            if (!CanSteer(ai) || !body.characterMotor || !body.characterMotor.isGrounded || body.isFlying
+                || input.pressSkill1 || input.pressSkill2 || input.pressSkill3 || input.pressSkill4
+                || !actions.NativeUtilityAvailable(body, now)) return;
+            if (visible && engagement != BotEngagement.Recover
+                && Vector3.Distance(body.corePosition, Enemy.corePosition) <= player.BotKit.Range * 1.25f) return;
+
+            Vector3 direction = input.moveVector;
+            direction.y = 0;
+            if (direction.sqrMagnitude < .2f) return;
+            direction.Normalize();
+            var origin = body.footPosition;
+            var utility = body.skillLocator.utility;
+            float span = ArenaBotKit.TravelDistance(body, utility, out bool needsAim);
+            if (span <= 0 || span > 72 || Vector3.Dot(direction, Destination - origin) < 1) return;
+
+            float runway = Vector3.Dot(direction, Destination - origin);
+            if (pursuitTarget) runway = Mathf.Max(runway, pursuit.ForwardRunway(origin, direction));
+            if (runway < span) return;
+
+            Vector3 castDirection = direction;
+            bool aligned = true;
+            if (needsAim)
+            {
+                var actualAim = body.inputBank.aimDirection;
+                aligned = Vector3.Dot(actualAim, direction) >= .9985f && Mathf.Abs(actualAim.y) < .035f;
+                if (aligned)
+                {
+                    castDirection = actualAim;
+                    castDirection.y = 0;
+                    castDirection.Normalize();
+                }
+            }
+
+            if (now >= nextTravelProbe || (origin - probedTravelOrigin).sqrMagnitude > 1
+                || Vector3.Dot(castDirection, probedTravelDirection) < .9995f || Mathf.Abs(span - probedTravelSpan) > .5f)
+            {
+                nextTravelProbe = now + .15f;
+                probedTravelOrigin = origin;
+                probedTravelDirection = castDirection;
+                probedTravelSpan = span;
+                travelClear = ArenaBotLocomotion.ClearTravelCorridor(body, castDirection, span, movementHill);
+            }
+            if (!travelClear) return;
+            if (needsAim) input.desiredAimDirection = direction;
+            if (!aligned) return;
+            if (actions.TravelUtility(ref input, previous, body, now))
+            {
+                input.moveVector = direction;
+                input.pressJump = false;
+            }
         }
         private static bool SprintDirection(CharacterBody body,Vector3 movement)
         { var aim=body.inputBank.aimDirection;aim.y=0;movement.y=0;return Vector3.Dot(aim.normalized,movement.normalized)>=.5f; }

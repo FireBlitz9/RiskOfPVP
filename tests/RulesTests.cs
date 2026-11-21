@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ArenaPvP;
 
 internal static class RulesTests
@@ -774,30 +773,18 @@ internal static class RulesTests
     }
     private static void BotDecisionScheduling()
     {
-        var batch = new BotDecisionBatch();
-        var decided = new List<int>();
-        batch.Begin(5, 2);
-        while (batch.TryNext(out int index))
+        foreach (int limit in new[] { 1, 2, 3 })
         {
-            if (index == 0) continue; // No tactical update due for this bot.
-            decided.Add(index);
-            batch.RecordDecision();
+            var firstBot = new BotDecisionPasses(limit);
+            var secondBot = new BotDecisionPasses(limit);
+            for (int pass = 0; pass < limit; pass++)
+                Check(firstBot.TryNext(true, out int index) && index == pass && secondBot.TryNext(true, out index) && index == pass,
+                    "each ready bot owns its own pass allowance and gets distinct pass numbers");
+            Check(!firstBot.TryNext(true, out _) && !secondBot.TryNext(true, out _), "neither bot exceeds its own cap");
         }
-        Check(decided.SequenceEqual(new[] { 1, 2 }), "two decisions per tick counts completed decisions rather than skipped bots");
-        decided.Clear();
-        batch.Begin(5, 3);
-        while (batch.TryNext(out int index))
-        {
-            decided.Add(index);
-            batch.RecordDecision();
-        }
-        Check(decided.SequenceEqual(new[] { 3, 4, 0 }), "increasing the cap preserves round-robin order across ticks");
-        batch.Begin(5, 1);
-        Check(batch.TryNext(out int first) && first == 1, "a temporary budget cutoff starts the next tick with the next bot");
-        batch.Begin(5, 3);
-        Check(batch.TryNext(out first) && first == 2, "an interrupted scan continues where it left off");
-        batch.Begin(1, 3);
-        Check(batch.TryNext(out first) && first == 0 && !batch.TryNext(out _), "a bot is evaluated at most once per tick");
+        var busy = new BotDecisionPasses(3);
+        Check(busy.TryNext(true, out int first) && first == 0 && !busy.TryNext(false, out _),
+            "a busy tick keeps the baseline pass and omits extra refinement");
     }
 
     private static void BotIntelligenceAndCounters()
