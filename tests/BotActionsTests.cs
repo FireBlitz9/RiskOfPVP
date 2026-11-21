@@ -293,8 +293,16 @@ internal static class BotActionsTests
         check(!input.pressSkill1,"a primary cannot interrupt a shared-machine combo recovery");
         controller.Dispose();
         body=new CharacterBody();controller=Controller("MageBody",body,out ai,out enemy,false);
+        body.skillLocator.utility.activationState=new SerializableEntityStateType(typeof(NativeDodge));
         Step(controller,ai,enemy,0);body.Activate(body.skillLocator.utility);
+        body.skillLocator.utility.stateMachine.state=new NativeDodge();
         check(controller.MovementLocked(body),"native traversal/body utility states keep movement ownership");
+        body.skillLocator.utility.stateMachine.state=new NativeScope();
+        check(!controller.MovementLocked(body) && !controller.TraversalOwnsAim(body),"an unknown busy state can keep its skill input without disabling walking and aim");
+        body.characterMotor.isGrounded=false;body.characterMotor.disableAirControlUntilCollision=true;
+        check(controller.MovementLocked(body),"an airborne motor with native air control disabled keeps its movement ownership");
+        body.characterMotor.isGrounded=true;
+        check(!controller.MovementLocked(body),"landing restores steering even if the motor flag has not cleared yet");
         controller.Dispose();
         body=new CharacterBody();controller=Controller("RailgunnerBody",body,out ai,out enemy);
         body.skillLocator.secondary.activationState=new SerializableEntityStateType(typeof(NativeScope));

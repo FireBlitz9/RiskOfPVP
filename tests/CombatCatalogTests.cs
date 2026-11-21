@@ -124,7 +124,7 @@ namespace RoR2
         public void Activate(GenericSkill skill,float now) { Time.unscaledTime=now;onSkillActivatedServer?.Invoke(skill); }
     }
     public class CharacterMaster:UnityEngine.Object { public CharacterBody Body;public CharacterBody GetBody()=>Body; }
-    public class CharacterMotor:UnityEngine.Object { public Vector3 velocity=Vector3.zero;public bool isGrounded=true; }
+    public class CharacterMotor:UnityEngine.Object { public Vector3 velocity=Vector3.zero;public bool isGrounded=true,disableAirControlUntilCollision; }
     public class InputBank:UnityEngine.Object { public Vector3 aimDirection=Vector3.forward; }
     public class Inventory:UnityEngine.Object { public int GetItemCountEffective(ItemDef item)=>0; }
     public class HealthComponent:UnityEngine.Object { public float fullCombinedHealth=100,barrier=0; }

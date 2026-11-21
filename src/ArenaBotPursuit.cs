@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace ArenaPvP
 {
-    // Search the whole connected native ground graph in slices. The local
-    // combat planner handles firing angles once an opponent is within reach.
+    // Search the connected native ground graph in slices. A hill route can end
+    // at any reachable capture node, including when the center node is isolated.
     internal sealed class ArenaBotPursuit
     {
         private struct Visit
@@ -34,13 +34,32 @@ namespace ArenaPvP
         private float retryAt, progressAt, bestDistance, avoidUntil;
         private NodeGraph.LinkIndex avoidedLink;
         private CharacterBody requestedTarget;
+        private HillView requestedHill;
         private bool unreachable;
         internal bool AtDestination => graph && !unreachable && frontier.Count == 0 && route.Count <= leg;
         internal bool SearchPending => frontier.Count > 0;
+        internal bool NextLegNeedsJump => graph && leg < route.Count
+            && graph.GetLinkNeedsJump(route[leg].Link, (HullMask)(1 << (int)hull));
+
+        internal bool TryJumpHeading(CharacterBody body, out Vector3 heading)
+        {
+            heading = Vector3.zero;
+            if (!NextLegNeedsJump || !graph.GetNodePosition(graph.GetLinkStartNode(route[leg].Link), out var start)) return false;
+            if ((start - body.footPosition).sqrMagnitude > 4) return false;
+            var landing = route[leg].Position;
+            if (!CanJump(body, body.footPosition, landing)
+                || !Physics.Raycast(landing + Vector3.up * 2, Vector3.down, out var ground, 5,
+                    LayerIndex.world.mask, QueryTriggerInteraction.Ignore) || ground.normal.y < .45f) return false;
+            heading = landing - body.footPosition;
+            heading.y = 0;
+            heading.Normalize();
+            return heading.sqrMagnitude > .01f;
+        }
 
         internal void Clear()
         {
             requestedTarget = null;
+            requestedHill = null;
             graph = null;
             route.Clear();
             frontier.Clear();
@@ -59,15 +78,57 @@ namespace ArenaPvP
                 return;
             }
             Vector3 position = target.footPosition;
-            if (target == requestedTarget && currentGraph == graph
+            if (requestedHill == null && target == requestedTarget && currentGraph == graph
                 && (position - requestedPosition).sqrMagnitude < 100
                 && (frontier.Count > 0 || route.Count > leg || now < retryAt || AtDestination)) return;
 
             if (currentGraph != graph) avoidUntil = 0;
             graph = currentGraph;
             requestedTarget = target;
+            requestedHill = null;
             requestedPosition = position;
             Begin(body, now);
+        }
+
+        internal void TrackHill(CharacterBody body, HillView hill, float now)
+        {
+            var currentGraph = SceneInfo.instance ? SceneInfo.instance.groundNodes : null;
+            if (!currentGraph) { Clear(); return; }
+            bool sameHill = requestedHill != null && currentGraph == graph
+                && (hill.To - requestedPosition).sqrMagnitude < .01f && hill.Radius == requestedHill.Radius;
+            if (sameHill && (SearchPending || route.Count > leg || now < retryAt || AtDestination)) return;
+            if (!sameHill) avoidUntil = 0;
+            graph = currentGraph;
+            requestedTarget = null;
+            requestedHill = hill;
+            requestedPosition = hill.To;
+            Begin(body, now);
+        }
+
+        internal static bool CanCapture(HillView hill, Vector3 feet, Vector3 eye)
+        {
+            return ArenaBotRoutes.InHill(hill, feet) && !Physics.Linecast(hill.To + Vector3.up * 2, eye,
+                LayerIndex.world.mask, QueryTriggerInteraction.Ignore);
+        }
+
+        internal static bool BlocksApproach(CharacterBody body, CharacterBody enemy, Vector3 waypoint, float distance, float reach)
+        {
+            if (distance <= Mathf.Max(4, body.radius + enemy.radius + 1)) return true;
+            if (distance > Mathf.Clamp(reach, 6, 24)) return false;
+            var forward = waypoint - body.footPosition;
+            var offset = enemy.footPosition - body.footPosition;
+            forward.y = offset.y = 0;
+            var direction = forward.normalized;
+            float along = Vector3.Dot(direction, offset);
+            return along > 0 && (offset - direction * along).sqrMagnitude <= 36;
+        }
+
+        private float Remaining(Vector3 position)
+        {
+            if (requestedHill == null) return Vector3.Distance(position, destinationPosition);
+            var offset = position - requestedPosition;
+            offset.y = 0;
+            return Mathf.Max(0, offset.magnitude - requestedHill.Radius);
         }
 
         private void Begin(CharacterBody body, float now)
@@ -83,33 +144,37 @@ namespace ArenaPvP
             retryAt = now + 1.2f;
             hull = body.hullClassification;
             var start = graph.FindClosestNodeWithRaycast(body.footPosition, hull, 32, 8);
-            destination = graph.FindClosestNodeWithRaycast(requestedPosition, hull, 32, 8);
-            if (destination.nodeIndex < 0) destination = graph.FindClosestNode(requestedPosition, hull, 48);
-            if (!graph.GetNodePosition(start, out var startPosition)
-                || !graph.GetNodePosition(destination, out destinationPosition))
+            if (requestedHill == null)
+            {
+                destination = graph.FindClosestNodeWithRaycast(requestedPosition, hull, 32, 8);
+                if (destination.nodeIndex < 0) destination = graph.FindClosestNode(requestedPosition, hull, 48);
+                if (!graph.GetNodePosition(destination, out destinationPosition)) { unreachable = true; return; }
+            }
+            if (!graph.GetNodePosition(start, out var startPosition))
             {
                 unreachable = true;
                 return;
             }
             costs[start.nodeIndex] = 0;
-            Push(new Visit { Node = start, Priority = Vector3.Distance(startPosition, destinationPosition) });
+            Push(new Visit { Node = start, Priority = Remaining(startPosition) });
         }
 
         internal void Step(CharacterBody body, float now, int budget = 64)
         {
-            if (!graph || !requestedTarget || !body || frontier.Count == 0) return;
+            if (!graph || (requestedHill == null && !requestedTarget) || !body || frontier.Count == 0) return;
             for (int work = 0; work < budget && frontier.Count > 0; work++)
             {
                 var current = Pop();
                 if (current.Cost != costs[current.Node.nodeIndex]) continue;
-                if (current.Node.nodeIndex == destination.nodeIndex)
+                if (!graph.GetNodePosition(current.Node, out var origin)) continue;
+                if (requestedHill == null ? current.Node.nodeIndex == destination.nodeIndex
+                    : CanCapture(requestedHill, origin, origin + (body.corePosition - body.footPosition)))
                 {
                     Complete(current.Node);
                     frontier.Clear();
                     retryAt = now + .4f;
                     return;
                 }
-                if (!graph.GetNodePosition(current.Node, out var origin)) continue;
                 links.Clear();
                 graph.GetActiveNodeLinks(current.Node, links);
                 foreach (var link in links)
@@ -125,7 +190,7 @@ namespace ArenaPvP
                     if (costs.TryGetValue(next.nodeIndex, out float prior) && prior <= total) continue;
                     costs[next.nodeIndex] = total;
                     previous[next.nodeIndex] = link;
-                    Push(new Visit { Node = next, Cost = total, Priority = total + Vector3.Distance(position, destinationPosition) });
+                    Push(new Visit { Node = next, Cost = total, Priority = total + Remaining(position) });
                 }
             }
             if (frontier.Count == 0)
@@ -160,7 +225,7 @@ namespace ArenaPvP
         internal bool TryWaypoint(CharacterBody body, float now, bool canMove, out Vector3 waypoint)
         {
             waypoint = body.footPosition;
-            if (!graph || !requestedTarget || route.Count <= leg) return false;
+            if (!graph || (requestedHill == null && !requestedTarget) || route.Count <= leg) return false;
             while (leg < route.Count)
             {
                 var next = route[leg];
@@ -170,7 +235,8 @@ namespace ArenaPvP
                     return false;
                 }
                 float distance = Vector3.Distance(body.footPosition, next.Position);
-                if (distance <= 1.6f)
+                float arrival = requestedHill != null && leg == route.Count - 1 ? .55f : 1.6f;
+                if (distance <= arrival)
                 {
                     leg++;
                     bestDistance = float.PositiveInfinity;
@@ -195,7 +261,7 @@ namespace ArenaPvP
             return false;
         }
 
-        internal bool Failed(float now) => requestedTarget && unreachable && now < retryAt;
+        internal bool Failed(float now) => (requestedHill != null || requestedTarget) && unreachable && now < retryAt;
 
         internal float ForwardRunway(Vector3 origin, Vector3 direction)
         {

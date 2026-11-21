@@ -25,6 +25,7 @@ namespace ArenaPvP
             var body=__instance.owner ? __instance.owner.GetComponent<CharacterBody>() : null;var actor=ArenaCombatLearning.Find(body);
             int slot=actor?.Slot(__instance.damageType.damageSource,Time.unscaledTime) ?? -1;
             var model=slot>=0 ? ArenaCombatLearning.Model(body,slot) : null;
+            if(model!=null) { model.InstantShot=true;model.Speed=0; }
             if(model!=null && __instance.falloffModel==BulletAttack.FalloffModel.DefaultBullet)
             { model.FalloffStart=25;model.FalloffEnd=60;model.MinimumDamage=.5f; }
             else if(model!=null && __instance.falloffModel==BulletAttack.FalloffModel.Buckshot)

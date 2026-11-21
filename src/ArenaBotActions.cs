@@ -100,8 +100,13 @@ namespace ArenaPvP
         {
             if (body.currentVehicle) return true;
             var utility = Skill(body, BotAction.Utility);
-            return utility && utility.skillDef && utility == active[2] && Busy(utility)
-                && (ArenaCombatLearning.Model(body, 2)?.Movement == true || utility.skillDef.forceSprintDuringState);
+            if (!Busy(utility) || !utility.skillDef || utility.stateMachine.state == null) return false;
+            var state = utility.stateMachine.state.GetType();
+            if (state == utility.activationState.stateType)
+                return utility.skillDef.forceSprintDuringState || ArenaCombatLearning.Model(body, 2)?.Movement == true;
+            // A previous utility activation may share this machine with a
+            // scope, attack or idle state. Inspect the state that is live.
+            return utility == active[2] && BotSkillKnowledge.IsTravelState(state);
         }
 
         internal bool NativeUtilityAvailable(CharacterBody body, float now)
@@ -181,10 +186,11 @@ namespace ArenaPvP
         }
         internal bool MovementLocked(CharacterBody body)
         {
-            if(body.currentVehicle || UnknownState(body))return true;
-            // Aiming/charging a weapon is not a reason to stop walking. Native
-            // traversal utilities retain control of their movement and vehicle.
-            return Busy(active[(int)BotAction.Utility]);
+            // An unrecognized weapon or body state can still accept movement
+            // input. Leave sprint cancellation conservative, and surrender
+            // steering only when a native traversal actually owns it.
+            return TraversalOwnsAim(body) || body.characterMotor && !body.characterMotor.isGrounded
+                && body.characterMotor.disableAirControlUntilCollision;
         }
         private bool UnknownState(CharacterBody body)
         {

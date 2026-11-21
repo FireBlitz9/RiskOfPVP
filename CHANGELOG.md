@@ -1,3 +1,9 @@
+# 1.3.9
+
+- KOTH bots commit to a reachable entry into the capture zone and sprint toward it. They can fight nearby enemies along the way while keeping the hill as their destination.
+- Bots can keep walking during ordinary weapon and utility animations. Actual traversal skills retain control of movement, and recovery can keep a safe heading when its probe budget is full.
+- Ultra leads projectile shots using measured movement and acceleration. Hitscan stays on the current hurtbox, and terrain can rule out a predicted shot.
+
 # 1.3.8
 
 - Ultra measures closing progress against the opponent even after it reaches a local waypoint. Sideways movement and ordinary jumps cannot hide a stall. When the approach stalls, it drops the local commitment and searches for a fresh pursuit route.

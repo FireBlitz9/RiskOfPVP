@@ -35,6 +35,8 @@ namespace ArenaPvP
         private HillView movementHill;
         private CharacterBody kitBody, sightTarget;
         private CharacterBody lastVisibleEnemy;
+        private CharacterBody predictedTarget;
+        private readonly ArenaBotPrediction prediction = new ArenaBotPrediction();
         private float lastVisibleAt, lastVisibleAcquisition;
         private struct RankedTarget { internal BotTarget Target; internal float Priority, Distance; }
         private struct ActiveThreat { internal CharacterBody Body; internal BotExposure Exposure; }
@@ -52,6 +54,8 @@ namespace ArenaPvP
         private ArenaBotRoutes routes;
         private readonly BotEngagementPolicy tactics = new BotEngagementPolicy();
         private readonly ArenaBotPursuit pursuit = new ArenaBotPursuit();
+        private bool approachingHill;
+        private bool followingLeg;
         private readonly Dictionary<CharacterBody, float> unreachable = new Dictionary<CharacterBody, float>();
         private CharacterBody pursuitTarget;
         private int sightCursor;
@@ -70,6 +74,7 @@ namespace ArenaPvP
         private bool travelClear;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
+        internal bool FollowingWalkLeg => followingLeg && !pursuit.NextLegNeedsJump;
 
         internal void Initialize(ArenaPlayer participant, string bodyName)
         {
@@ -103,7 +108,7 @@ namespace ArenaPvP
         internal bool CanSteer(BaseAI ai)
         {
             if(!hasGoal || !goal || player==null || !player.Connected || player.Dead || !ai.body || ai.body.currentVehicle) return false;
-            if(tier==BotIntelligence.Ultra)return !actions.MovementLocked(ai.body);
+            if(tier==BotIntelligence.Ultra || approachingHill)return !actions.MovementLocked(ai.body);
             var driver=ai.skillDriverEvaluation.dominantSkillDriver;
             return !driver || driver.skillSlot!=SkillSlot.Utility && driver.skillSlot!=SkillSlot.Special
                 || tier == BotIntelligence.Ultra && reserveEscape && ArenaBotKit.ReserveUtility(ai.body, driver);
@@ -139,13 +144,15 @@ namespace ArenaPvP
                 forceApproachUntil = 0;
                 nextTravelProbe = 0;
                 lastVisibleEnemy = null;
+                predictedTarget = null;
+                prediction.Clear();
                 ResetSight(now);
             }
             if (bodyChanged || tier != nextTier)
             {
                 routes?.Clear();
                 tactics.Clear();
-                StopPursuit();
+                ResetRoute();
                 unreachable.Clear();
                 crossfireUntil = 0;
                 reserveEscape = false;
@@ -156,6 +163,7 @@ namespace ArenaPvP
             var hill=match.Rules.Mode==ArenaMode.KOTH ? match.Hill.View(match.Rules) : null;
             movementHill=hill;
             bool objective=hill!=null && hill.Ready;
+            UpdateHillRoute(body, objective ? hill : null, now);
             if (tier == BotIntelligence.Ultra)
             {
                 ThinkUltra(match, targets, body, hill, objective, now);
@@ -172,7 +180,8 @@ namespace ArenaPvP
                 if(!Candidate(match,body,candidate) || candidate.Summon && tier<BotIntelligence.High || human && (candidate.Player.IsBot || candidate.Summon))continue;
                 var enemy=candidate.Body; float distance=Vector3.Distance(body.corePosition,enemy.corePosition);
                 if(distance>BotTacticsRules.SightRange(tier))continue;
-                bool onHill=objective && (enemy.footPosition-hill.To).sqrMagnitude<hill.Radius*hill.Radius;
+                if (approachingHill && !ArenaBotPursuit.BlocksApproach(body, enemy, Destination, distance, range)) continue;
+                bool onHill=objective && ArenaBotRoutes.InHill(hill, enemy.footPosition);
                 float threat=enemy.damage*Mathf.Max(.5f,enemy.attackSpeed)/Mathf.Max(1,body.damage);
                 float score=BotTacticsRules.TargetScore(tier,distance,enemy.healthComponent.combinedHealthFraction,enemy==Enemy,onHill,candidate.Player.ProtectionUntil>match.Clock,threat);
                 if(score>a) { third=second;c=b;second=first;b=a;first=candidate;a=score; }
@@ -183,6 +192,7 @@ namespace ArenaPvP
             Enemy=selected.Body; enemyPlayer=selected.Player;
             if(Enemy) { lastSeen=Enemy.footPosition;seenAt=now; }
             ApplyEnemy(match);
+            if (approachingHill) return true;
             Vector3 desired=body.footPosition;
             if(Enemy)
             {
@@ -266,6 +276,7 @@ namespace ArenaPvP
             {
                 if (!IsHostile(match, target)) continue;
                 float distance = Vector3.Distance(origin, target.Body.footPosition);
+                if (approachingHill && !ArenaBotPursuit.BlocksApproach(body, target.Body, Destination, distance, kit.Reach)) continue;
                 float priority = distance + (target.Summon ? 38 : 0) - (target.Body == pursuitTarget ? 15 : 0)
                     - (target.Body == currentEnemy ? 18 : 0) - (chase && !target.Player.IsBot && !target.Summon ? 40 : 0)
                     - (objective && ArenaBotRoutes.InHill(hill, target.Body.footPosition) ? 35 : 0);
@@ -323,6 +334,12 @@ namespace ArenaPvP
             if (Enemy != currentEnemy) ResetSight(now);
             ApplyEnemy(match);
             ObserveProjectiles(match, body, now);
+            if (approachingHill)
+            {
+                engagement = BotEngagement.Press;
+                reserveEscape = false;
+                return;
+            }
             if (highestThreat > .16f)
                 crossfireUntil = now + .24f;
             foreach (var threat in activeThreats)
@@ -367,12 +384,6 @@ namespace ArenaPvP
                 }
             }
             StopPursuit();
-            if (zone != null && !holding && (zone.To - origin).sqrMagnitude > 64f * 64f
-                && ProjectGround(body, zone.To, out var objectiveGoal))
-            {
-                ApplyGoal(objectiveGoal);
-                return;
-            }
             if (!Enemy)
             {
                 if (zone != null && Route(body, origin, false, zone, targets, kit.Range, now)) return;
@@ -420,6 +431,29 @@ namespace ArenaPvP
                 && target.Body.healthComponent.alive && match.AreOpponents(player, target.Player);
         }
 
+        private void UpdateHillRoute(CharacterBody body, HillView hill, float now)
+        {
+            bool travel = hill != null && !ArenaBotPursuit.CanCapture(hill, body.footPosition, body.corePosition);
+            if (travel && (!approachingHill || pursuitTarget)) ResetRoute();
+            if (!travel && approachingHill) ResetRoute();
+            if (!travel) return;
+            approachingHill = true;
+            pursuit.TrackHill(body, hill, now);
+            if (pursuit.SearchPending || !SceneInfo.instance || !SceneInfo.instance.groundNodes || pursuit.Failed(now) || pursuit.AtDestination)
+            {
+                followingLeg = false;
+                ApplyGoal(hill.To, true);
+            }
+        }
+
+        private void ResetRoute()
+        {
+            approachingHill = false;
+            followingLeg = false;
+            pursuitTarget = null;
+            pursuit.Clear();
+        }
+
         private CharacterBody PursuitTarget(float now)
         {
             foreach (var candidate in candidates)
@@ -433,14 +467,13 @@ namespace ArenaPvP
         private void StopPursuit()
         {
             if (ReferenceEquals(pursuitTarget, null)) return;
-            pursuitTarget = null;
-            pursuit.Clear();
+            ResetRoute();
         }
 
         internal void AdvancePursuit(float now)
         {
-            if (tier != BotIntelligence.Ultra || ReferenceEquals(pursuitTarget, null) || player.Dead || !player.Master) return;
-            if (!pursuitTarget || !pursuitTarget.healthComponent || !pursuitTarget.healthComponent.alive)
+            if ((!approachingHill && (tier != BotIntelligence.Ultra || ReferenceEquals(pursuitTarget, null))) || player.Dead || !player.Master) return;
+            if (!approachingHill && (!pursuitTarget || !pursuitTarget.healthComponent || !pursuitTarget.healthComponent.alive))
             {
                 StopPursuit();
                 return;
@@ -448,20 +481,22 @@ namespace ArenaPvP
             var body = player.Master.GetBody();
             if (!body || !body.characterMotor || !body.characterMotor.isGrounded) return;
             pursuit.Step(body, now);
-            if (pursuit.Failed(now))
+            if (!approachingHill && pursuit.Failed(now))
             {
                 if (unreachable.Count >= 96) unreachable.Clear();
                 unreachable[pursuitTarget] = now + 2.5f;
                 StopPursuit();
                 return;
             }
-            if (pursuit.TryWaypoint(body, now, !actions.MovementLocked(body), out var waypoint)) ApplyGoal(waypoint, true);
+            followingLeg = pursuit.TryWaypoint(body, now, !actions.MovementLocked(body), out var waypoint);
+            if (followingLeg) ApplyGoal(waypoint, true);
         }
 
         internal bool RefineDecision(float now, int pass)
         {
-            if (pursuitTarget && pursuit.SearchPending)
+            if (approachingHill || pursuitTarget)
             {
+                if (!pursuit.SearchPending) return false;
                 AdvancePursuit(now);
                 return true;
             }
@@ -687,11 +722,11 @@ namespace ArenaPvP
 
         private Vector3 DirectStep(CharacterBody body,Vector3 nativeMove,float now,bool visible)
         {
-            if(nativeMove.sqrMagnitude>.01f)return nativeMove;
             var toward=Destination-body.footPosition;toward.y=0;
-            if(toward.sqrMagnitude<2.25f)
+            if(nativeMove.sqrMagnitude>.01f && (!followingLeg || Vector3.Dot(nativeMove, toward.normalized) >= .35f))return nativeMove;
+            if(toward.sqrMagnitude<(approachingHill ? .16f : 2.25f))
             {
-                if(!visible || !Enemy || engagement==BotEngagement.Recover)return Vector3.zero;
+                if(approachingHill || !visible || !Enemy || engagement==BotEngagement.Recover)return Vector3.zero;
                 toward=Enemy.footPosition-body.footPosition;toward.y=0;
                 if(toward.sqrMagnitude<.01f)toward=Vector3.forward;
                 float close=Mathf.Max(3,player.BotKit.Range*.55f);
@@ -702,7 +737,7 @@ namespace ArenaPvP
             {
                 nextDirectProbe=now+.15f;directGoal=Destination;cachedDirect=Vector3.zero;
                 var direction=toward.normalized;RaycastHit hit;
-                if(movementHill!=null && movementHill.Ready)
+                if(!approachingHill && movementHill!=null && movementHill.Ready)
                 {
                     var offset=body.footPosition-movementHill.To;offset.y=0;
                     if(offset.magnitude>movementHill.Radius*.72f)direction=-offset.normalized;
@@ -713,7 +748,7 @@ namespace ArenaPvP
                     Mathf.Min(toward.magnitude,Mathf.Max(2,body.radius*2)),LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
                 if(!blocked && SupportedAhead(body,direction,false))cachedDirect=direction;
             }
-            return (Destination-directGoal).sqrMagnitude<9 ? cachedDirect : Vector3.zero;
+            return (Destination-directGoal).sqrMagnitude<9 && cachedDirect.sqrMagnitude>.01f ? cachedDirect : nativeMove;
         }
 
         private bool UseUltraEquipment(CharacterBody body, EquipmentDef equipment, bool fire, bool visible,
@@ -801,16 +836,25 @@ namespace ArenaPvP
                 Vector3 point=Enemy.mainHurtBox ? Enemy.mainHurtBox.transform.position : Enemy.corePosition;
                 int aimSlot = ultra ? actions.AimSlotFor(body) : 0;
                 var attackModel=ultra ? ArenaCombatLearning.Model(body,aimSlot) : null;
-                float speed=ultra ? attackModel!=null && attackModel.Speed>0 ? attackModel.Speed : aimSlot==0 ? projectileSpeed : 0 : projectileSpeed;
-                if(tier>=BotIntelligence.ExtraHigh && speed>0 && Enemy.characterMotor && (ultra || !dominant || dominant.skillSlot==SkillSlot.Primary || dominant.skillSlot==SkillSlot.Secondary))
+                float speed=attackModel?.InstantShot == true ? 0 : attackModel != null && attackModel.Speed > 0 ? attackModel.Speed
+                    : aimSlot == 0 ? projectileSpeed : 0;
+                if (ultra)
+                {
+                    if (predictedTarget != Enemy) { predictedTarget = Enemy; prediction.Clear(); }
+                    var velocity = Enemy.characterMotor ? Enemy.characterMotor.velocity : Vector3.zero;
+                    prediction.Observe(Enemy.corePosition, velocity, now);
+                    if (speed > 0)
+                    {
+                        var intercept = prediction.Intercept(body.inputBank.aimOrigin, point, speed);
+                        if ((intercept - point).sqrMagnitude > .001f && !Physics.Linecast(body.inputBank.aimOrigin, intercept,
+                            LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) point = intercept;
+                    }
+                }
+                else if(tier>=BotIntelligence.ExtraHigh && speed>0 && Enemy.characterMotor && (!dominant || dominant.skillSlot==SkillSlot.Primary || dominant.skillSlot==SkillSlot.Secondary))
                 {
                     Vector3 velocity = Vector3.ClampMagnitude(Enemy.characterMotor.velocity, 45);
-                    Vector3 offset = point - body.inputBank.aimOrigin;
-                    float travel = ultra ? BotAdaptation.LeadTime(speed, offset.sqrMagnitude, velocity.sqrMagnitude, Vector3.Dot(offset, velocity))
-                        : Mathf.Min(.5f, Vector3.Distance(body.corePosition, point) / speed) * .65f;
-                    Vector3 intercept = point + velocity * travel;
-                    if (!ultra || !Physics.Linecast(body.inputBank.aimOrigin, intercept, LayerIndex.world.mask, QueryTriggerInteraction.Ignore))
-                        point = intercept;
+                    float travel = Mathf.Min(.5f, Vector3.Distance(body.corePosition, point) / speed) * .65f;
+                    point += velocity * travel;
                     input.desiredAimDirection=(point-body.inputBank.aimOrigin).normalized;
                 }
                 aim=(point-body.inputBank.aimOrigin).normalized;
@@ -859,17 +903,35 @@ namespace ArenaPvP
                 plannedJump=path.desiredJumpVelocity>0 && path.nextPosition.HasValue
                     && Physics.Raycast(path.nextPosition.Value+Vector3.up*2,Vector3.down,out landing,6,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && landing.normal.y>.45f;
             }
+            if (followingLeg && pursuit.NextLegNeedsJump && CanSteer(ai) && body.characterMotor && !body.isFlying)
+            {
+                if (body.characterMotor.isGrounded && !plannedJump && !previous.pressJump && pursuit.TryJumpHeading(body, out var heading))
+                {
+                    input.moveVector = heading;
+                    input.pressJump = plannedJump = true;
+                }
+                else if (!body.characterMotor.isGrounded)
+                {
+                    var headingInAir = Destination - body.footPosition;
+                    headingInAir.y = 0;
+                    if (headingInAir.sqrMagnitude > .16f) input.moveVector = headingInAir.normalized;
+                }
+            }
             if(!plannedJump && CanSteer(ai) && body.characterMotor && body.characterMotor.isGrounded)
             {
                 // Native "stand and shoot" drivers can scale movement to zero.
                 // Use the already-computed safe path vector so an enemy cannot
                 // pin an objective bot outside the zone merely by being visible.
-                input.moveVector=(Destination-body.footPosition).sqrMagnitude>(pursuitTarget ? 1f : 2.25f) ? ai.localNavigator.moveVector : Vector3.zero;
-                if(ultra)input.moveVector=DirectStep(body,input.moveVector,now,visible);
-                if(!Enemy && input.moveVector.sqrMagnitude>.01f)input.pressSprint=true;
+                float arrival = approachingHill ? .16f : pursuitTarget ? 1f : 2.25f;
+                input.moveVector=(Destination-body.footPosition).sqrMagnitude>arrival ? ai.localNavigator.moveVector : Vector3.zero;
+                if(ultra || approachingHill)input.moveVector=DirectStep(body,input.moveVector,now,visible);
+                if(approachingHill && !visible && input.moveVector.sqrMagnitude>.01f)
+                    input.desiredAimDirection=input.moveVector.normalized;
+                if((approachingHill || !Enemy) && input.moveVector.sqrMagnitude>.01f && !actions.SprintBlocked(body)
+                    && ((body.bodyFlags & CharacterBody.BodyFlags.SprintAnyDirection) != 0 || SprintDirection(body, input.moveVector))) input.pressSprint=true;
             }
             bool addedMobility=false,wantsCombatJump=false;
-            if(!plannedJump && BotTacticsRules.Adaptive(tier) && CanSteer(ai) && body.characterMotor && !body.isFlying)
+            if(!approachingHill && !plannedJump && BotTacticsRules.Adaptive(tier) && CanSteer(ai) && body.characterMotor && !body.isFlying)
             {
                 bool protectedSkill=ultra ? actions.MovementLocked(body) : actions.Protected(body,previous);
                 var intent=actions.Motion(body,input,previous,Enemy,visible,protectedSkill,player.BotOrdinal,tier,
@@ -906,7 +968,7 @@ namespace ArenaPvP
                     wantsCombatJump=intent.Jump;
                 }
             }
-            bool canTrackFootwork = ultra && visible && CanSteer(ai) && body.characterMotor
+            bool canTrackFootwork = !approachingHill && ultra && visible && CanSteer(ai) && body.characterMotor
                 && !body.isFlying && engagement != BotEngagement.Recover
                 && (movementHill == null || !movementHill.Ready || ArenaBotRoutes.InHill(movementHill, body.footPosition));
             if (canTrackFootwork)
@@ -949,15 +1011,16 @@ namespace ArenaPvP
                 if(unsafeMove && Vector3.Dot(direction,previousProbeDirection)>.5f) { input.moveVector=avoidedMove;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
             }
             if(wantsCombatJump && !unsafeMove && !previous.pressJump && SafeCombatJump(body,input.moveVector,input.pressSprint))input.pressJump=true;
-            if(ultra && CanSteer(ai) && !plannedJump)
+            if((ultra || approachingHill) && CanSteer(ai) && !plannedJump)
             {
                 var next=ai.broadNavigationAgent.output.nextPosition;
-                var waypoint=next.HasValue && (next.Value-body.footPosition).sqrMagnitude>4 ? next.Value : Destination;
+                var waypoint=!FollowingWalkLeg && next.HasValue && (next.Value-body.footPosition).sqrMagnitude>4 ? next.Value : Destination;
                 bool jump;var repaired=locomotion.Resolve(body,input.moveVector,waypoint,movementHill,now,out jump);
                 if(jump)
                 {
                     bool safe=!previous.pressJump && SafeCombatJump(body,repaired,input.pressSprint);
-                    input.moveVector=safe ? repaired : Vector3.zero;input.pressJump|=safe;
+                    if (safe) input.moveVector = repaired;
+                    input.pressJump|=safe;
                 }
                 else input.moveVector=repaired;
             }
@@ -977,7 +1040,8 @@ namespace ArenaPvP
                     var primary=body.skillLocator ? body.skillLocator.primary : null;
                     Plugin.Log("Ultra bot "+player.BotOrdinal+" has a visible target but no observed attack for 4s: aim="+Vector3.Dot(body.inputBank.aimDirection,aim).ToString("F2")
                         +", distance="+Vector3.Distance(body.corePosition,Enemy.corePosition).ToString("F1")+", primaryReady="+(primary && primary.CanExecute())
-                        +", primaryHeld="+input.pressSkill1+", movementLocked="+actions.MovementLocked(body)+", recoveries="+locomotion.Recoveries+".");
+                        +", primaryHeld="+input.pressSkill1+", movementLocked="+actions.MovementLocked(body)+", move="+input.moveVector.magnitude.ToString("F2")
+                        +", utilityState="+body.skillLocator?.utility?.stateMachine?.state?.GetType().Name+", recoveries="+locomotion.Recoveries+".");
                     nextQuietReport=now+12;
                 }
             }
@@ -1002,7 +1066,7 @@ namespace ArenaPvP
             if (span <= 0 || span > 72 || Vector3.Dot(direction, Destination - origin) < 1) return;
 
             float runway = Vector3.Dot(direction, Destination - origin);
-            if (pursuitTarget) runway = Mathf.Max(runway, pursuit.ForwardRunway(origin, direction));
+            if (pursuitTarget || approachingHill) runway = Mathf.Max(runway, pursuit.ForwardRunway(origin, direction));
             if (runway < span) return;
 
             Vector3 castDirection = direction;
@@ -1055,7 +1119,7 @@ namespace ArenaPvP
             float flight=2*body.jumpPower/Mathf.Max(1,Mathf.Abs(Physics.gravity.y));
             float speed=body.moveSpeed*(sprint && !body.isSprinting ? body.sprintingSpeedMultiplier : 1);
             Vector3 destination=body.footPosition+movement.normalized*speed*Mathf.Clamp(flight,.3f,2f);
-            if(movementHill!=null && movementHill.Ready && (destination-movementHill.To).sqrMagnitude>movementHill.Radius*movementHill.Radius*.81f)return false;
+            if(!approachingHill && movementHill!=null && movementHill.Ready && (destination-movementHill.To).sqrMagnitude>movementHill.Radius*movementHill.Radius*.81f)return false;
             RaycastHit landing;
             return !Physics.Raycast(body.corePosition,Vector3.up,2.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)
                 && !Physics.Linecast(body.corePosition,destination+Vector3.up*2,LayerIndex.world.mask,QueryTriggerInteraction.Ignore)

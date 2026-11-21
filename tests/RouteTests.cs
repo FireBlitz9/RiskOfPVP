@@ -49,6 +49,8 @@ internal static class RouteTests
             Locomotion();
             CombatFootwork();
             Pursuit();
+            HillPursuit();
+            PredictiveAim();
             Crossfire();
             Console.WriteLine("PASS: "+checks+" production graph-route assertions.");return 0;
         }
@@ -175,6 +177,101 @@ internal static class RouteTests
         Check(pursuit.TryWaypoint(body, 2, true, out _), "a reopened route can be planned after the retry window");
     }
 
+    private static void HillPursuit()
+    {
+        var graph = new NodeGraph();
+        graph.Positions.Add(Vector3.zero);
+        graph.Positions.Add(new Vector3(-6, 0, 0));
+        graph.Positions.Add(new Vector3(-6, 0, 15));
+        graph.Positions.Add(new Vector3(26, 0, 15));
+        graph.Positions.Add(new Vector3(26, 0, 0));
+        graph.Positions.Add(new Vector3(30, 0, 0)); // Disconnected hill center.
+        for (int i = 0; i < 4; i++) graph.Connect(i, i + 1);
+        SceneInfo.instance = new SceneInfo { groundNodes = graph };
+        var hill = new HillView { Ready = true, To = graph.Positions[5], Radius = 6 };
+        var bots = new CharacterBody[5];
+        var routes = new ArenaBotPursuit[bots.Length];
+        for (int i = 0; i < bots.Length; i++) { bots[i] = new CharacterBody(); routes[i] = new ArenaBotPursuit(); }
+        for (int tick = 0; tick < 12; tick++)
+        {
+            float now = tick * .1f;
+            for (int i = 0; i < bots.Length; i++)
+            {
+                var bot = bots[i];
+                if (ArenaBotPursuit.CanCapture(hill, bot.footPosition, bot.corePosition)) continue;
+                var route = routes[i];
+                route.TrackHill(bot, new HillView { Ready = true, To = hill.To, Radius = hill.Radius }, now);
+                route.Step(bot, now, 1);
+                if (!route.TryWaypoint(bot, now, true, out var waypoint)) continue;
+                if (bot.footPosition.sqrMagnitude < .01f) Check(waypoint.x < 0, "the first hill waypoint follows the connected detour, even though it leads away from the circle");
+                bot.footPosition = waypoint;
+            }
+        }
+        foreach (var bot in bots) Check(ArenaBotPursuit.CanCapture(hill, bot.footPosition, bot.corePosition),
+            "five independent routes survive consecutive hill snapshots and reach a connected capture node");
+        var sample = bots[0];
+        Physics.LineBlocked = (a, b) => true;
+        Check(!ArenaBotPursuit.CanCapture(hill, sample.footPosition, sample.corePosition), "standing inside the drawn ring behind a wall does not count as capturing");
+        Physics.LineBlocked = null;
+        var moved = new HillView { Ready = true, To = Vector3.zero, Radius = 4 };
+        routes[0].TrackHill(sample, moved, 2);
+        routes[0].Step(sample, 2);
+        Check(routes[0].TryWaypoint(sample, 2, true, out var next) && next.z == 15, "relocating the hill immediately replaces the committed route");
+
+        var traveler = new CharacterBody();
+        var enemy = new CharacterBody { footPosition = new Vector3(0, 0, 12) };
+        var goal = Vector3.forward * 20;
+        Check(ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 12, 25), "an enemy in the corridor can be engaged while traveling");
+        enemy.footPosition = new Vector3(9, 0, 12);
+        Check(!ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 15, 25), "enemies to the side do not pull bots into a fight away from the route");
+        enemy.footPosition = new Vector3(0, 0, -12);
+        Check(!ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 12, 25), "enemies behind the bot do not interrupt the approach");
+
+        graph = new NodeGraph { RequiresJump = true };
+        graph.Positions.Add(Vector3.zero);
+        graph.Positions.Add(new Vector3(3, 0, 0));
+        graph.Connect(0, 1);
+        SceneInfo.instance.groundNodes = graph;
+        var jumpRoute = new ArenaBotPursuit();
+        jumpRoute.TrackHill(traveler, new HillView { Ready = true, To = graph.Positions[1], Radius = 1 }, 3);
+        jumpRoute.Step(traveler, 3);
+        Check(jumpRoute.TryWaypoint(traveler, 3, true, out _) && jumpRoute.TryJumpHeading(traveler, out var heading) && heading.x > .99f,
+            "a reachable native jump leg supplies a validated forward jump even when a combat driver supplies no jump input");
+        Physics.NoFloor = true;
+        Check(!jumpRoute.TryJumpHeading(traveler, out _), "a planned jump requires supported landing terrain");
+        Physics.NoFloor = false;
+    }
+
+    private static void PredictiveAim()
+    {
+        var tracker = new ArenaBotPrediction();
+        var sight = new Vector3(20, 0, 0);
+        var strafe = Vector3.forward * 8;
+        tracker.Observe(sight, strafe, 0);
+        var lead = tracker.Intercept(Vector3.zero, sight, 50);
+        Check(lead.z > 3.15f && lead.z < 3.35f, "projectile lead solves the intercept of a constant lateral strafe");
+        var reversed = sight - strafe * .1f;
+        tracker.Observe(reversed, strafe, .1f);
+        Check(tracker.Intercept(Vector3.zero, reversed, 50).z < reversed.z - 3,
+            "a measured reversal changes the lead even when reported velocity still points the old way");
+        tracker.Clear();
+        tracker.Observe(sight, Vector3.zero, 1);
+        var moving = sight + Vector3.forward * .4f;
+        tracker.Observe(moving, Vector3.zero, 1.06f);
+        Check(tracker.Intercept(Vector3.zero, moving, 50).z > moving.z + 3.2f,
+            "observed acceleration leads farther than constant velocity when the target speeds up");
+        var teleported = new Vector3(22, 0, 30);
+        tracker.Observe(teleported, strafe, 1.12f);
+        Check((tracker.Intercept(Vector3.zero, teleported, 50) - teleported).sqrMagnitude == 0,
+            "teleporting resets prediction instead of aiming at a phantom high-speed target");
+        tracker.Clear();
+        tracker.Observe(sight, strafe, 2);
+        Check((tracker.Intercept(Vector3.zero, sight, 0) - sight).sqrMagnitude == 0,
+            "hitscan aiming stays on the current hurtbox");
+        Check((tracker.Intercept(Vector3.zero, sight, 9) - sight).sqrMagnitude == 0,
+            "an intercept outside the bounded prediction window uses the visible aim point");
+    }
+
     private static void Crossfire()
     {
         var graph = new NodeGraph();
@@ -222,6 +319,7 @@ namespace RoR2.Navigation
         public struct LinkIndex { public int index; }
         public readonly List<Vector3> Positions=new List<Vector3>();
         public int DisabledStart = -1;
+        public bool RequiresJump;
         private readonly List<int[]> edges=new List<int[]>();
         public void Connect(int a,int b) { edges.Add(new[]{a,b});edges.Add(new[]{b,a}); }
         public NodeIndex FindClosestNode(Vector3 point,RoR2.HullClassification hull,float max)
@@ -230,7 +328,7 @@ namespace RoR2.Navigation
         public bool GetNodePosition(NodeIndex node,out Vector3 point) { point=node.nodeIndex<0 ? Vector3.zero : Positions[node.nodeIndex];return node.nodeIndex>=0; }
         public void GetActiveNodeLinks(NodeIndex node,List<LinkIndex> result) { for(int i=0;i<edges.Count;i++)if(edges[i][0]==node.nodeIndex)result.Add(new LinkIndex { index=i }); }
         public bool IsLinkSuitableForHull(LinkIndex link,RoR2.HullClassification hull) { return edges[link.index][0] != DisabledStart; }
-        public bool GetLinkNeedsJump(LinkIndex link,RoR2.HullMask mask) { return false; }
+        public bool GetLinkNeedsJump(LinkIndex link,RoR2.HullMask mask) { return RequiresJump; }
         public NodeIndex GetLinkEndNode(LinkIndex link) { return new NodeIndex { nodeIndex=edges[link.index][1] }; }
         public NodeIndex GetLinkStartNode(LinkIndex link) { return new NodeIndex { nodeIndex=edges[link.index][0] }; }
         public bool GetNodeTraversalPenalty(NodeIndex node, out float penalty) { penalty = 0; return true; }

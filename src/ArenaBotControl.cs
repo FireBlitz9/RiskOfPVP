@@ -34,7 +34,8 @@ namespace ArenaPvP
             if(!owner.Brain.CanSteer(owner.AI))return;
             var next=owner.AI.broadNavigationAgent.output.nextPosition;
             var body=owner.AI.body;
-            navigator.targetPosition=next.HasValue ? next.Value+(body.transform.position-body.footPosition) : body.transform.position;
+            Vector3 target=owner.Brain.FollowingWalkLeg ? owner.Brain.Destination : next ?? owner.Brain.Destination;
+            navigator.targetPosition=target + (body.transform.position-body.footPosition);
         }
     }
     [HarmonyPatch(typeof(LocalNavigator),nameof(LocalNavigator.Update))]

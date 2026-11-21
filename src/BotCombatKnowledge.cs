@@ -14,6 +14,7 @@ namespace ArenaPvP
         public bool Dot, NativeSequence;
         public float FalloffStart,FalloffEnd,MinimumDamage=1;
         internal float TravelDuration, TravelSpeedCoefficient, TravelStartCoefficient, TravelEndCoefficient;
+        internal bool InstantShot;
         public int Samples;
         private float driverRange;
         public void DriverRange(float minimum,float maximum)
@@ -57,11 +58,16 @@ namespace ArenaPvP
         {
             name=(name ?? "").ToLowerInvariant();
             Charge|=name.Contains("charge");
-            Movement|=name.Contains("blink") || name.Contains("dodge") || name.Contains("slide") || name.Contains("leap") || name.Contains("assaulter") || name.Contains("grapple");
+            Movement |= LooksLikeTravel(name);
             Deployable|=name.Contains("place") || name.Contains("deploy") || name.Contains("turret") || name.Contains("supply");
             NativeSequence|=name.Contains("scope") || name.Contains("reload") || name.Contains("grapple") || name.Contains("stance");
             if(name.Contains("freeze") || name.Contains("icewall"))Control=Math.Max(Control,.8f);
         }
+        private static bool LooksLikeTravel(string name) => name.Contains("blink") || name.Contains("dodge")
+            || name.Contains("slide") || name.Contains("leap") || name.Contains("assaulter") || name.Contains("grapple")
+            || name.Contains("dash") || name.Contains("teleport");
+
+        internal static bool IsTravelState(Type type) => type != null && LooksLikeTravel(type.Name.ToLowerInvariant());
         public void Emission(float coefficient,float proc,float range,float speed,float radius,float hits=1)
         {
             if(coefficient<=0 || float.IsNaN(coefficient) || float.IsInfinity(coefficient))return;
@@ -69,7 +75,7 @@ namespace ArenaPvP
             if(!KnownDamage)Damage=coefficient;else Damage=Math.Max(Damage*.8f,Damage+(coefficient-Damage)*weight);
             Proc=Math.Max(0,Math.Min(10,Proc+(proc-Proc)*weight));
             if(range>0) { Range=Math.Max(.5f,Math.Min(1000,range));ConfiguredRange=true; }
-            if(speed>0)Speed=Math.Min(500,speed);
+            if(speed>0) { Speed=Math.Min(500,speed);InstantShot=false; }
             if(radius>0)Radius=Math.Min(100,radius);
             Hits=Math.Max(1,Math.Min(64,hits));
             KnownDamage=Combat=true;Samples++;

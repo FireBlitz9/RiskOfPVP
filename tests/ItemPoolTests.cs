@@ -335,7 +335,7 @@ namespace RoR2
         public void Activate(GenericSkill skill) { skill.Ready=false;skill.stateMachine.Main=false;onSkillActivatedServer?.Invoke(skill); }
         public int GetInstanceID() { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this); }
     }
-    public class CharacterMotor : TestObject { public bool isGrounded=true; }
+    public class CharacterMotor : TestObject { public bool isGrounded=true,disableAirControlUntilCollision; }
     public class InputBankTest : TestObject
     {
         public struct ButtonState { public bool down; }
@@ -345,7 +345,7 @@ namespace RoR2
     public enum SkillSlot { None=-1,Primary,Secondary,Utility,Special }
     public struct SerializableEntityStateType
     { public Type stateType;public SerializableEntityStateType(Type t) { stateType=t; } }
-    public class EntityStateMachine : TestObject { public bool Main=true;public bool IsInMainState() { return Main; } }
+    public class EntityStateMachine : TestObject { public bool Main=true;public EntityStates.EntityState state;public bool IsInMainState() { return Main; } }
     public class GenericSkill : TestObject
     {
         public bool isCombatSkill=true;
@@ -361,6 +361,7 @@ namespace RoR2
     public class NativeBanditFinisher : EntityStates.EntityState { }
     public class NativeChargeBomb:EntityStates.EntityState { }
     public class NativeScope:EntityStates.EntityState { }
+    public class NativeDodge:EntityStates.EntityState { }
     public class SkillLocator : TestObject
     {
         public GenericSkill primary=new GenericSkill(),secondary=new GenericSkill(),utility=new GenericSkill(),special=new GenericSkill();

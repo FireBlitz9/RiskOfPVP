@@ -23,7 +23,7 @@ namespace ArenaPvP
             if(!grounded || now>=recoveryUntil)return requested;
             if(now<nextProbe)return escape;
             if(probeFrame!=Time.frameCount) { probeFrame=Time.frameCount;probes=0; }
-            if(probes>=4)return Vector3.zero;
+            if(probes>=4)return requested;
             probes++;
             nextProbe=now+.15f;
             var toward=waypoint-body.footPosition;toward.y=0;toward.Normalize();
