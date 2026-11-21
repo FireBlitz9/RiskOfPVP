@@ -1,3 +1,8 @@
+# 1.3.6
+
+- Bot decision intervals can go down to 0.05 seconds. New configs default to 0.1 seconds and saved intervals carry over.
+- Added a live host setting for one to three tactical decisions per physics tick, with a default of two. Ready bots take turns, and pursuit and rewards have their own slice of the existing soft CPU budget.
+
 # 1.3.5
 
 - Ultra tracks hostile positions across the map and searches the connected navigation graph for routes around walls and elevation changes. It can pursue a hidden opponent while reserving attacks for clear sightlines.

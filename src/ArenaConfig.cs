@@ -16,7 +16,7 @@ namespace ArenaPvP
         internal readonly ConfigEntry<float> DamageScale, HealOnKill, RespawnSeconds, ProtectionSeconds, AntiBurstSeconds;
         internal readonly ConfigEntry<RespawnRule> Respawn;
         internal readonly ConfigEntry<bool> IncludeEquipment, IncludeLunar, IncludeVoid, IncludeBoss, IncludeSpecial, IncludeRestricted;
-        internal readonly ConfigEntry<int> BotIntelligence;
+        internal readonly ConfigEntry<int> BotIntelligence, BotDecisionsPerTick;
         internal readonly ConfigEntry<float> BotThinkSeconds;
         internal readonly ConfigEntry<bool> BotChase;
         internal readonly ConfigEntry<bool> AutoOpen, ShowNametags, ShowOpponentArrows;
@@ -133,12 +133,19 @@ namespace ArenaPvP
                 BotIntelligence = General("Bots", "Bot intelligence", 1,
                     "Low: simple tactics and fixed builds. Medium: standard tactics. High: nearest-enemy awareness and fixed builds. Extra High: adaptive builds, predictive aim, dodging, combat jumps and sprint resets. Ultra: stronger aim, opponent counter-builds and survivor-specific attack combinations. Every tier seeks KOTH objectives and uses cliff avoidance. Host-controlled and live.", new AcceptableValueRange<int>(0,4));
                 Add(new ArenaBotIntelligenceOption(BotIntelligence));
-                BotThinkSeconds = General("Bots", "Decision interval", .5f,
-                    "Seconds between tactical decisions per bot. Lower values react sooner but use more CPU. Decisions are staggered inside a shared 2 ms budget; native movement and aiming continue between them. Applies live.", new AcceptableValueRange<float>(.1f,2f),
+                BotThinkSeconds = General("Bots", "Decision interval", BotTacticsRules.DefaultDecisionInterval,
+                    "Seconds between tactical decisions for each bot. Lower values react sooner and use more CPU. Applies live.",
+                    new AcceptableValueRange<float>(BotTacticsRules.MinimumDecisionInterval, BotTacticsRules.MaximumDecisionInterval),
                     new ConfigDefinition(SettingsLayout.Profile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
                     new ConfigDefinition(SettingsLayout.LegacyProfile(DefaultMode.Value), SettingsLayout.Key("Bots", "Bot decision interval seconds")),
                     new ConfigDefinition("05 Match", "Bot decision interval seconds"));
-                Add(new StepSliderOption(BotThinkSeconds, new StepSliderConfig { name = "Decision interval", min = .1f, max = 2f, increment = .05f }));
+                Add(new StepSliderOption(BotThinkSeconds, new StepSliderConfig { name = "Decision interval",
+                    min = BotTacticsRules.MinimumDecisionInterval, max = BotTacticsRules.MaximumDecisionInterval, increment = .05f }));
+                BotDecisionsPerTick = General("Bots", "Decisions per tick", BotTacticsRules.DefaultDecisionsPerTick,
+                    "Maximum tactical decisions in one server physics tick. A shared CPU budget can defer decisions to later ticks. Applies live.",
+                    new AcceptableValueRange<int>(1, BotTacticsRules.MaximumDecisionsPerTick));
+                Add(new IntSliderOption(BotDecisionsPerTick, new IntSliderConfig { name = "Decisions per tick",
+                    min = 1, max = BotTacticsRules.MaximumDecisionsPerTick }));
                 BotChase = GeneralCheck("Bots", "Chase mode", false, "FFA only: bots prioritize human players over other bots. If no living human target is available, they fight other enemies. Ignored by Teams and KOTH; objectives always take priority. Applies live.");
 
                 profiles.Add(ArenaMode.FFA, new ArenaModeConfig(this, ArenaMode.FFA));
@@ -200,6 +207,7 @@ namespace ArenaPvP
         internal int FocusCaptures;
         internal int StartingBots;
         internal float BotThinkSeconds;
+        internal int BotDecisionsPerTick;
         internal BotIntelligence BotIntelligence;
         internal bool BotChase;
         internal float FocusChargeSeconds, FocusRadius, FocusMoveSeconds;
@@ -221,7 +229,7 @@ namespace ArenaPvP
             Selection = c.Selection.Value; Respawn = config.Respawn.Value;
             Mode = mode; FocusCaptures = (c.FocusCaptures == null ? 3 : c.FocusCaptures.Value);
             StartingBots = c.StartingBots.Value;
-            BotThinkSeconds = config.BotThinkSeconds.Value; BotIntelligence = BotTacticsRules.Tier(config.BotIntelligence.Value); BotChase = config.BotChase.Value;
+            RefreshBots(config);
             FocusChargeSeconds = (c.FocusChargeSeconds == null ? 45f : c.FocusChargeSeconds.Value); FocusRadius = (c.FocusRadius == null ? 25f : c.FocusRadius.Value); FocusMoveSeconds = (c.FocusMoveSeconds == null ? 8f : c.FocusMoveSeconds.Value);
             AntiOneShot = config.AntiOneShot.Value; AntiBurstSeconds = config.AntiBurstSeconds.Value; VoidProtection = config.VoidProtection.Value;
             RandomAutoLevel = c.RandomAutoLevel.Value; RandomLevelSeconds = c.RandomLevelSeconds.Value;
@@ -252,7 +260,14 @@ namespace ArenaPvP
             AntiOneShot = config.AntiOneShot.Value; AntiBurstSeconds = config.AntiBurstSeconds.Value;
             VoidProtection = config.VoidProtection.Value; NoFallDamage = !config.FallDamage.Value;
             EnableScrapper = config.Profile(Mode).EnableScrapper.Value;
-            BotThinkSeconds = config.BotThinkSeconds.Value; BotIntelligence = BotTacticsRules.Tier(config.BotIntelligence.Value); BotChase = config.BotChase.Value;
+            RefreshBots(config);
+        }
+        private void RefreshBots(ArenaConfig config)
+        {
+            BotThinkSeconds = config.BotThinkSeconds.Value;
+            BotDecisionsPerTick = config.BotDecisionsPerTick.Value;
+            BotIntelligence = BotTacticsRules.Tier(config.BotIntelligence.Value);
+            BotChase = config.BotChase.Value;
         }
     }
 }

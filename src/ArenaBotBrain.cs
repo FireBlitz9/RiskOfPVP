@@ -15,7 +15,8 @@ namespace ArenaPvP
     }
     internal sealed class ArenaBotBrain : MonoBehaviour
     {
-        internal float NextThink;
+        private float firstThinkAt;
+        private float lastThink = float.NegativeInfinity;
         internal float NextChoice;
         internal uint ChoiceArrival;
         internal CharacterBody Enemy { get; private set; }
@@ -86,7 +87,7 @@ namespace ArenaPvP
                 ai.neverRetaliateFriendlies=true; ai.xrayVision=false; ai.ReplaceSkillDrivers(drivers);
                 ai.SetCustomTargetGameObject(goal); ArenaBotControl.Register(ai,this);
             }
-            NextThink=Time.unscaledTime+(player.BotOrdinal%8)*.06f;
+            firstThinkAt = Time.unscaledTime + (player.BotOrdinal % 8) * (BotTacticsRules.DefaultDecisionInterval / 8f);
             nextGroundProbe=Time.unscaledTime+(player.BotOrdinal%5)*.02f; patrol=player.BotOrdinal*17;
         }
         private void OnDestroy()
@@ -99,11 +100,22 @@ namespace ArenaPvP
             return !driver || driver.skillSlot!=SkillSlot.Utility && driver.skillSlot!=SkillSlot.Special
                 || tier == BotIntelligence.Ultra && reserveEscape && ArenaBotKit.ReserveUtility(ai.body, driver);
         }
-        internal void Think(ArenaMatch match,List<BotTarget> targets,float now)
+        internal bool DecisionDue(float now, float interval)
         {
-            NextThink=now+Mathf.Clamp(match.Rules.BotThinkSeconds,.1f,2f);
-            if(!player.Connected || player.Dead || !player.Master || !goal) { hasGoal=false; Enemy=null; return; }
-            var body=player.Master.GetBody(); if(!body || !body.healthComponent || !body.healthComponent.alive)return;
+            if (!player.Connected || player.Dead || !player.Master || !goal)
+            {
+                hasGoal = false;
+                Enemy = null;
+                return false;
+            }
+            float deadline = float.IsNegativeInfinity(lastThink) ? firstThinkAt : lastThink + interval;
+            return now + .0001f >= deadline;
+        }
+        internal bool Think(ArenaMatch match,List<BotTarget> targets,float now)
+        {
+            var body = player.Master.GetBody();
+            if (!body || !body.healthComponent || !body.healthComponent.alive) return false;
+            lastThink = now;
             var nextTier = match.Rules.BotIntelligence;
             bool bodyChanged = kitBody != body;
             if (bodyChanged)
@@ -134,7 +146,7 @@ namespace ArenaPvP
             if (tier == BotIntelligence.Ultra)
             {
                 ThinkUltra(match, targets, body, hill, objective, now);
-                return;
+                return true;
             }
             bool chase=BotTacticsRules.ChaseHumans(match.Rules.BotChase,match.Rules.Mode);
             bool human=false;
@@ -196,6 +208,7 @@ namespace ArenaPvP
             if(!ProjectGround(body,desired,out safe))safe=body.footPosition;
             if(objective && (safe-hill.To).sqrMagnitude>hill.Radius*hill.Radius)ProjectGround(body,hill.To,out safe);
             ApplyGoal(safe);
+            return true;
         }
 
         private void ApplyEnemy(ArenaMatch match)
@@ -417,7 +430,6 @@ namespace ArenaPvP
             if (!pursuitTarget || !pursuitTarget.healthComponent || !pursuitTarget.healthComponent.alive)
             {
                 StopPursuit();
-                NextThink = now;
                 return;
             }
             var body = player.Master.GetBody();
@@ -428,7 +440,6 @@ namespace ArenaPvP
                 if (unreachable.Count >= 96) unreachable.Clear();
                 unreachable[pursuitTarget] = now + 2.5f;
                 StopPursuit();
-                NextThink = now;
                 return;
             }
             if (pursuit.TryWaypoint(body, now, !actions.MovementLocked(body), out var waypoint)) ApplyGoal(waypoint, true);

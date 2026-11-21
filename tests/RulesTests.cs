@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ArenaPvP;
 
 internal static class RulesTests
@@ -553,6 +554,7 @@ internal static class RulesTests
             Check(remainingPlayers == 1, "the host remains a valid participant after the last remote player leaves");
             BotBuilds();
             BotIntelligenceAndCounters();
+            BotDecisionScheduling();
             BotMotionTests.Run(Check);
             UltraPressureTests.Run(Check);
             CombatKnowledgeTests.Run(Check);
@@ -770,6 +772,34 @@ internal static class RulesTests
         Check(BotBuildRules.TargetScore(25, 1, true, false, false) > BotBuildRules.TargetScore(25, 1, false, false, false), "target stickiness avoids constant aim switching");
         Check(BotBuildRules.TargetScore(25, 1, false, true, false) > BotBuildRules.TargetScore(25, 1, false, false, false), "KOTH targets on the objective gain priority");
     }
+    private static void BotDecisionScheduling()
+    {
+        var batch = new BotDecisionBatch();
+        var decided = new List<int>();
+        batch.Begin(5, 2);
+        while (batch.TryNext(out int index))
+        {
+            if (index == 0) continue; // No tactical update due for this bot.
+            decided.Add(index);
+            batch.RecordDecision();
+        }
+        Check(decided.SequenceEqual(new[] { 1, 2 }), "two decisions per tick counts completed decisions rather than skipped bots");
+        decided.Clear();
+        batch.Begin(5, 3);
+        while (batch.TryNext(out int index))
+        {
+            decided.Add(index);
+            batch.RecordDecision();
+        }
+        Check(decided.SequenceEqual(new[] { 3, 4, 0 }), "increasing the cap preserves round-robin order across ticks");
+        batch.Begin(5, 1);
+        Check(batch.TryNext(out int first) && first == 1, "a temporary budget cutoff starts the next tick with the next bot");
+        batch.Begin(5, 3);
+        Check(batch.TryNext(out first) && first == 2, "an interrupted scan continues where it left off");
+        batch.Begin(1, 3);
+        Check(batch.TryNext(out first) && first == 0 && !batch.TryNext(out _), "a bot is evaluated at most once per tick");
+    }
+
     private static void BotIntelligenceAndCounters()
     {
         Check(BotTacticsRules.Tier(-20)==BotIntelligence.Low && BotTacticsRules.Tier(99)==BotIntelligence.Ultra,"intelligence clamps to its five supported settings");

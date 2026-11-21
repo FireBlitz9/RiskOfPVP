@@ -4,8 +4,39 @@ namespace ArenaPvP
 {
     public enum BotIntelligence { Low, Medium, High, ExtraHigh, Ultra }
 
+    internal struct BotDecisionBatch
+    {
+        private int cursor;
+        private int count, visited, allowance;
+
+        internal void Begin(int botCount, int limit)
+        {
+            count = botCount;
+            visited = 0;
+            allowance = Math.Max(1, Math.Min(limit, BotTacticsRules.MaximumDecisionsPerTick));
+        }
+
+        internal bool TryNext(out int index)
+        {
+            index = -1;
+            if (visited >= count || allowance == 0) return false;
+            index = cursor % count;
+            cursor = index + 1;
+            visited++;
+            return true;
+        }
+
+        internal void RecordDecision() { allowance--; }
+    }
+
     public static class BotTacticsRules
     {
+        internal const float MinimumDecisionInterval = .05f;
+        internal const float DefaultDecisionInterval = .1f;
+        internal const float MaximumDecisionInterval = 2f;
+        internal const int DefaultDecisionsPerTick = 2;
+        internal const int MaximumDecisionsPerTick = 3;
+
         private static readonly string[] names = { "Low", "Medium", "High", "Extra High", "Ultra" };
         private static readonly float[] sight = { 100f, 140f, 180f, 200f, 220f }, damping = { .35f, .18f, .11f, .065f, .035f },
             aimSpeed = { 6f, 10f, 16f, 24f, 32f }, aimDot = { .82f, .9f, .94f, .97f, .985f };

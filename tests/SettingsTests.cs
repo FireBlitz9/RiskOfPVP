@@ -175,14 +175,22 @@ internal static class SettingsTests
         Check(config.BotIntelligence.Value==1 && captured.BotIntelligence==BotIntelligence.Medium, "existing bot behavior remains the Medium default");
         var intelligence=registered.Single(o=>o.Entry==config.BotIntelligence).Config as RiskOfOptions.OptionConfigs.IntSliderConfig;
         Check(intelligence!=null && intelligence.min==0 && intelligence.max==4, "bot intelligence is a five-position slider including Ultra");
+        var interval = registered.Single(o => o.Entry == config.BotThinkSeconds).Config as RiskOfOptions.OptionConfigs.StepSliderConfig;
+        var decisions = registered.Single(o => o.Entry == config.BotDecisionsPerTick).Config as RiskOfOptions.OptionConfigs.IntSliderConfig;
+        Check(interval != null && interval.min == .05f && interval.increment == .05f && (float)config.BotThinkSeconds.DefaultValue == .1f,
+            "the decision interval has a 0.05-second minimum and 0.1-second factory default");
+        Check(decisions != null && decisions.min == 1 && decisions.max == 3 && captured.BotDecisionsPerTick == 2
+            && config.MatchEntries.Contains(config.BotDecisionsPerTick), "the shared host decisions cap allows one through three and defaults to two");
         Check(!config.MatchEntries.Any(e=>e.Definition.Section!="General" && e.Definition.Key.Contains("decision interval")), "decision interval is shared rather than repeated in every mode");
         Check(!captured.OnStart && !captured.OnKill && !captured.OnTimer && captured.OnDeath && captured.DamageScale == .8f, "the actual host capture derives reward events from amount sliders and shares General rules");
         config.Profile(ArenaMode.Teams).DeathRewards.Value = 7;
         Check(config.Profile(ArenaMode.FFA).DeathRewards.Value == 1 && config.Profile(ArenaMode.KOTH).DeathRewards.Value == 1, "mode reward profiles remain independent");
-        config.VoidProtection.Value = false; config.DamageScale.Value = .65f; config.BotIntelligence.Value=4;config.BotThinkSeconds.Value=.2f;config.BotChase.Value=true;captured.RefreshCombat(config);
-        Check(captured.BotIntelligence==BotIntelligence.Ultra && captured.BotThinkSeconds==.2f && captured.BotChase, "all active bot tuning comes from live host rules");
+        config.VoidProtection.Value = false; config.DamageScale.Value = .65f; config.BotIntelligence.Value=4;config.BotThinkSeconds.Value=.05f;config.BotDecisionsPerTick.Value=3;config.BotChase.Value=true;captured.RefreshCombat(config);
+        Check(captured.BotIntelligence==BotIntelligence.Ultra && captured.BotThinkSeconds==.05f && captured.BotDecisionsPerTick==3
+            && captured.BotChase, "all active bot tuning comes from live host rules");
         Check(!captured.VoidProtection && captured.DamageScale == .65f && captured.OnDeath, "live General combat refresh leaves captured reward clocks intact");
         file.Save(); config = new ArenaConfig(Open(path));
+        Check(config.BotThinkSeconds.Value == .05f && config.BotDecisionsPerTick.Value == 3, "minimum interval and maximum decisions survive config reload");
         Check(config.Profile(ArenaMode.Teams).DeathRewards.Value == 7 && config.Profile(ArenaMode.FFA).KillRewards.Value == 0 && config.DamageScale.Value == .65f && !config.VoidProtection.Value, "schema-3 reload preserves new edits instead of reapplying legacy migration");
         Check(!File.ReadAllText(path).Contains("Settings schema = 2"), "settings schema advances after the successful reorganization");
         File.WriteAllText(path,"[00 Internal]\nSettings schema = 3\n[General]\nLobby / Default mode = Teams\n[Teams]\nBots / Bot decision interval seconds = 0.85\n",Encoding.UTF8);
