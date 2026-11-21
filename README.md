@@ -70,13 +70,13 @@ Bot intelligence is under **General > Bots**:
 | **Medium** | Standard tactics and fixed builds; the default. |
 | **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
 | **Extra High** | Adaptive builds, predictive aiming, dodging, combat jumps and sprint resets. |
-| **Ultra** | Sustained primary pressure, advancing dodges, stable pursuit and defensive builds that learn from damage and defeats. It tracks opponents for navigation and reacts to visible attacks. |
+| **Ultra** | Learns skill damage, range, proc values and opponents' habits; sustains fire, seeks cover and adapts its movement and defensive build. |
 
 **Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
 
 Extra High and Ultra sprint when movement and their current skill allow it. Ultra checks line of sight before firing and dodges visible attacks or incoming projectiles with normal movement inputs. It reads its equipped skills and uses native AI for complex traversal, scope/reload, and custom survivor chains. Its builds use the normal reward pool, including eligible DLC items and equipment. [Bot build and combat rules](BOT_BUILDS.md)
 
-Ultra keeps using its primary while burst abilities recharge and continues moving as it attacks. It can fire alongside skills on independent state machines; shared-state charges and animations still finish normally. Defensive choices account for existing protection, sustain, enemy builds and recent defeats, including after respawn. It receives the same rewards and follows the same item limits as players.
+Ultra keeps aiming and using available attacks while burst abilities recharge. It combines registered skill configuration with observed casts, attack parameters and hit outcomes. It can fire alongside skills on independent state machines; shared-state charges and animations still finish normally. Opponents' movement, accuracy and skill use gradually change its reaction, aim and evasive behaviour. It uses active threats and recovery windows to seek cover or push, and learns defensive priorities across respawns. Unknown custom skill behaviour uses estimates until observed; this is a bounded tactical model, not a simulation of every mod script. Bots receive the same rewards and follow the same item limits as players.
 
 ### Ultra benchmarks
 

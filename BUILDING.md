@@ -19,7 +19,7 @@ The package script checks dependency pins and the DLL/manifest version match, th
 
 These checks do not run Unity or replace multiplayer playtesting. Test changes in a separate mod-manager profile. Only one RiskOfPVP/RiskOfArena plugin copy should be enabled, and every player must use the same version.
 
-The route suite compiles production `ArenaBotRoutes` against a small graph/physics adapter. Controller tests drive skill requests, actual activation events and native recovery separately. Pressure tests cover continuous primary input, displacement-based stuck detection, route revisits, advancing dodges and defensive choices across respawns. Adapter timings exclude native physics, pathfinding, animation and network costs.
+The route suite compiles production graph routing and local collision recovery against a small graph/physics adapter. Controller tests drive aim ownership, skill requests, actual activation events and native recovery separately. A ten-second aim-to-fire case starts from sideways native aim with other skills unavailable. A separate suite executes the production combat catalog, event observer, telemetry attribution and respawn cleanup against native API adapters. Pressure tests cover continuous primary input, displacement-based stuck detection, route revisits, advancing dodges and defensive choices across respawns. Adapter timings exclude native physics, pathfinding, animation and network costs.
 
 ## Release versions
 

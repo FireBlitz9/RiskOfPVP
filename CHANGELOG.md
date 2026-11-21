@@ -1,3 +1,12 @@
+# 1.3.4
+
+- Fixed an Ultra firing deadlock: movement and utility drivers could keep hitscan aim pointing sideways, preventing the firing gate from ever opening. Target aim now updates while the bot turns, including while its other skills recharge.
+- Ultra evaluates its four equipped skills using registered configuration and observed casts, attack emissions and hits. Damage, proc coefficient, hit count, physical range, projectile speed, falloff and charge timing inform attack and build choices. Available attacks replace fixed survivor combo orders; native scope, traversal and other multistate chains retain their input handling.
+- Opponent movement, skill use and hit outcomes gradually adjust Ultra's aim, reaction and evasive movement. Active skill threats and observed recovery windows inform cover, counterattacks and defensive purchases. Learning persists through respawns within the match.
+- Added local collision feedback to obstacle recovery. A/D oscillation without forward progress triggers bounded wall-tangent probes and a committed escape heading, with floor, landing and KOTH checks.
+- Learning is host-only, indexes registered state data in small batches and shares the bot decision budget. It does not load assemblies or execute skills for discovery. No new dependencies or multiplayer protocol changes.
+- Added a ten-second aim-to-fire regression, production learning lifecycle tests, physical wall-recovery tests and skill range/charge/healing checks. Live map and multiplayer testing remain necessary.
+
 # 1.3.3
 
 - Ultra sustains primary fire while other abilities recharge, and can fire alongside abilities using independent state machines. Shared-state charges and native recovery remain protected.

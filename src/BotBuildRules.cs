@@ -30,6 +30,8 @@ namespace ArenaPvP
         public float SkillUse = .65f, EnemyStrafe;
         public float MobilityEvidence, SustainEvidence, BurstEvidence;
         public float SurvivalPressure;
+        public float EnemySkillProc,EnemySkillBurst;
+        public bool EnemySkillDot;
         internal float DefenseNeed, Mitigation, Sustain;
         public int Count(string name) { int n; return Inventory.TryGetValue(name, out n) ? n : 0; }
         public int EnemyCount(string name) { int n; return EnemyInventory.TryGetValue(name,out n) ? n : 0; }
@@ -235,6 +237,9 @@ namespace ArenaPvP
             bool burst=c.EnemyDamage>1.30f || c.EnemyCount("CritDamage")>0 || c.EnemyCount("FireRing")>0
                 || c.EnemyCount("IceRing")>0 || c.EnemyCount("CritGlasses")>=6;
             bool procs=c.EnemyCount("MissileVoid")>0 || c.EnemyCount("ChainLightningVoid")>0 || c.EnemyCount("BleedOnHit")>=4;
+            procs|=c.EnemySkillProc>3;
+            burst|=c.EnemySkillBurst>.5f;
+            if(c.EnemySkillDot && i.Name=="Cleanse")value+=.8f;
             if(multiHit && (i.Name=="Syringe" || i.Name=="MissileVoid" || i.Name=="ChainLightningVoid"))value=value*1.8f+.25f*once;
             if(flatArmor && (i.Name=="Syringe" || i.Name=="BleedOnHit" || i.Name=="BleedOnHitVoid"))value*=.6f;
             if(flatArmor && (i.Name=="Behemoth" || i.Name=="FireRing" || i.Name=="IceRing" || i.Name=="Crowbar"))value=value*1.45f+.12f*once;

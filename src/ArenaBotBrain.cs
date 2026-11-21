@@ -48,6 +48,8 @@ namespace ArenaPvP
         private bool reserveEscape;
         private float nextDodgeProbe,nextDirectProbe;
         private Vector3 cachedDodge,cachedDirect,directGoal;
+        private readonly ArenaBotLocomotion locomotion=new ArenaBotLocomotion();
+        private float nextQuietReport;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
 
@@ -67,6 +69,7 @@ namespace ArenaPvP
             // press/release semantics. Travel is only a non-firing last resort.
             drivers=gameObject.GetComponents<AISkillDriver>().Where(d=>d!=movement).Concat(new[]{movement}).ToArray();
             participant.BotKit = ArenaBotKit.Read(body, drivers, range);
+            ArenaCombatLearning.SeedDrivers(body,drivers);
             actions.Initialize(bodyName,drivers,player.BotOrdinal);
             ais=gameObject.GetComponents<BaseAI>();
             foreach(var ai in ais)
@@ -101,6 +104,7 @@ namespace ArenaPvP
                 Enemy = null; enemyPlayer = null; seenAt = -100;
                 projectileAt = -100;
                 nextDodgeProbe=nextDirectProbe=0;cachedDodge=cachedDirect=Vector3.zero;
+                locomotion.Clear();nextQuietReport=now+5;
                 ResetSight(now);
             }
             if (bodyChanged || tier != nextTier)
@@ -211,6 +215,7 @@ namespace ArenaPvP
         private void ThinkUltra(ArenaMatch match, List<BotTarget> targets, CharacterBody body, HillView hill, bool objective, float now)
         {
             var kit = ArenaBotKit.Read(body, drivers, range);
+            ArenaCombatLearning.SeedDrivers(body,drivers);
             player.BotKit = kit;
             candidates.Clear();
             int allies = 0;
@@ -292,9 +297,12 @@ namespace ArenaPvP
             float pressureNow = profile.Pressure(now);
             var tempo = timing.Decide(now, healthNow, enemyHealth, separation.magnitude, kit, profile.Trade(now), pressureNow,
                 nearbyEnemies, allies, holding, attackReady, escapeReady, true,
-                !selected.Summon && profile.HasOpening(Enemy.GetInstanceID(), now));
+                !selected.Summon && (profile.HasOpening(Enemy.GetInstanceID(), now) || ArenaCombatLearning.Find(Enemy)?.Opening(now)==true));
             engagement = tempo.Engagement;
             reserveEscape = tempo.ReserveEscape;
+            var opponentKnowledge=ArenaCombatLearning.Find(Enemy);
+            if(!holding && opponentKnowledge!=null && opponentKnowledge.Threat(body,now)>.65f && healthNow<.85f)
+            { engagement=BotEngagement.Recover;reserveEscape=escapeReady; }
             float spacing = BotAdaptation.Spacing(kit, engagement, profile.Approach, pressureNow, enemyHealth);
             if (!Route(body, Enemy.corePosition, true, zone, targets, spacing, now))
                 ApplyGoal(FightGoal(body, Enemy, away, spacing, hill, objective));
@@ -581,15 +589,30 @@ namespace ArenaPvP
             float now = Time.unscaledTime;
             bool hostile=Enemy && enemyPlayer!=null && enemyPlayer.Connected && match.AreOpponents(player,enemyPlayer);
             bool alive=hostile && Enemy.healthComponent && Enemy.healthComponent.alive;
-            bool visible=alive && ai.currentEnemy!=null && ai.currentEnemy.gameObject==Enemy.gameObject && ai.currentEnemy.hasLoS && Enemy.GetVisibilityLevel(body)==VisibilityLevel.Visible;
-            if (ultra && visible) visible = HasClearSight(body, now);
+            bool targetVisible=alive && Enemy.GetVisibilityLevel(body)==VisibilityLevel.Visible;
+            bool visible=ultra ? targetVisible && HasClearSight(body,now)
+                : targetVisible && ai.currentEnemy!=null && ai.currentEnemy.gameObject==Enemy.gameObject && ai.currentEnemy.hasLoS;
+            if(ultra && ai.currentEnemy!=null)
+            {
+                // Ultra owns its chosen hostile target and the physical LoS
+                // query. A stale native utility/retaliation target must not
+                // veto combat or redirect aimed skills to another body.
+                if(Enemy && ai.currentEnemy.gameObject!=Enemy.gameObject)
+                { ai.currentEnemy.gameObject=Enemy.gameObject;ai.currentEnemy.bestHurtBox=Enemy.mainHurtBox; }
+                ai.currentEnemy.hasLoS=visible;
+            }
             var dominant=ai.skillDriverEvaluation.dominantSkillDriver;
+            bool incoming = ultra && now - projectileAt >= .04f && now - projectileAt < .35f;
+            bool attackThreat = ultra && AttackThreat(body, visible, now);
+            bool threatened = attackThreat || incoming;
+            if (ultra && reserveEscape && !threatened && !previous.pressSkill3 && ArenaBotKit.ReserveUtility(body, dominant))input.pressSkill3=false;
             Vector3 aim=Vector3.zero;
             if(visible)
             {
                 Vector3 point=Enemy.mainHurtBox ? Enemy.mainHurtBox.transform.position : Enemy.corePosition;
-                float speed = ultra ? ArenaBotKit.ProjectileSpeed(body, dominant, projectileSpeed) : projectileSpeed;
-                if(tier>=BotIntelligence.ExtraHigh && speed>0 && Enemy.characterMotor && (!dominant || dominant.skillSlot==SkillSlot.Primary || dominant.skillSlot==SkillSlot.Secondary))
+                var attackModel=ultra ? ArenaCombatLearning.Model(body,actions.AimSlot) : null;
+                float speed=ultra ? attackModel!=null && attackModel.Speed>0 ? attackModel.Speed : actions.AimSlot==0 ? projectileSpeed : 0 : projectileSpeed;
+                if(tier>=BotIntelligence.ExtraHigh && speed>0 && Enemy.characterMotor && (ultra || !dominant || dominant.skillSlot==SkillSlot.Primary || dominant.skillSlot==SkillSlot.Secondary))
                 {
                     Vector3 velocity = Vector3.ClampMagnitude(Enemy.characterMotor.velocity, 45);
                     Vector3 offset = point - body.inputBank.aimOrigin;
@@ -602,9 +625,24 @@ namespace ArenaPvP
                 }
                 aim=(point-body.inputBank.aimOrigin).normalized;
             }
-            bool fire=match.WarmupRemaining<=0 && (!ultra || now - acquiredAt >= .10f)
+            var learnedEnemy=ultra ? ArenaCombatLearning.Find(Enemy) : null;
+            var style=learnedEnemy!=null && enemyPlayer!=null && !enemyPlayer.IsBot ? learnedEnemy.Style : null;
+            if(ultra && visible && style!=null)
+            {
+                float error=(1-style.Skill)*.025f;
+                aim=(aim+Vector3.Cross(Vector3.up,aim)*Mathf.Sin(now*2.7f+player.BotOrdinal)*error+Vector3.up*Mathf.Sin(now*1.9f)*error*.35f).normalized;
+            }
+            var utility=body.skillLocator ? body.skillLocator.utility : null;
+            var utilityModel=ultra ? ArenaCombatLearning.Model(body,2) : null;
+            bool movementAim=ultra && (actions.MovementLocked(body) || input.pressSkill3 && utility && utility.CanExecute()
+                && (ArenaBotKit.EscapeReady(body) || utilityModel!=null && utilityModel.Movement || dominant && dominant.skillSlot==SkillSlot.Utility && dominant.aimType!=AISkillDriver.AimType.AtCurrentEnemy));
+            bool fire=ultra ? ArenaBotAim.Apply(ref input,body.inputBank.aimDirection,aim,alive,hostile,visible,
+                enemyPlayer!=null && enemyPlayer.ProtectionUntil>match.Clock,movementAim,match.WarmupRemaining<=0,now-acquiredAt,
+                style?.Reaction ?? .10f,style?.Alignment ?? BotTacticsRules.AimDot(tier))
+                : match.WarmupRemaining<=0
                 && BotTacticsRules.CanFire(alive,hostile,visible,enemyPlayer!=null && enemyPlayer.ProtectionUntil>match.Clock,
                 visible ? Vector3.Dot(body.inputBank.aimDirection,aim) : -1,tier);
+            if(ultra && style!=null) { ai.aimVectorDampTime=style.AimDamping;ai.aimVectorMaxSpeed=style.AimSpeed; }
             input.pressSkill1 &= fire || ultra && NativeHold(body, dominant, SkillSlot.Primary, previous.pressSkill1);
             bool offensive=dominant && (dominant.aimType==AISkillDriver.AimType.AtCurrentEnemy || dominant.moveTargetType==AISkillDriver.TargetType.CurrentEnemy);
             if(offensive)
@@ -615,13 +653,6 @@ namespace ArenaPvP
                 input.pressSkill3=BotTacticsRules.HeldSkill(input.pressSkill3,previous.pressSkill3,true,fire);
                 input.pressSkill4=BotTacticsRules.HeldSkill(input.pressSkill4,previous.pressSkill4,true,fire);
             }
-            bool incoming = ultra && now - projectileAt >= .04f && now - projectileAt < .35f;
-            bool attackThreat = ultra && AttackThreat(body, visible, now);
-            bool threatened = attackThreat || incoming;
-            // A reserved escape is for the incoming attack, not for keeping its
-            // last stock forever while the native driver tries to spend it.
-            if (ultra && reserveEscape && !threatened && !previous.pressSkill3 && ArenaBotKit.ReserveUtility(body, dominant))
-                input.pressSkill3 = false;
             if(BotTacticsRules.Adaptive(tier) || actions.HasHold)
                 actions.Combo(ai,ref input,previous,Enemy,fire,tier);
             if(body.equipmentSlot && body.inventory)
@@ -652,7 +683,8 @@ namespace ArenaPvP
             if(!plannedJump && BotTacticsRules.Adaptive(tier) && CanSteer(ai) && body.characterMotor && !body.isFlying)
             {
                 bool protectedSkill=ultra ? actions.MovementLocked(body) : actions.Protected(body,previous);
-                var intent=actions.Motion(body,input,previous,Enemy,visible,protectedSkill,player.BotOrdinal,tier,threatened,incoming);
+                var intent=actions.Motion(body,input,previous,Enemy,visible,protectedSkill,player.BotOrdinal,tier,
+                    threatened || style!=null && style.Strafe>.35f,incoming || style!=null && style.Jumping>.25f);
                 if(!protectedSkill)
                 {
                     if(intent.DodgeSide!=0 && body.characterMotor.isGrounded)
@@ -700,6 +732,31 @@ namespace ArenaPvP
                 if(unsafeMove && Vector3.Dot(direction,previousProbeDirection)>.5f) { input.moveVector=avoidedMove;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
             }
             if(wantsCombatJump && !unsafeMove && !previous.pressJump && SafeCombatJump(body,input.moveVector,input.pressSprint))input.pressJump=true;
+            if(ultra && CanSteer(ai) && !plannedJump)
+            {
+                var next=ai.broadNavigationAgent.output.nextPosition;
+                var waypoint=next.HasValue && (next.Value-body.footPosition).sqrMagnitude>4 ? next.Value : Destination;
+                bool jump;var repaired=locomotion.Resolve(body,input.moveVector,waypoint,movementHill,now,out jump);
+                if(jump)
+                {
+                    bool safe=!previous.pressJump && SafeCombatJump(body,repaired,input.pressSprint);
+                    input.moveVector=safe ? repaired : Vector3.zero;input.pressJump|=safe;
+                }
+                else input.moveVector=repaired;
+            }
+            else locomotion.Pause();
+            if(ultra && visible && match.WarmupRemaining<=0 && now>=nextQuietReport && now-acquiredAt>4)
+            {
+                var observed=ArenaCombatLearning.Find(body);
+                if(observed!=null && now-observed.LastAttack>4)
+                {
+                    var primary=body.skillLocator ? body.skillLocator.primary : null;
+                    Plugin.Log("Ultra bot "+player.BotOrdinal+" has a visible target but no observed attack for 4s: aim="+Vector3.Dot(body.inputBank.aimDirection,aim).ToString("F2")
+                        +", distance="+Vector3.Distance(body.corePosition,Enemy.corePosition).ToString("F1")+", primaryReady="+(primary && primary.CanExecute())
+                        +", primaryHeld="+input.pressSkill1+", movementLocked="+actions.MovementLocked(body)+", recoveries="+locomotion.Recoveries+".");
+                    nextQuietReport=now+12;
+                }
+            }
             return input;
         }
         private static bool SprintDirection(CharacterBody body,Vector3 movement)

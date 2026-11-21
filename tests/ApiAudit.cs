@@ -351,6 +351,45 @@ internal static class ApiAudit
                 int comboAt=brainInput.Body.Instructions.ToList().FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Combo");
                 int escapeAt=brainInput.Body.Instructions.ToList().FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="ReserveUtility");
                 if(escapeAt<0 || comboAt<=escapeAt)throw new Exception("Escape reservation must be resolved before primary/skill arbitration.");
+                var nativeAI=game.MainModule.GetType("RoR2.CharacterAI.BaseAI");
+                var nativeTick=nativeAI.Methods.Single(m=>m.Name=="ManagedFixedUpdate").Body.Instructions.ToList();
+                int nativeInputAt=nativeTick.FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="UpdateBodyInputs");
+                int nativeAimAt=nativeTick.FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="UpdateBodyAim");
+                if(nativeInputAt<0 || nativeAimAt<=nativeInputAt || !nativeAI.Methods.Single(m=>m.Name=="UpdateBodyAim").Body.Instructions
+                    .Any(i=>i.Operand is FieldReference && ((FieldReference)i.Operand).Name=="desiredAimDirection"))
+                    throw new Exception("Native aim must consume the filtered body-input aim after input generation.");
+                var ownAim=plugin.MainModule.GetType("ArenaPvP.ArenaBotAim").Methods.Single(m=>m.Name=="Apply").Body.Instructions.ToList();
+                int aimWrite=ownAim.FindIndex(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && ((FieldReference)i.Operand).Name=="desiredAimDirection");
+                int fireGate=ownAim.FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Fire");
+                if(aimWrite<0 || fireGate<=aimWrite || !brainInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="ArenaBotAim"))
+                    throw new Exception("Ultra must own target aim before applying its firing gate, including while still turning.");
+                if(actionCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="BotComboRules" && ((MethodReference)i.Operand).Name=="Plan")
+                    || !actionCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="BotSkillKnowledge" && ((MethodReference)i.Operand).Name=="Value"))
+                    throw new Exception("Ultra must score available learned skills rather than wait for a fixed survivor combo.");
+                var learning=plugin.MainModule.GetType("ArenaPvP.ArenaCombatLearning");
+                var learningCode=new[]{learning}.Concat(learning.NestedTypes).SelectMany(t=>t.Methods).Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).ToArray();
+                if(!learningCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.FullName=="RoR2.ContentManagement.ContentManager" && ((MethodReference)i.Operand).Name=="get_entityStateConfigurations")
+                    || !learningCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="add_onSkillActivatedServer")
+                    || !learningCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="remove_onSkillActivatedServer"))
+                    throw new Exception("Learning must use registered state data and paired native body-event subscriptions.");
+                if(learningCode.Any(i=>i.Operand is MethodReference && new[]{"Instantiate","InstantiateState","InitializeStateFields","CreateInstance","GetTypes","GetAssemblies","LoadAsset","LoadAssetAsync","ApplyStatic"}.Contains(((MethodReference)i.Operand).Name)))
+                    throw new Exception("Learning must never load content, scan assemblies or instantiate/execute states for discovery.");
+                foreach(var patchName in new[]{"LearnArenaBullets","LearnArenaBlasts","LearnArenaMelee","LearnArenaProjectiles"})
+                {
+                    var observer=plugin.MainModule.GetType("ArenaPvP."+patchName).Methods.Single(m=>m.Name=="Prefix");
+                    if(observer.ReturnType.FullName!="System.Void" || observer.Parameters.Any(p=>p.ParameterType.IsByReference)
+                        || !observer.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="NetworkServer" && ((MethodReference)i.Operand).Name=="get_active")
+                        || !observer.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).DeclaringType.Name=="ArenaCombatTelemetry" && ((MethodReference)i.Operand).Name=="Original")
+                        || observer.Body.Instructions.Any(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && ((FieldReference)i.Operand).DeclaringType.Namespace.StartsWith("RoR2")))
+                        throw new Exception("Attack telemetry must be host-only, exclude proc chains and leave native attack data unchanged: "+patchName);
+                }
+                var localRecovery=plugin.MainModule.GetType("ArenaPvP.ArenaBotLocomotion");
+                var recoveryCode=localRecovery.Methods.Where(m=>m.HasBody).SelectMany(m=>m.Body.Instructions).ToArray();
+                if(!recoveryCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="SphereCast")
+                    || !recoveryCode.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Raycast")
+                    || recoveryCode.Any(i=>i.Operand is MethodReference && new[]{"set_velocity","set_position","TeleportBody","SetNextState"}.Contains(((MethodReference)i.Operand).Name)))
+                    throw new Exception("Local recovery must use bounded collision/ground probes and ordinary movement, never forced displacement.");
+                Console.WriteLine("PASS: native aim-to-fire ordering, learned skill arbitration, registered-data observation, read-only server telemetry and physical obstacle recovery audited.");
                 Console.WriteLine("PASS: mode profile capture, compressed settings, native headings, bounded bot tactics and saved build catalog identifiers audited.");
                 var suppression = plugin.MainModule.GetType("ArenaPvP.BlockSkillsWhileChoosing");
                 if (suppression.Methods.Any(m => m.Name == "Prefix") || !suppression.Methods.Any(m => m.Name == "Postfix"))

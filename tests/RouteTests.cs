@@ -46,9 +46,33 @@ internal static class RouteTests
                 && ArenaBotRoutes.InHill(hill,waypoint),"combat goals stay inside a held hill");
             var isolated=new NodeGraph();isolated.Positions.Add(body.footPosition);SceneInfo.instance.groundNodes=isolated;routes.Clear();
             Check(!routes.Choose(body,enemy,true,null,player,roster,BotEngagement.Press,12,4,true,body.footPosition,out waypoint),"an isolated start node returns control to fallback navigation instead of a fake movement route");
+            Locomotion();
             Console.WriteLine("PASS: "+checks+" production graph-route assertions.");return 0;
         }
         catch(Exception e) { Console.Error.WriteLine(e);return 1; }
+    }
+    private static void Locomotion()
+    {
+        var motor=new ArenaBotLocomotion();var body=new CharacterBody();Physics.Wall=true;
+        int reversals=0;float side=0;var last=Vector3.zero;
+        for(int i=0;i<100;i++)
+        {
+            Time.frameCount=i;
+            bool jump;var target=new Vector3(12,0,0);
+            if((target-body.footPosition).sqrMagnitude<2.25f)break;
+            var move=motor.Resolve(body,(target-body.footPosition).normalized,target,null,i*.1f,out jump);
+            if(move.z!=0 && side!=0 && move.z*side<0)reversals++;if(move.z!=0)side=move.z;
+            var next=body.footPosition+move*.35f;
+            if(!Physics.CrossesWall(body.footPosition,next))body.footPosition=next;
+            last=move;
+        }
+        Check(motor.Recoveries>0 && body.footPosition.x>2,"actual collision normals produce a wall-slide escape instead of remaining against the wall");
+        Check(reversals<5,"escape commitment prevents rapid A/D reversal at the same obstacle");
+        Physics.Wall=false;Physics.NoFloor=true;motor.Clear();body.footPosition=Vector3.zero;
+        Vector3 repaired=Vector3.zero;bool wantsJump=false;
+        for(int i=0;i<13;i++) { Time.frameCount=100+i;repaired=motor.Resolve(body,new Vector3(1,0,0),new Vector3(12,0,0),null,i*.1f,out wantsJump); }
+        Check(repaired.sqrMagnitude==0 && !wantsJump,"recovery does not invent a route or jump when every sampled landing has no floor");
+        Physics.NoFloor=false;
     }
 }
 namespace ArenaPvP
@@ -62,9 +86,9 @@ namespace RoR2
     public class TestObject { public static implicit operator bool(TestObject value) { return value!=null; } }
     public enum HullClassification { Human }
     public enum HullMask { Human=1 }
-    public class CharacterMotor:TestObject { public bool isGrounded=true; }
+    public class CharacterMotor:TestObject { public bool isGrounded=true;public Vector3 velocity=Vector3.zero; }
     public class CharacterBody:TestObject
-    { public bool isFlying=false;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
+    { public bool isFlying=false;public float radius=.5f,moveSpeed=7,acceleration=80;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
     public class SceneInfo:TestObject { public static SceneInfo instance;public NodeGraph groundNodes; }
     public struct LayerIndex { public int mask;public static LayerIndex world=new LayerIndex { mask=1 }; }
 }
@@ -88,20 +112,39 @@ namespace RoR2.Navigation
 }
 namespace UnityEngine
 {
+    public static class Time { public static int frameCount; }
     public struct Vector3
     {
         public float x,y,z;public Vector3(float a,float b,float c) { x=a;y=b;z=c; }
         public static Vector3 zero=>new Vector3();public static Vector3 forward=>new Vector3(0,0,1);
+        public static Vector3 up=>new Vector3(0,1,0);public static Vector3 down=>new Vector3(0,-1,0);
         public float sqrMagnitude=>x*x+y*y+z*z;public float magnitude=>(float)Math.Sqrt(sqrMagnitude);
         public Vector3 normalized=>magnitude>0 ? this*(1/magnitude) : zero;
         public static Vector3 operator +(Vector3 a,Vector3 b)=>new Vector3(a.x+b.x,a.y+b.y,a.z+b.z);
         public static Vector3 operator -(Vector3 a,Vector3 b)=>new Vector3(a.x-b.x,a.y-b.y,a.z-b.z);
+        public static Vector3 operator -(Vector3 a)=>new Vector3(-a.x,-a.y,-a.z);
         public static Vector3 operator *(Vector3 a,float n)=>new Vector3(a.x*n,a.y*n,a.z*n);
         public static float Dot(Vector3 a,Vector3 b)=>a.x*b.x+a.y*b.y+a.z*b.z;
         public static float Distance(Vector3 a,Vector3 b)=>(a-b).magnitude;
+        public void Normalize() { var n=normalized;x=n.x;y=n.y;z=n.z; }
+        public static Vector3 Cross(Vector3 a,Vector3 b)=>new Vector3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
     }
     public struct Quaternion { private float angle;public static Quaternion Euler(float x,float y,float z)=>new Quaternion { angle=y*(float)Math.PI/180 };public static Vector3 operator *(Quaternion q,Vector3 v)=>new Vector3(v.x*(float)Math.Cos(q.angle)+v.z*(float)Math.Sin(q.angle),v.y,v.z*(float)Math.Cos(q.angle)-v.x*(float)Math.Sin(q.angle)); }
-    public static class Mathf { public static float Min(float a,float b)=>Math.Min(a,b);public static int Min(int a,int b)=>Math.Min(a,b);public static float Max(float a,float b)=>Math.Max(a,b);public static float Abs(float n)=>Math.Abs(n);public static float Sqrt(float n)=>(float)Math.Sqrt(n);public static float Clamp01(float n)=>Math.Max(0,Math.Min(1,n)); }
+    public static class Mathf { public static float Min(float a,float b)=>Math.Min(a,b);public static int Min(int a,int b)=>Math.Min(a,b);public static float Max(float a,float b)=>Math.Max(a,b);public static float Abs(float n)=>Math.Abs(n);public static float Sqrt(float n)=>(float)Math.Sqrt(n);public static float Clamp01(float n)=>Math.Max(0,Math.Min(1,n));public static float Clamp(float n,float a,float b)=>Math.Max(a,Math.Min(b,n)); }
     public enum QueryTriggerInteraction { Ignore }
-    public static class Physics { public static int Queries;public static bool Linecast(Vector3 a,Vector3 b,int mask,QueryTriggerInteraction query) { Queries++;return false; } }
+    public struct RaycastHit { public Vector3 normal,point; }
+    public static class Physics
+    {
+        public static int Queries;public static bool Wall=false,NoFloor=false;
+        public static bool CrossesWall(Vector3 from,Vector3 to)
+        {
+            if(!Wall || (from.x-.8f)*(to.x-.8f)>=0 || Math.Abs(to.x-from.x)<.0001f)return false;
+            float t=(.8f-from.x)/(to.x-from.x);return Math.Abs(from.z+(to.z-from.z)*t)<2.5f;
+        }
+        public static bool Linecast(Vector3 a,Vector3 b,int mask,QueryTriggerInteraction query) { Queries++;return false; }
+        public static bool SphereCast(Vector3 from,float radius,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)
+        { Queries++;var to=from+direction*distance;bool blocked=CrossesWall(from,to);hit=new RaycastHit { normal=new Vector3(from.x<=.8f ? -1 : 1,0,0) };return blocked; }
+        public static bool Raycast(Vector3 from,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)
+        { Queries++;hit=new RaycastHit { normal=Vector3.up,point=new Vector3(from.x,0,from.z) };return !NoFloor; }
+    }
 }

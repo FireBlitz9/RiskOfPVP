@@ -29,7 +29,7 @@ namespace ArenaPvP
         internal string Status = "";
         private void Awake() { Instance = this; }
         private void OnDestroy() { Reset(); Instance = null; }
-        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextBrain = 0; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); Status = ""; }
+        internal void Reset() { initialSpawned = false; startingRemaining = 0; nextRoster = nextSpawn = 0; nextBrain = 0; brains.Clear(); targets.Clear(); owners.Clear(); ArenaBotControl.Clear(); ArenaBotBuilds.Reset(); ArenaCombatLearning.Reset(); Status = ""; }
         private BotSurvivor[] Survivors
         {
             get
@@ -76,7 +76,8 @@ namespace ArenaPvP
                 nextSpawn = Time.unscaledTime + 0.15f;
                 if (Add(true)) startingRemaining--; else startingRemaining = 0;
             }
-            if (match.Finished || brains.Count == 0) return;
+            if(match.Finished) { ArenaCombatLearning.Pause();return; }
+            if(brains.Count==0) { if(ArenaCombatLearning.HasActors)ArenaCombatLearning.Reset();return; }
             float now = Time.unscaledTime;
             if (now >= nextRoster)
             {
@@ -104,6 +105,8 @@ namespace ArenaPvP
             // Round-robin fairness. Check between decisions: one native physics query
             // cannot be preempted, so this is a soft budget, not a frame-time promise.
             decisionBudget.Restart();
+            if(match.Rules.BotIntelligence==BotIntelligence.Ultra)ArenaCombatLearning.Step(match,now);
+            else if(ArenaCombatLearning.HasActors)ArenaCombatLearning.Reset();
             int remaining = brains.Count;
             while (remaining-- > 0)
             {

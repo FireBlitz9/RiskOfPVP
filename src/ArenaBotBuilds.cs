@@ -85,11 +85,19 @@ namespace ArenaPvP
                 context.EnemyArmor = Math.Max(context.EnemyArmor, Math.Min(60, shieldBoosters * 15));
             var habit = bot.BotMemory?.Find(player.UserId);
             var enemyBody=player.Master.GetBody();
+            var own=bot.Master.GetBody();
             if(enemyBody)
             {
+                var knowledge=ArenaCombatLearning.Find(enemyBody);
+                if(knowledge!=null)foreach(var attack in knowledge.Skills)
+                {
+                    if(attack==null || !attack.Combat || !attack.KnownDamage)continue;
+                    context.EnemySkillProc=Math.Max(context.EnemySkillProc,attack.Proc*attack.Hits/Math.Max(.15f,attack.Duration));
+                    context.EnemySkillBurst=Math.Max(context.EnemySkillBurst,attack.Damage*attack.Hits*enemyBody.damage*ArenaCombatLearning.DamageScale/Math.Max(1,own && own.healthComponent ? own.healthComponent.fullCombinedHealth : 100));
+                    context.EnemySkillDot|=attack.Dot;
+                }
                 context.EnemyArmor=Math.Max(context.EnemyArmor,enemyBody.armor);
                 context.EnemyMoveSpeed=Math.Max(context.EnemyMoveSpeed,enemyBody.moveSpeed);
-                var own=bot.Master.GetBody();
                 if(own)context.EnemyDamage=Math.Max(context.EnemyDamage,Math.Min(3.5f,
                     enemyBody.damage*Math.Max(.5f,enemyBody.attackSpeed)/Math.Max(1,own.damage*Math.Max(.5f,own.attackSpeed))));
             }

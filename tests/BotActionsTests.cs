@@ -19,6 +19,9 @@ internal static class BotActionsTests
         for(int i=0;i<4;i++)drivers[i]=new AISkillDriver { skillSlot=(SkillSlot)i,buttonPressType=AISkillDriver.ButtonPressType.PressOnce };
         drivers[0].buttonPressType=AISkillDriver.ButtonPressType.Hold;
         configure?.Invoke(drivers);
+        if(name=="MageBody")ArenaCombatLearning.Model(body,2).Control=3;
+        if(name=="LoaderBody" || name=="RailgunnerBody" || name=="CustomSurvivorBody")
+            for(int i=1;i<4;i++)ArenaCombatLearning.Model(body,i).Damage=.01f;
         var controller=new ArenaBotActions();controller.Initialize(name,drivers,0);return controller;
     }
     private static BaseAI.BodyInputs Step(ArenaBotActions controller,BaseAI ai,CharacterBody enemy,float time,
@@ -129,6 +132,39 @@ internal static class BotActionsTests
         check(motion.Sprint && motion.RestoringSprint,"the following input re-presses sprint after recovery");
         controller.Dispose();
         SustainedPressure(check);
+        LearnedSkills(check);
+    }
+    private static void LearnedSkills(Action<bool,string> check)
+    {
+        BaseAI ai;CharacterBody enemy;var body=new CharacterBody();
+        var controller=Controller("CustomSurvivorBody",body,out ai,out enemy);
+        body.skillLocator.primary.activationState=new SerializableEntityStateType(typeof(NativeChargeBomb));
+        body.skillLocator.secondary.Ready=body.skillLocator.utility.Ready=body.skillLocator.special.Ready=false;
+        var model=ArenaCombatLearning.Model(body,0);model.ChargeTime=1.6f;
+        var input=Step(controller,ai,enemy,0);
+        check(input.pressSkill1,"a registered custom charged primary can start without a named survivor combo");
+        body.Activate(body.skillLocator.primary);
+        input=Step(controller,ai,enemy,1,input);
+        check(input.pressSkill1 && controller.HasHold,"a managed primary holds for its learned charge duration");
+        input=Step(controller,ai,enemy,1.65f,input);
+        check(!input.pressSkill1 && !controller.HasHold,"a managed primary releases at the learned duration without forcing state completion");
+        controller.Dispose();
+        body=new CharacterBody();controller=Controller("CustomSurvivorBody",body,out ai,out enemy);
+        body.healthComponent.combinedHealthFraction=.3f;enemy.corePosition=new Vector3(0,0,100);
+        var heal=ArenaCombatLearning.Model(body,2);heal.Healing=.3f;heal.Range=5;heal.Damage=0;heal.KnownDamage=true;
+        input=Step(controller,ai,enemy,0);
+        check(input.pressSkill3,"a threatened bot can use a self-heal outside the enemy's attack range");
+        controller.Dispose();
+        body=new CharacterBody();controller=Controller("CustomSurvivorBody",body,out ai,out enemy);
+        body.skillLocator.secondary.Ready=body.skillLocator.utility.Ready=body.skillLocator.special.Ready=false;
+        model=ArenaCombatLearning.Model(body,0);model.Range=120;model.ConfiguredRange=true;
+        enemy.corePosition=new Vector3(0,0,80);ai.PassesDriverFilters=false;
+        input=Step(controller,ai,enemy,0);
+        check(input.pressSkill1,"known physical range permits a shot outside the native driver's preferred spacing");
+        enemy.corePosition=new Vector3(0,0,130);
+        input=new BaseAI.BodyInputs();controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);
+        check(!input.pressSkill1,"physical range still rejects genuinely unreachable targets");
+        controller.Dispose();
     }
     private static void SustainedPressure(Action<bool,string> check)
     {
@@ -179,6 +215,7 @@ internal static class BotActionsTests
         check(controller.MovementLocked(body),"native traversal/body utility states keep movement ownership");
         controller.Dispose();
         body=new CharacterBody();controller=Controller("RailgunnerBody",body,out ai,out enemy);
+        body.skillLocator.secondary.activationState=new SerializableEntityStateType(typeof(NativeScope));
         Time.unscaledTime=0;
         input=new BaseAI.BodyInputs { pressSkill2=true };
         controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);

@@ -155,6 +155,7 @@ namespace ArenaPvP
                 victim.LastAttacker = attacker.UserId; victim.LastHitTime = match.Clock;
                 if (match.Rules.BotIntelligence == BotIntelligence.Ultra)
                 {
+                    ArenaCombatLearning.Hit(body,damageInfo);
                     float now = Time.unscaledTime;
                     float fraction = (__state - __instance.combinedHealth) / Mathf.Max(1, __instance.fullCombinedHealth);
                     victim.BotMemory?.For(attacker.UserId).Damage(now, fraction, true);

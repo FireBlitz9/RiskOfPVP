@@ -63,6 +63,13 @@ internal static class UltraPressureTests
             if(pick==0 || pick==2 || pick==3)protection++;else offense++;
         }
         check(protection>=10 && offense>=10,"forty real scoring decisions sustain both defence and offensive pressure instead of overcorrecting to one role");
+        var learned=new BotBuildContext { Ultra=true };
+        var plate=new BotBuildItem { Name="ArmorPlate" };var barrier=new BotBuildItem { Name="BearVoid" };var cleanse=new BotBuildItem { Name="Cleanse",Equipment=true };
+        float normalPlate=BotBuildRules.AdaptiveScore(plate,learned),normalBarrier=BotBuildRules.AdaptiveScore(barrier,learned),normalCleanse=BotBuildRules.AdaptiveScore(cleanse,learned);
+        learned.EnemySkillProc=8;learned.EnemySkillBurst=.8f;learned.EnemySkillDot=true;
+        check(BotBuildRules.AdaptiveScore(plate,learned)>normalPlate,"observed high-proc skills raise repeat-hit mitigation even without an enemy proc-item list");
+        check(BotBuildRules.AdaptiveScore(barrier,learned)>normalBarrier,"observed skill burst raises burst protection before the first defeat");
+        check(BotBuildRules.AdaptiveScore(cleanse,learned)>normalCleanse,"observed native damage-over-time skills raise cleanse utility");
         Console.WriteLine("INFO: sustained-pressure build simulation: "+protection+" defence / "+offense+" offence rewards.");
     }
 }

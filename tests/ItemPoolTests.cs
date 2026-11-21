@@ -75,6 +75,7 @@ internal static class ItemPoolTests
             Check(version.Update(mutable), "menu tracking notices reused arrays whose contents change");
             SurvivorRestrictions(); SharedWeightsAndDraft(); BotInventoryCounters();
             BotActionsTests.Run(Check);
+            BotAimPipelineTests.Run(Check);
             Console.WriteLine("PASS: " + assertions + " production ItemPool and reward-layout integration assertions."); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine("FAILED: " + error); return 1; }
@@ -320,7 +321,7 @@ namespace RoR2
         public CharacterBody GetBody() { return BodyMissing ? null : Body; }
     }
     public class BodyPrefab { public string name="CommandoBody"; }
-    public class HealthComponent : TestObject { public bool alive=true;public float combinedHealthFraction=1; }
+    public class HealthComponent : TestObject { public bool alive=true;public float combinedHealthFraction=1,combinedHealth=100,fullCombinedHealth=100; }
     public class CharacterBody : TestObject
     {
         public readonly HealthComponent healthComponent=new HealthComponent();
@@ -347,6 +348,8 @@ namespace RoR2
     public class EntityStateMachine : TestObject { public bool Main=true;public bool IsInMainState() { return Main; } }
     public class GenericSkill : TestObject
     {
+        public bool isCombatSkill=true;
+        public float baseRechargeInterval=1;
         public bool mustKeyPress=false;
         public RoR2.Skills.SkillDef skillDef=new RoR2.Skills.SkillDef();
         public EntityStateMachine stateMachine=new EntityStateMachine();
@@ -354,8 +357,9 @@ namespace RoR2
         public bool Ready=true;
         public bool CanExecute() { return Ready && stateMachine.Main; }
     }
-    public class NativeShot { }
-    public class NativeChargeBomb { }
+    public class NativeShot:EntityStates.EntityState { }
+    public class NativeChargeBomb:EntityStates.EntityState { }
+    public class NativeScope:EntityStates.EntityState { }
     public class SkillLocator : TestObject
     {
         public GenericSkill primary=new GenericSkill(),secondary=new GenericSkill(),utility=new GenericSkill(),special=new GenericSkill();
@@ -409,11 +413,12 @@ namespace RoR2.CharacterAI
     }
     public class BaseAI
     {
-        public struct BodyInputs { public UnityEngine.Vector3 moveVector;public bool pressSkill1,pressSkill2,pressSkill3,pressSkill4,pressJump,pressSprint; }
+        public struct BodyInputs { public UnityEngine.Vector3 moveVector,desiredAimDirection;public bool pressSkill1,pressSkill2,pressSkill3,pressSkill4,pressJump,pressSprint; }
         public class Target { }
         public RoR2.CharacterBody body;
         public Target currentEnemy=new Target();
-        public bool GameObjectPassesSkillDriverFilters(Target target,AISkillDriver driver,out float distance) { distance=100;return true; }
+        public bool PassesDriverFilters=true;
+        public bool GameObjectPassesSkillDriverFilters(Target target,AISkillDriver driver,out float distance) { distance=100;return PassesDriverFilters; }
     }
 }
 namespace RoR2.Items

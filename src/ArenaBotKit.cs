@@ -49,6 +49,13 @@ namespace ArenaPvP
                     kit.OnHit *= .65f;
             }
             kit.SkillUse = Mathf.Clamp(.42f + skillWeight * .35f + (1 - kit.OnHit) * .35f, .4f, 1f);
+            var learned=ArenaCombatLearning.Model(body,0);
+            if(learned!=null && learned.KnownDamage)
+            {
+                float period=Mathf.Max(learned.Duration,primary ? primary.baseRechargeInterval/Mathf.Max(1,primary.maxStock) : 0);
+                kit.OnHit=Mathf.Clamp(learned.Proc*learned.Hits/Mathf.Max(.2f,period)*.22f,.1f,1.2f);
+                if(learned.ConfiguredRange) { kit.Range=Mathf.Min(kit.Range,Mathf.Max(2,learned.Range*.75f));kit.Reach=Mathf.Max(kit.Reach,learned.Range); }
+            }
             return kit;
         }
 
@@ -64,6 +71,8 @@ namespace ArenaPvP
         internal static bool Ready(CharacterBody body)
         {
             if (!body.skillLocator) return false;
+            var primary=body.skillLocator.primary;
+            if(primary && primary.isCombatSkill && primary.CanExecute())return true;
             var secondary = body.skillLocator.secondary;
             var special = body.skillLocator.special;
             return secondary && secondary.isCombatSkill && secondary.CanExecute()
