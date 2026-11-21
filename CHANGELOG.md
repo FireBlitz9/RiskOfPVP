@@ -1,3 +1,12 @@
+# 1.3.3
+
+- Ultra sustains primary fire while other abilities recharge, and can fire alongside abilities using independent state machines. Shared-state charges and native recovery remain protected.
+- Fixed combat routing that selected the bot's current node, discarded progress during goal changes, or repeatedly returned to recently reached points. Route commitment and bounded obstacle/ground checks keep pursuit moving.
+- Dodges retain forward or cover movement. Reaching a firing position no longer means waiting motionless for the next tactical decision.
+- Ultra remembers sustained damage and defeats across respawns, builds defensive layers and sustain, and keeps balancing these against offensive investment. Host reward rules, bans and item limits still apply.
+- Reserved native escapes become available during incoming attacks. Dodge probes are cached and tactical work retains the shared budget.
+- Added production-controller and graph-route regression tests. Historical benchmark figures are retained and identified as results from before this update.
+
 # 1.3.2
 
 - Ultra adapts its spacing, defensive timing, and item choices to individual opponents. It uses the survivor's equipped skills and recent damage trades to evaluate builds.

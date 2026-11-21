@@ -32,6 +32,9 @@ namespace ArenaPvP
         private Vector3 anchor, lastHill;
         private bool wasHolding, planned;
         private float rebuildAt;
+        private Vector3 committed, committedEnemy;
+        private BotEngagement committedIntent;
+        private float commitUntil;
 
         internal void Clear()
         {
@@ -40,6 +43,7 @@ namespace ArenaPvP
             previousGraph = null;
             rebuildAt = 0;
             planned = false;
+            commitUntil=0;
         }
 
         internal bool Choose(CharacterBody body, Vector3 enemy, bool hasEnemy, HillView hill,
@@ -49,11 +53,18 @@ namespace ArenaPvP
             waypoint = body.footPosition;
             bool grounded = !body.isFlying && body.characterMotor && body.characterMotor.isGrounded;
             if (planned) planner.Progress(now, Vector3.Distance(waypoint, previousWaypoint), canMove && grounded);
+            bool stalled=planner.Movement(now,waypoint.x,waypoint.z,canMove && grounded,Vector3.Distance(waypoint,previousWaypoint));
             if (!grounded || !SceneInfo.instance) return false;
             var graph = SceneInfo.instance.groundNodes;
             if (!graph) return false;
             Vector3 origin = body.footPosition;
             bool holding = hill != null && InHill(hill, origin);
+            if(stalled) { commitUntil=0;rebuildAt=0; }
+            bool sameHill=hill==null || (hill.To-lastHill).sqrMagnitude<4;
+            if(planned && !stalled && graph==previousGraph && sameHill && holding==wasHolding
+                && now<commitUntil && intent==committedIntent && (enemy-committedEnemy).sqrMagnitude<64
+                && (committed-origin).sqrMagnitude>6.25f)
+            { waypoint=committed;return true; }
             if (graph != previousGraph || holding != wasHolding || now >= rebuildAt
                 || (origin - anchor).sqrMagnitude > 16 || hill != null && (hill.To - lastHill).sqrMagnitude > 4)
             {
@@ -78,6 +89,9 @@ namespace ArenaPvP
             {
                 var route = ranked[i];
                 var visit = route.Visit;
+                // The zero-travel start node used to win every range trade,
+                // producing an intentional stand-still rather than a route.
+                if(hasEnemy && intent!=BotEngagement.Recover && (visit.Position-origin).sqrMagnitude<4)continue;
                 bool hasShot = hasEnemy && OpenShot(visit.Node.nodeIndex, visit.Position + eyeOffset, enemy);
                 sawAnAngle |= hasShot;
                 bool firstExposed = hasEnemy && OpenShot(visit.FirstHop, visit.FirstPosition + eyeOffset, enemy);
@@ -96,6 +110,8 @@ namespace ArenaPvP
                     HasShot = hasShot,
                     FirstHopExposed = firstExposed,
                     HasCoverExit = !firstExposed && visit.FirstHop != visit.Node.nodeIndex,
+                    Approach=hasEnemy ? Mathf.Min(Vector3.Distance(origin,enemy)-route.Range,
+                        Mathf.Max(0,Vector3.Distance(origin,enemy)-spacing*.85f)) : 0,
                 };
                 float score = planner.Score(option, intent, spacing, hill == null ? 0 : hill.Radius, now);
                 if (score <= best) continue;
@@ -106,11 +122,10 @@ namespace ArenaPvP
             planned = !float.IsNegativeInfinity(best) && (!hasEnemy || sawAnAngle || hill != null || intent == BotEngagement.Recover);
             if (planned)
             {
-                // Use a native waypoint around obstructed bends before asking the
-                // broad navigator to route all the way to the firing position.
-                waypoint = (selectedVisit.FirstPosition - origin).sqrMagnitude > 9 && selectedVisit.FirstHop != selectedVisit.Node.nodeIndex
-                    && Physics.Linecast(origin + eyeOffset, selectedVisit.Position + eyeOffset, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)
-                    ? selectedVisit.FirstPosition : selectedVisit.Position;
+                // Native broad navigation owns intermediate waypoints. Cached
+                // discovery first-hops may already be behind a moving body.
+                waypoint=selectedVisit.Position;
+                committed=waypoint;committedEnemy=enemy;committedIntent=intent;commitUntil=now+.7f;
                 planner.SetGoal(selected, now, Vector3.Distance(origin, waypoint));
             }
             return planned;

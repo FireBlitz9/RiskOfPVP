@@ -172,6 +172,12 @@ internal static class ItemPoolTests
         Check(ArenaBotBuilds.Choose(bot,pool.Available(new[]{0,1},bot.Master.inventory),ItemSelection.Command)==1,"Ultra cannot choose a counter removed by host bans or inventory limits");
         bot.Dead=true;bot.Master.BodyMissing=true;
         Check(ArenaBotBuilds.Choose(bot,new[]{0,1},ItemSelection.Command)==0,"Ultra can read opponent inventories and choose its death reward after its old body has been removed");
+        bot.BotMemory.For(opponent.UserId).Defeated(1.3f);bot.BotMemory.NewLife();
+        bot.Master.inventory.Counts[(ItemIndex)0]=12;
+        Check(ArenaBotBuilds.Choose(bot,new[]{1,2},ItemSelection.Command)==2,"the actual chooser preserves death evidence and buys protection even after its body is removed");
+        var defensivePool=new ItemPool(new Run(),Settings("BearVoid"));
+        Check(ArenaBotBuilds.Choose(bot,defensivePool.Available(new[]{1,2},bot.Master.inventory),ItemSelection.Command)==1,"defensive adaptation still obeys host bans instead of manufacturing protection");
+        bot.Master.inventory.Counts.Clear();bot.BotMemory=new BotMemory();
         var expansion = new ExpansionDef();
         ItemCatalog.Definitions = ItemCatalog.Definitions.Concat(new[]
         {
@@ -341,6 +347,7 @@ namespace RoR2
     public class EntityStateMachine : TestObject { public bool Main=true;public bool IsInMainState() { return Main; } }
     public class GenericSkill : TestObject
     {
+        public bool mustKeyPress=false;
         public RoR2.Skills.SkillDef skillDef=new RoR2.Skills.SkillDef();
         public EntityStateMachine stateMachine=new EntityStateMachine();
         public SerializableEntityStateType activationState=new SerializableEntityStateType(typeof(NativeShot));
@@ -392,6 +399,7 @@ namespace RoR2.CharacterAI
         public enum AimType { AtCurrentEnemy,AtMoveTarget }
         public RoR2.SkillSlot skillSlot;
         public RoR2.Skills.SkillDef requiredSkill,forbiddenSkill;
+        public RoR2.Skills.SkillDef[] additionalForbiddenSkills=null;
         public ButtonPressType buttonPressType;
         public TargetType moveTargetType=TargetType.CurrentEnemy;
         public AimType aimType=AimType.AtCurrentEnemy;

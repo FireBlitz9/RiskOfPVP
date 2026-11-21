@@ -47,7 +47,7 @@ if ($RunTests) {
     New-Item -ItemType Directory -Force -Path $testDirectory | Out-Null
     $testExe = Join-Path $testDirectory 'ArenaRules.Tests.exe'
     $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
-    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\PickupRules.cs') (Join-Path $PSScriptRoot 'src\BotTacticsRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\BotActionRules.cs') (Join-Path $PSScriptRoot 'src\BotAdaptation.cs') (Join-Path $PSScriptRoot 'src\BotBattlePlan.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\DeferredMenuStartup.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs') (Join-Path $PSScriptRoot 'tests\BotMotionTests.cs')
+    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $testExe) (Join-Path $PSScriptRoot 'src\ArenaRules.cs') (Join-Path $PSScriptRoot 'src\PickupRules.cs') (Join-Path $PSScriptRoot 'src\BotTacticsRules.cs') (Join-Path $PSScriptRoot 'src\BotBuildRules.cs') (Join-Path $PSScriptRoot 'src\BotActionRules.cs') (Join-Path $PSScriptRoot 'src\BotAdaptation.cs') (Join-Path $PSScriptRoot 'src\BotBattlePlan.cs') (Join-Path $PSScriptRoot 'src\HierarchyWorkQueue.cs') (Join-Path $PSScriptRoot 'src\StartupCallbacks.cs') (Join-Path $PSScriptRoot 'src\DeferredMenuStartup.cs') (Join-Path $PSScriptRoot 'tests\RulesTests.cs') (Join-Path $PSScriptRoot 'tests\BotMotionTests.cs') (Join-Path $PSScriptRoot 'tests\UltraPressureTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Rules tests failed.' }
@@ -56,6 +56,11 @@ if ($RunTests) {
     if ($LASTEXITCODE -ne 0) { throw 'Production ItemPool test compilation failed.' }
     & $poolExe
     if ($LASTEXITCODE -ne 0) { throw 'Production ItemPool tests failed.' }
+    $routeExe = Join-Path $testDirectory 'Routes.Tests.exe'
+    & $compiler /nologo /noconfig /target:exe /langversion:latest ("/reference:" + (Join-Path $framework 'System.dll')) ("/reference:" + (Join-Path $framework 'System.Core.dll')) ("/out:" + $routeExe) (Join-Path $PSScriptRoot 'src\BotAdaptation.cs') (Join-Path $PSScriptRoot 'src\BotBattlePlan.cs') (Join-Path $PSScriptRoot 'src\ArenaBotRoutes.cs') (Join-Path $PSScriptRoot 'tests\RouteTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Production route test compilation failed.' }
+    & $routeExe
+    if ($LASTEXITCODE -ne 0) { throw 'Production graph-route tests failed.' }
     $bepinex = Join-Path $DependencyDirectory 'bepinex\BepInExPack\BepInEx\core\BepInEx.dll'
     Copy-Item -LiteralPath $bepinex -Destination (Join-Path $testDirectory 'BepInEx.dll') -Force
     $migrationExe = Join-Path $testDirectory 'Settings.Tests.exe'

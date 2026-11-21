@@ -29,6 +29,8 @@ namespace ArenaPvP
         public float Health = 1, Shield, Crit, AttackAffinity = 1, ProcPower, MoveSpeed = 7, Armor, EnemyArmor, EnemyHealing, EnemyMoveSpeed=7, EnemyDamage = 1;
         public float SkillUse = .65f, EnemyStrafe;
         public float MobilityEvidence, SustainEvidence, BurstEvidence;
+        public float SurvivalPressure;
+        internal float DefenseNeed, Mitigation, Sustain;
         public int Count(string name) { int n; return Inventory.TryGetValue(name, out n) ? n : 0; }
         public int EnemyCount(string name) { int n; return EnemyInventory.TryGetValue(name,out n) ? n : 0; }
     }
@@ -118,6 +120,7 @@ namespace ArenaPvP
         }
         public static int ChooseAdaptive(BotBuildItem[] offered, BotBuildContext context, bool mayLevel = false, int level = 1)
         {
+            if(context.Ultra)PrepareDefense(context);
             int best = -1; float score = float.NegativeInfinity;
             foreach (var item in offered)
             {
@@ -139,7 +142,55 @@ namespace ArenaPvP
         }
 
         private static float BuildValue(BotBuildItem item, BotBuildContext context)
-        { return context.Ultra ? CounterValue(item, context, UltraUtility(item, context)) : Utility(item, context); }
+        { return context.Ultra ? CounterValue(item, context, SurvivalValue(item,context,UltraUtility(item, context))) : Utility(item, context); }
+
+        private static void PrepareDefense(BotBuildContext c)
+        {
+            float total=0;foreach(var held in c.Inventory)total+=Math.Min(12,held.Value);
+            c.Mitigation=c.Count("Bear")*.6f+c.Count("BearVoid")*1.7f+c.Count("ArmorPlate")*.7f
+                +c.Count("ShieldBooster")*.8f+c.Count("DelayedDamage")*.8f+c.Count("BarrierOnCooldown")*.7f
+                +c.Count("Knurl")*.55f+c.Count("FlatHealth")*.25f;
+            c.Sustain=c.Shield>.85f ? 1 : c.Count("Seed")*.8f+c.Count("HealOnCrit")*Math.Min(1,c.Crit*.04f)
+                +c.Count("Medkit")*.5f+c.Count("Knurl")*.45f+c.Count("MushroomVoid")*.25f;
+            float target=.30f+Math.Min(.20f,c.SurvivalPressure*.18f+Math.Max(0,c.EnemyDamage-1)*.08f);
+            float investment=(target*(total+3)-c.Mitigation-c.Sustain*.7f)/Math.Max(2,(total+3)*target);
+            c.DefenseNeed=Math.Max(0,Math.Min(1,Math.Max(investment,c.SurvivalPressure*.65f/(1+(c.Mitigation+c.Sustain)*.25f))));
+        }
+
+        private static float SurvivalValue(BotBuildItem item,BotBuildContext c,float value)
+        {
+            float n=item.Owned,quality=0;
+            bool sustain=false;
+            switch(item.Name)
+            {
+                case "Bear":quality=.47f/(1+n*.22f);break;
+                case "BearVoid":quality=.66f/(1+n*.7f);break;
+                case "ArmorPlate":quality=.39f/(1+n*.45f);break;
+                case "ShieldBooster":quality=.39f/(1+n*.5f);break;
+                case "DelayedDamage":quality=.31f/(1+n*.6f);break;
+                case "BarrierOnCooldown":quality=.37f/(1+n*.55f);break;
+                case "FlatHealth":quality=.20f/(1+n*.5f);break;
+                case "Knurl":quality=.40f/(1+n*.5f);break;
+                case "Seed":quality=.32f*c.AttackAffinity/(1+n*.55f);sustain=true;break;
+                case "HealOnCrit":quality=.42f*Math.Min(1,c.Crit*.025f)/(1+n*.5f);sustain=true;break;
+                case "Medkit":quality=.30f/(1+n*.65f);sustain=true;break;
+                case "MushroomVoid":quality=.22f/(1+n*.6f);sustain=true;break;
+                case "IncreaseHealing":quality=.20f*Math.Min(1,c.Sustain)/(1+n);sustain=true;break;
+                case "BarrierOnOverHeal":quality=.18f*Math.Min(1,c.Sustain)/(1+n);sustain=true;break;
+                case "GainArmor":case "Parry":quality=.48f;break;
+                case "Fruit":quality=.36f;sustain=true;break;
+            }
+            if(sustain && c.Shield>.85f)return value;
+            if(quality>0)
+            {
+                float layer=sustain ? c.Sustain : c.Mitigation;
+                float missing=1/(1+layer*.5f);
+                return Math.Max(value,quality)*(1+c.DefenseNeed*.8f)+c.DefenseNeed*missing*.30f;
+            }
+            // Survival competes with damage instead of losing every full-health
+            // respawn choice. Existing counter/synergy bonuses still apply.
+            return value*(1-c.DefenseNeed*.32f);
+        }
 
         public static float AdaptiveScore(BotBuildItem item, BotBuildContext c)
         {

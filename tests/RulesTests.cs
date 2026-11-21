@@ -554,6 +554,7 @@ internal static class RulesTests
             BotBuilds();
             BotIntelligenceAndCounters();
             BotMotionTests.Run(Check);
+            UltraPressureTests.Run(Check);
             RewardArrivalAndVehicleCleanup();
             foreach (string section in new[] { SettingsLayout.General, SettingsLayout.Profile(ArenaMode.FFA), SettingsLayout.Profile(ArenaMode.Teams), SettingsLayout.Profile(ArenaMode.KOTH) })
                 Check(ArenaRules.IsMatchSettingGroup(section), "match settings includes gameplay category " + section);

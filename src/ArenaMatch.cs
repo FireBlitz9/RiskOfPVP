@@ -358,6 +358,8 @@ namespace ArenaPvP
             if (killer == null && Clock - victim.LastHitTime <= 10f)
                 killer = AllPlayers.FirstOrDefault(p => p.UserId == victim.LastAttacker && p.Connected);
             if (!AreOpponents(killer, victim)) killer = null;
+            if(!voidDeath && killer!=null && Rules.BotIntelligence==BotIntelligence.Ultra)
+                victim.BotMemory?.For(killer.UserId).Defeated(Time.unscaledTime);
             if (killer != null)
             {
                 killer.Kills++;

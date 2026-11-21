@@ -284,7 +284,7 @@ internal static class ApiAudit
                 foreach (var item in plugin.MainModule.GetType("ArenaPvP.BotBuildRules").Methods.Single(m => m.Name == ".cctor").Body.Instructions
                     .Where(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Ldstr).Select(i => (string)i.Operand))
                     if (!nativeItemNames.Contains(item)) throw new Exception("Unknown saved bot build item/equipment identifier: " + item);
-                foreach(var method in plugin.MainModule.GetType("ArenaPvP.BotBuildRules").Methods.Where(m=>new[]{"CounterValue","Utility","FixedCompatible","VoidRoute"}.Contains(m.Name)))
+                foreach(var method in plugin.MainModule.GetType("ArenaPvP.BotBuildRules").Methods.Where(m=>new[]{"CounterValue","Utility","FixedCompatible","VoidRoute","PrepareDefense","SurvivalValue"}.Contains(m.Name)))
                     foreach(var item in method.Body.Instructions.Where(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Ldstr).Select(i=>(string)i.Operand))
                         if(!nativeItemNames.Contains(item))throw new Exception("Unknown adaptive/counter item identifier: "+item);
                 var nativeInputs=game.MainModule.GetType("RoR2.CharacterAI.BaseAI").Methods.Single(m=>m.Name=="UpdateBodyInputs");
@@ -333,6 +333,24 @@ internal static class ApiAudit
                     || !jump.Body.Instructions.Any(i=>i.Operand is FieldReference && ((FieldReference)i.Operand).Name=="movementHill"))
                     throw new Exception("Combat jumps must validate overhead clearance, route/landing support and KOTH containment.");
                 Console.WriteLine("PASS: activation-confirmed bot combos, native sprint/charge contracts, normal-input mobility and bounded landing/objective guards audited.");
+                var routeChoice=plugin.MainModule.GetType("ArenaPvP.ArenaBotRoutes").Methods.Single(m=>m.Name=="Choose");
+                if(!routeChoice.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Movement")
+                    || !actions.Methods.Single(m=>m.Name=="Combo").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Primary")
+                    || !plugin.MainModule.GetType("ArenaPvP.ArenaBotBrain").Methods.Single(m=>m.Name=="CanSteer").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="MovementLocked")
+                    || !brainInput.Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="DirectStep"))
+                    throw new Exception("Ultra must retain independent body progress, primary pressure and movement ownership recovery.");
+                var buildRules=plugin.MainModule.GetType("ArenaPvP.BotBuildRules");
+                if(!buildRules.Methods.Single(m=>m.Name=="ChooseAdaptive").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="PrepareDefense")
+                    || !buildRules.Methods.Single(m=>m.Name=="BuildValue").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="SurvivalValue")
+                    || !matchType.Methods.Single(m=>m.Name=="PlayerDied").Body.Instructions.Any(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Defeated"))
+                    throw new Exception("Ultra defensive choice and actual defeat evidence must remain connected to production paths.");
+                var newLife=plugin.MainModule.GetType("ArenaPvP.BotOpponent").Methods.Single(m=>m.Name=="NewLife");
+                if(newLife.Body.Instructions.Any(i=>i.OpCode.Code==Mono.Cecil.Cil.Code.Stfld && i.Operand is FieldReference && new[]{"harm","losses"}.Contains(((FieldReference)i.Operand).Name)))
+                    throw new Exception("Respawn must not erase long-term survival evidence.");
+                Console.WriteLine("PASS: sustained primary pressure, independent path progress, native movement ownership and persistent defensive adaptation audited.");
+                int comboAt=brainInput.Body.Instructions.ToList().FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="Combo");
+                int escapeAt=brainInput.Body.Instructions.ToList().FindIndex(i=>i.Operand is MethodReference && ((MethodReference)i.Operand).Name=="ReserveUtility");
+                if(escapeAt<0 || comboAt<=escapeAt)throw new Exception("Escape reservation must be resolved before primary/skill arbitration.");
                 Console.WriteLine("PASS: mode profile capture, compressed settings, native headings, bounded bot tactics and saved build catalog identifiers audited.");
                 var suppression = plugin.MainModule.GetType("ArenaPvP.BlockSkillsWhileChoosing");
                 if (suppression.Methods.Any(m => m.Name == "Prefix") || !suppression.Methods.Any(m => m.Name == "Postfix"))

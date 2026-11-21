@@ -38,5 +38,12 @@ namespace ArenaPvP
         }
         public static float StoppingDistance(float speed, float acceleration, float radius)
         { return Math.Max(1.5f, Math.Min(12f, speed * .25f + speed * speed / (2 * Math.Max(10, acceleration)) + radius)); }
+        public static void PressureVector(float travelX,float travelZ,float sideX,float sideZ,out float x,out float z)
+        {
+            float travel=(float)Math.Sqrt(travelX*travelX+travelZ*travelZ),side=(float)Math.Sqrt(sideX*sideX+sideZ*sideZ);
+            x=(travel>0 ? travelX/travel*.9f : 0)+(side>0 ? sideX/side*.65f : 0);
+            z=(travel>0 ? travelZ/travel*.9f : 0)+(side>0 ? sideZ/side*.65f : 0);
+            float length=(float)Math.Sqrt(x*x+z*z);if(length>0) { x/=length;z/=length; }
+        }
     }
 }

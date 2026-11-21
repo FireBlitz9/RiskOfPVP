@@ -17,6 +17,7 @@ namespace ArenaPvP
         private int body, observations;
         private float rushEvidence, strafeEvidence, sustainEvidence, burstEvidence, evidenceAt;
         private BotCastWindow casts;
+        private float harm, losses, survivalAt;
         public float Speed { get; private set; }
         public float Approach { get; private set; }
         public float Strafe { get; private set; }
@@ -54,6 +55,8 @@ namespace ArenaPvP
             lastTrade = now;
             if (received)
             {
+                DecaySurvival(now);
+                harm=Math.Min(3,harm+Math.Max(0,fraction));
                 taken = Math.Min(2f, taken + fraction);
                 burst = Math.Max(burst, fraction);
                 if (fraction >= .15f)
@@ -68,6 +71,18 @@ namespace ArenaPvP
         private float Decay(float now) { return (float)Math.Exp(-Math.Max(0, now - lastTrade) / 6f); }
         public float Trade(float now) { return (dealt - taken) * Decay(now); }
         public float Pressure(float now) { return (taken * .4f + burst) * Decay(now); }
+        private void DecaySurvival(float now)
+        {
+            float decay=(float)Math.Exp(-Math.Max(0,now-survivalAt)/55f);
+            harm*=decay;losses*=decay;survivalAt=now;
+        }
+        public void Defeated(float now)
+        { DecaySurvival(now);losses=Math.Min(2,losses+.65f); }
+        public float SurvivalPressure(float now)
+        {
+            float decay=(float)Math.Exp(-Math.Max(0,now-survivalAt)/55f);
+            return BotAdaptation.Clamp((harm*.55f+losses)*decay,0,1);
+        }
         public float Familiarity(float now) { return observations > 0 ? Math.Max(0, 1 - (now - lastSeen) / 25f) : 0; }
         private float EvidenceDecay(float now) { return (float)Math.Exp(-Math.Max(0, now - evidenceAt) / 18f); }
         private void DecayEvidence(float now)
@@ -105,6 +120,12 @@ namespace ArenaPvP
         {
             BotOpponent opponent;
             return opponents.TryGetValue(id, out opponent) ? opponent : null;
+        }
+
+        public float SurvivalPressure(float now)
+        {
+            float value=0;foreach(var opponent in opponents.Values)value=Math.Max(value,opponent.SurvivalPressure(now));
+            return value;
         }
 
         public void NewLife()
@@ -145,8 +166,8 @@ namespace ArenaPvP
             if (holdingHill) return BotEngagement.Hold;
             if (health < .27f || (health < .62f && (trade < -.28f || enemies > allies + 1)
                 && enemyHealth > .25f)) return BotEngagement.Recover;
-            if (distance > kit.Range * 1.30f || (enemyHealth < .31f && health > enemyHealth + .2f))
-                return combatSkillReady || distance > kit.Reach ? BotEngagement.Press : BotEngagement.Trade;
+            if (distance > kit.Range * 1.08f || (enemyHealth < .31f && health > enemyHealth + .2f))
+                return BotEngagement.Press;
             if (pressure > .34f && (trade < -.1f || !combatSkillReady) && kit.Range >= 12f)
                 return BotEngagement.Hold;
             return BotEngagement.Trade;
@@ -157,8 +178,8 @@ namespace ArenaPvP
             float range = kit.Range;
             if (engagement == BotEngagement.Recover) return Math.Max(22, range + 12);
             if (range < 12f) return range;
-            if (engagement == BotEngagement.Press && enemyHealth < .35f) return Math.Max(9, range * .65f);
-            return Clamp(range + approach * 8 + pressure * 7, range * .73f, Math.Max(range, kit.Reach * .85f));
+            if (engagement == BotEngagement.Press) return Math.Max(7,range*(enemyHealth<.35f ? .60f : .77f));
+            return Clamp(range*.86f + approach * 5 + pressure * 5, range * .70f, Math.Max(range, kit.Reach * .72f));
         }
 
         // Solve the intercept against observed motion and bound the lead

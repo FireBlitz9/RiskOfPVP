@@ -1,0 +1,11 @@
+# Verification
+
+Run `build.ps1 -RunTests` from the repository root against a local game installation and the pinned build dependencies.
+
+RiskOfPVP 1.3.3 was compiled against Risk of Rain 2 1.5.0#1224 on 21 November 2026. The suite passes 1,018 rule assertions, 547 production item-pool/controller assertions, 10 production graph-route assertions and 78 real BepInEx configuration/transport assertions: 1,653 total. The metadata audit passes 62 scoped native hook targets and the retained host-authority, survivor, equipment, reward and explicit-assembly-loading guards. All builds pass without compiler warnings/errors. The optional metadata audit also passes 14 Aerolt-menu/DropIn contracts against the existing reference DLLs.
+
+The new controller cases distinguish button requests from real activation events and state completion. They cover continuous automatic primary input with burst skills on cooldown, independent versus shared state machines, native cooldown cycles, must-key-press edges, charge release, native scope priority and additional forbidden loadout definitions. Route cases execute production discovery and selection with a graph/physics adapter, including the standing start node, commitment, immediate retreat, arrival, query bounds, airborne fallback and KOTH containment. Rules cases cover displacement-based stalls despite changing goals, route revisit penalties, advancing dodge vectors, damage/defeat memory across respawns and diminishing defensive investment. Production reward tests retain host bans even when defensive adaptation requests an item.
+
+A 40-reward scripted high-pressure build picked 23 defensive/sustain rewards and 17 offensive rewards. This is a check against always choosing one role, not a claimed ideal build or player win rate. The warmed production chooser processed 1,000 600-pickup offers in about 540 ms in the catalog adapter. Timing excludes Unity physics, native pathfinding, inventory callbacks, animation, rendering and networking.
+
+No game was launched or installed profile changed during this verification. Live map navigation, survivor animation, damage balance, multiplayer observation and sustained CPU cost remain gameplay checks. Historical charts in the main README describe the earlier recorded comparison through commit `bece477`; they have not been relabelled as measurements of 1.3.3.

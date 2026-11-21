@@ -6,7 +6,7 @@ namespace ArenaPvP
     {
         public const int NoNode = -1;
         public int Node, FirstHop;
-        public float Travel, Range, HillDistance, AllyDistance, Sector;
+        public float Travel, Range, HillDistance, AllyDistance, Sector, Approach;
         public bool HasShot, FirstHopExposed, HasCoverExit;
     }
 
@@ -24,17 +24,45 @@ namespace ArenaPvP
         private int goal = BotRouteOption.NoNode, corridor = BotRouteOption.NoNode;
         private Blockage lastBlockage, earlierBlockage;
         private float checkedAt, bestRemaining;
+        private float positionAt, positionX, positionZ;
+        private bool hasPosition;
+        private readonly int[] arrivals=new int[4];
+        private readonly float[] arrivalUntil=new float[4];
+        private int arrivalIndex,lastArrival=BotRouteOption.NoNode;
 
         public void Clear()
         {
             goal = corridor = BotRouteOption.NoNode;
             checkedAt = bestRemaining = 0;
             lastBlockage = earlierBlockage = default(Blockage);
+            hasPosition=false;
+            Array.Clear(arrivalUntil,0,arrivalUntil.Length);arrivalIndex=0;lastArrival=BotRouteOption.NoNode;
+        }
+
+        // This clock is independent of SetGoal. Alternating nearby goals must
+        // not keep erasing evidence that the body is stuck in the same place.
+        public bool Movement(float now,float x,float z,bool canMove,float remaining)
+        {
+            float dx=x-positionX,dz=z-positionZ;
+            if(!hasPosition || !canMove || remaining<=2 || dx*dx+dz*dz>=1.21f)
+            { hasPosition=true;positionAt=now;positionX=x;positionZ=z;return false; }
+            if(now-positionAt<1.15f)return false;
+            Block(now);positionAt=now;positionX=x;positionZ=z;return true;
+        }
+
+        private void Block(float now)
+        {
+            if(goal==BotRouteOption.NoNode)return;
+            if(now>=lastBlockage.Until || lastBlockage.Corridor!=corridor)earlierBlockage=lastBlockage;
+            lastBlockage=new Blockage { Node=goal,Corridor=corridor,Until=now+3f };
+            goal=corridor=BotRouteOption.NoNode;
         }
 
         public void Progress(float now, float remaining, bool canMove)
         {
             if (goal == BotRouteOption.NoNode) return;
+            if(remaining<=2 && goal!=lastArrival)
+            { arrivals[arrivalIndex]=goal;arrivalUntil[arrivalIndex]=now+3;arrivalIndex=(arrivalIndex+1)%arrivals.Length;lastArrival=goal; }
             if (!canMove || remaining <= 2f || remaining < bestRemaining - .75f)
             {
                 checkedAt = now;
@@ -42,9 +70,7 @@ namespace ArenaPvP
             }
             if (remaining > 2f && now - checkedAt >= 1.1f)
             {
-                if (now >= lastBlockage.Until || lastBlockage.Corridor != corridor) earlierBlockage = lastBlockage;
-                lastBlockage = new Blockage { Node = goal, Corridor = corridor, Until = now + 3f };
-                goal = corridor = BotRouteOption.NoNode;
+                Block(now);
             }
         }
 
@@ -67,6 +93,7 @@ namespace ArenaPvP
                 score += (option.HasShot ? -16f : 14f) - (option.FirstHopExposed ? 6f : 0f);
             else
                 score += option.HasShot ? 12f : -5f;
+            if(mode!=BotEngagement.Recover)score+=Math.Max(-8,Math.Min(8,option.Approach))*(mode==BotEngagement.Press ? .75f : .55f);
             if (option.HasCoverExit) score += mode == BotEngagement.Press ? 1f : 4f;
             if (onHill)
             {
@@ -76,6 +103,8 @@ namespace ArenaPvP
                     score += 18f + option.Sector * 4f - Math.Max(0, 6f - option.AllyDistance) * 1.7f;
             }
             if (option.Node == goal) score += 2.3f;
+            if(mode!=BotEngagement.Recover)for(int i=0;i<arrivals.Length;i++)
+                if(now<arrivalUntil[i] && option.Node==arrivals[i]) { score-=14;break; }
             return score - Math.Max(lastBlockage.Penalty(option, now), earlierBlockage.Penalty(option, now));
         }
     }

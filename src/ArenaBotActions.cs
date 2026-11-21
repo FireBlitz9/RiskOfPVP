@@ -51,7 +51,7 @@ namespace ArenaPvP
             if(action!=BotAction.None)
             { for(int i=0;i<4;i++)if(active[i] && active[i].stateMachine==skill.stateMachine)active[i]=null;active[(int)action]=skill; }
             if(tier!=BotIntelligence.Ultra || action!=requested || Time.unscaledTime>requestedUntil)return;
-            recovering=skill;requested=BotAction.None;
+            recovering=action==BotAction.Primary ? null : skill;requested=BotAction.None;
             string state=skill.activationState.stateType==null ? "" : skill.activationState.stateType.Name;
             chargedHold=action==BotAction.Secondary && state.IndexOf("Charge",StringComparison.OrdinalIgnoreCase)>=0;
             if(chargedHold || action!=BotAction.Primary && NativeHold(skill,action))
@@ -104,6 +104,13 @@ namespace ArenaPvP
             }
             return false;
         }
+        internal bool MovementLocked(CharacterBody body)
+        {
+            if(body.currentVehicle || UnknownState(body))return true;
+            // Aiming/charging a weapon is not a reason to stop walking. Native
+            // traversal utilities retain control of their movement and vehicle.
+            return Busy(active[(int)BotAction.Utility]);
+        }
         private bool UnknownState(CharacterBody body)
         {
             for(int i=0;i<4;i++)
@@ -119,12 +126,14 @@ namespace ArenaPvP
         internal void Combo(BaseAI ai,ref BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool fire,BotIntelligence level)
         {
             var body=ai.body;Observe(body);tier=level;
+            if(level==BotIntelligence.Ultra)Primary(ai,ref input,previous,enemy,fire);
             if(ownedHold)
             {
                 var action=ActionFor(body,ownedHold);float now=Time.unscaledTime;
                 // A native primary request must not interrupt the coordinated
                 // charged/channelled attack before its release or recovery.
-                input.pressSkill1=input.pressSkill2=input.pressSkill3=input.pressSkill4=false;
+                bool primary=input.pressSkill1 && !Shares(Skill(body,BotAction.Primary),ownedHold);
+                input.pressSkill1=primary;input.pressSkill2=input.pressSkill3=input.pressSkill4=false;
                 bool busy=now-holdStarted<.12f || Busy(ownedHold);
                 if(busy && now<holdUntil)
                 { Press(ref input,action,true);return; }
@@ -137,24 +146,60 @@ namespace ArenaPvP
             {
                 if(Busy(recovering))
                 {
-                    input.pressSkill1 &= previous.pressSkill1;input.pressSkill2 &= previous.pressSkill2;
+                    if(Shares(Skill(body,BotAction.Primary),recovering))input.pressSkill1=false;
+                    input.pressSkill2 &= previous.pressSkill2;
                     input.pressSkill3 &= previous.pressSkill3;input.pressSkill4 &= previous.pressSkill4;return;
                 }
                 recovering=null;
             }
             if(level!=BotIntelligence.Ultra || !fire || !enemy || plan.Length==0)return;
-            bool busyAny=false;
-            for(int i=0;i<4;i++)if(Busy(Skill(body,(BotAction)i))) { busyAny=true;break; }
-            if(busyAny || input.pressSkill3)return;
+            // Native CanExecute evaluates interrupt priority per state machine.
+            // A busy primary must not block an independent special or vice versa.
+            if(input.pressSkill3)
+            {
+                var utility=Skill(body,BotAction.Utility);
+                if(utility && (utility.CanExecute() || Busy(utility)))
+                {
+                    if(Shares(Skill(body,BotAction.Primary),utility))input.pressSkill1=false;
+                    return;
+                }
+                input.pressSkill3=false;
+            }
             int ready=0;
             for(int i=0;i<4;i++)if(Eligible(ai,body,enemy,(BotAction)i))ready|=1<<i;
             var choice=combo.Pick(plan,Time.unscaledTime,enemy.GetInstanceID(),ready,Vector3.Distance(body.corePosition,enemy.corePosition),enemy.healthComponent.combinedHealthFraction,false);
             if(choice==BotAction.None)return;
             // A fresh edge is necessary for mustKeyPress skills. Never reset a
             // cooldown or execute/interrupt a state directly.
-            bool down=!Pressed(previous,choice);
-            input.pressSkill1=input.pressSkill2=input.pressSkill4=false;
+            var chosen=Skill(body,choice);
+            bool down=choice==BotAction.Primary && chosen && !chosen.mustKeyPress || !Pressed(previous,choice);
+            input.pressSkill2=input.pressSkill4=false;
+            if(down && choice!=BotAction.Primary && Shares(Skill(body,BotAction.Primary),Skill(body,choice)))input.pressSkill1=false;
             Press(ref input,choice,down);if(down) { requested=choice;requestedUntil=Time.unscaledTime+.4f; }
+        }
+        private static bool Shares(GenericSkill a,GenericSkill b)
+        { return a && b && a.stateMachine && a.stateMachine==b.stateMachine; }
+        private void Primary(BaseAI ai,ref BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool fire)
+        {
+            if(!fire || !enemy || ai.body.currentVehicle)return;
+            var skill=Skill(ai.body,BotAction.Primary);if(!skill || !skill.skillDef)return;
+            string state=skill.activationState.stateType==null ? "" : skill.activationState.stateType.Name;
+            // Native charge/scope drivers own both start and release. Keeping a
+            // held charge down forever is not automatic primary pressure.
+            if(state.IndexOf("Charge",StringComparison.OrdinalIgnoreCase)>=0
+                || state.IndexOf("Snipe",StringComparison.OrdinalIgnoreCase)>=0
+                || state.IndexOf("Reload",StringComparison.OrdinalIgnoreCase)>=0)return;
+            if(!input.pressSkill1)
+                for(int i=1;i<4;i++)
+                {
+                    var other=Skill(ai.body,(BotAction)i);
+                    if(Pressed(input,(BotAction)i) && Shares(skill,other) && other.CanExecute())return;
+                }
+            if(ownedHold && Shares(skill,ownedHold) || recovering && Busy(recovering) && Shares(skill,recovering))return;
+            if(Eligible(ai,ai.body,enemy,BotAction.Primary))
+                input.pressSkill1=!skill.mustKeyPress || !previous.pressSkill1;
+            else if(active[0]==skill && Busy(skill) && previous.pressSkill1 && NativeHold(skill,BotAction.Primary))
+                input.pressSkill1=true;
         }
         private bool Eligible(BaseAI ai,CharacterBody body,CharacterBody enemy,BotAction action)
         {
@@ -168,7 +213,8 @@ namespace ArenaPvP
             foreach(var driver in drivers)
             {
                 if(!driver || (int)driver.skillSlot!=(int)action || driver.requiredSkill && driver.requiredSkill!=skill.skillDef
-                    || driver.forbiddenSkill==skill.skillDef || driver.maxTimesSelected>=0 && driver.timesSelected>=driver.maxTimesSelected)continue;
+                    || driver.forbiddenSkill==skill.skillDef || driver.additionalForbiddenSkills!=null && Array.IndexOf(driver.additionalForbiddenSkills,skill.skillDef)>=0
+                    || driver.maxTimesSelected>=0 && driver.timesSelected>=driver.maxTimesSelected)continue;
                 if(driver.moveTargetType!=AISkillDriver.TargetType.CurrentEnemy && driver.aimType!=AISkillDriver.AimType.AtCurrentEnemy)continue;
                 float health=body.healthComponent.combinedHealthFraction;
                 if(health<driver.minUserHealthFraction || health>driver.maxUserHealthFraction || driver.selectionRequiresOnGround && body.characterMotor && !body.characterMotor.isGrounded)continue;

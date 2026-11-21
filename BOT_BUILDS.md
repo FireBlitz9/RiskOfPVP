@@ -1,5 +1,11 @@
 # Survivor bots
 
+Ultra now treats primary fire as the ongoing attack, with burst skills woven around it. Native readiness, interrupt priority, state-machine sharing and held/charged input rules determine which attacks can overlap. Walking is separate from sprint cancellation; aiming a weapon does not itself stop pursuit. Native movement utilities and unknown busy states retain movement ownership. Incoming attacks release the reservation on a native escape instead of indefinitely blocking its last stock.
+
+Combat routes exclude the standing start node, retain a short commitment, remember recently reached points and track actual body displacement independently of changing route goals. Native broad navigation handles intermediate waypoints. Bounded direct steps bridge a temporarily idle navigator or a reached firing position, with collision, ground and objective checks. Dodges combine lateral motion with continued route progress. Dodge checks are cached for 0.1 seconds; direct-step checks for 0.15 seconds. Route discovery remains bounded and bot decisions/grants retain the shared round-robin budget.
+
+Ultra's build scorer evaluates defensive investment against the rest of its inventory. Missing protection and sustain compete with damage choices, and repeated small hits or defeats raise that priority even at full health after respawning. Evidence decays and diminishing returns preserve offensive choices. Shield-only builds avoid ineffective health sustain, void conversion costs remain in force, and all choices come from the actual host-created offer. No stats, stock, cooldowns, damage or movement speeds are granted outside the ordinary rules.
+
 Low, Medium and High use survivor-appropriate priority plans. Extra High and Ultra score their current inventory, survivor role, health/shields, crit, proc synergies and available pickups instead of following a fixed item list. Unknown custom items use their catalog tags; this is a heuristic, not a simulation of arbitrary mod scripts.
 
 | Fixed plan | Main goals |

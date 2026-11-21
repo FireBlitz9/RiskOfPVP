@@ -46,6 +46,8 @@ namespace ArenaPvP
         private ArenaBotRoutes routes;
         private readonly BotFightTiming timing = new BotFightTiming();
         private bool reserveEscape;
+        private float nextDodgeProbe,nextDirectProbe;
+        private Vector3 cachedDodge,cachedDirect,directGoal;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
 
@@ -80,6 +82,7 @@ namespace ArenaPvP
         internal bool CanSteer(BaseAI ai)
         {
             if(!hasGoal || !goal || player==null || !player.Connected || player.Dead || !ai.body || ai.body.currentVehicle) return false;
+            if(tier==BotIntelligence.Ultra)return !actions.MovementLocked(ai.body);
             var driver=ai.skillDriverEvaluation.dominantSkillDriver;
             return !driver || driver.skillSlot!=SkillSlot.Utility && driver.skillSlot!=SkillSlot.Special
                 || tier == BotIntelligence.Ultra && reserveEscape && ArenaBotKit.ReserveUtility(ai.body, driver);
@@ -97,6 +100,7 @@ namespace ArenaPvP
                 kitBody = body;
                 Enemy = null; enemyPlayer = null; seenAt = -100;
                 projectileAt = -100;
+                nextDodgeProbe=nextDirectProbe=0;cachedDodge=cachedDirect=Vector3.zero;
                 ResetSight(now);
             }
             if (bodyChanged || tier != nextTier)
@@ -195,6 +199,9 @@ namespace ArenaPvP
 
         private void ApplyGoal(Vector3 safe)
         {
+            // Keep the target transform and broad navigator on the same committed
+            // destination instead of nudging only one of them every decision.
+            if(tier==BotIntelligence.Ultra && hasGoal && (safe-Destination).sqrMagnitude<2.25f)return;
             bool moved=!hasGoal || (safe-Destination).sqrMagnitude>4;
             goal.transform.position=safe; hasGoal=true;
             foreach(var ai in ais)if(ai && ai.body)
@@ -299,7 +306,7 @@ namespace ArenaPvP
             bool moving = false;
             foreach (var ai in ais)
                 if (ai && CanSteer(ai)) { moving = true; break; }
-            moving = moving && !actions.Protected(body, default(BaseAI.BodyInputs));
+            moving = moving && !actions.MovementLocked(body);
             Vector3 waypoint;
             if (!routes.Choose(body, enemy, hasEnemy, hill, player, targets, engagement, range, now, moving, Destination, out waypoint))
                 return false;
@@ -346,6 +353,7 @@ namespace ArenaPvP
                 if (!ProjectGround(body, desired, out safe) || (objective && !ArenaBotRoutes.InHill(hill, safe))) continue;
                 bool covered = Physics.Linecast(safe + (body.corePosition - origin), enemyPoint, LayerIndex.world.mask, QueryTriggerInteraction.Ignore);
                 float score = -(safe - origin).magnitude * .3f - Mathf.Abs(Vector3.Distance(safe, enemy.footPosition) - spacing) * .45f;
+                if(engagement!=BotEngagement.Recover && (safe-origin).sqrMagnitude<4)score-=12;
                 score += (engagement == BotEngagement.Recover ? covered : !covered) ? 8 : 0;
                 if (engagement == BotEngagement.Hold && !objective && i != 0) score += 2;
                 if (score > bestScore) { best = safe; bestScore = score; }
@@ -437,7 +445,7 @@ namespace ArenaPvP
             }
             if (newAttack && aimedAtBot && now >= dodgeUntil)
             {
-                dodgeAt = now + .10f;
+                dodgeAt = now + .06f;
                 dodgeUntil = dodgeAt + .22f;
             }
             return now >= dodgeAt && now < dodgeUntil;
@@ -463,15 +471,59 @@ namespace ArenaPvP
 
         private Vector3 DodgeDirection(CharacterBody body, Vector3 threat, int preferredSide, bool sprint)
         {
+            if(Time.unscaledTime<nextDodgeProbe)return cachedDodge;
+            nextDodgeProbe=Time.unscaledTime+.1f;
+            return cachedDodge=ComputeDodgeDirection(body,threat,preferredSide,sprint);
+        }
+
+        private Vector3 ComputeDodgeDirection(CharacterBody body, Vector3 threat, int preferredSide, bool sprint)
+        {
             threat.y = 0;
             var side = Vector3.Cross(Vector3.up, threat.normalized) * preferredSide;
             if (side.sqrMagnitude < .1f) return Vector3.zero;
             var towardRoute = Destination - body.footPosition;
             towardRoute.y = 0;
             if (towardRoute.sqrMagnitude > 4 && Vector3.Dot(side, towardRoute.normalized) < -.3f) side = -side;
-            var alternative = -side;
-            if (KeepInObjective(body, ref side) && SupportedAhead(body, side, sprint)) return side;
+            var travel=towardRoute.sqrMagnitude>4 ? towardRoute.normalized : Enemy ? (Enemy.footPosition-body.footPosition).normalized : Vector3.zero;
+            // Sidesteps add lateral displacement while retaining forward/cover
+            // progress. Reversing pure strafes formerly cancelled that progress.
+            float x,z;BotTacticsRules.PressureVector(travel.x,travel.z,side.x,side.z,out x,out z);
+            var first=new Vector3(x,0,z);
+            BotTacticsRules.PressureVector(travel.x,travel.z,-side.x,-side.z,out x,out z);
+            var alternative=new Vector3(x,0,z);
+            if (KeepInObjective(body, ref first) && SupportedAhead(body, first, sprint)) return first;
             return KeepInObjective(body, ref alternative) && SupportedAhead(body, alternative, sprint) ? alternative : Vector3.zero;
+        }
+
+        private Vector3 DirectStep(CharacterBody body,Vector3 nativeMove,float now,bool visible)
+        {
+            if(nativeMove.sqrMagnitude>.01f)return nativeMove;
+            var toward=Destination-body.footPosition;toward.y=0;
+            if(toward.sqrMagnitude<2.25f)
+            {
+                if(!visible || !Enemy || engagement==BotEngagement.Recover)return Vector3.zero;
+                toward=Enemy.footPosition-body.footPosition;toward.y=0;
+                if(toward.sqrMagnitude<.01f)toward=Vector3.forward;
+                float close=Mathf.Max(3,player.BotKit.Range*.55f);
+                if(toward.sqrMagnitude<close*close)
+                    toward=toward.normalized*.25f+Vector3.Cross(Vector3.up,toward.normalized)*(player.BotOrdinal%2==0 ? 1 : -1);
+            }
+            if(now>=nextDirectProbe)
+            {
+                nextDirectProbe=now+.15f;directGoal=Destination;cachedDirect=Vector3.zero;
+                var direction=toward.normalized;RaycastHit hit;
+                if(movementHill!=null && movementHill.Ready)
+                {
+                    var offset=body.footPosition-movementHill.To;offset.y=0;
+                    if(offset.magnitude>movementHill.Radius*.72f)direction=-offset.normalized;
+                    else KeepInObjective(body,ref direction);
+                }
+                float radius=Mathf.Clamp(body.radius*.7f,.2f,.7f);
+                bool blocked=Physics.SphereCast(body.footPosition+Vector3.up*(radius+.2f),radius,direction,out hit,
+                    Mathf.Min(toward.magnitude,Mathf.Max(2,body.radius*2)),LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
+                if(!blocked && SupportedAhead(body,direction,false))cachedDirect=direction;
+            }
+            return (Destination-directGoal).sqrMagnitude<9 ? cachedDirect : Vector3.zero;
         }
 
         private bool UseUltraEquipment(CharacterBody body, EquipmentDef equipment, bool fire, bool visible,
@@ -563,13 +615,15 @@ namespace ArenaPvP
                 input.pressSkill3=BotTacticsRules.HeldSkill(input.pressSkill3,previous.pressSkill3,true,fire);
                 input.pressSkill4=BotTacticsRules.HeldSkill(input.pressSkill4,previous.pressSkill4,true,fire);
             }
-            if(BotTacticsRules.Adaptive(tier) || actions.HasHold)
-                actions.Combo(ai,ref input,previous,Enemy,fire && (!ultra || engagement != BotEngagement.Recover),tier);
-            if (ultra && reserveEscape && !previous.pressSkill3 && ArenaBotKit.ReserveUtility(body, dominant))
-                input.pressSkill3 = false;
-            bool incoming = ultra && now - projectileAt >= .08f && now - projectileAt < .35f;
+            bool incoming = ultra && now - projectileAt >= .04f && now - projectileAt < .35f;
             bool attackThreat = ultra && AttackThreat(body, visible, now);
             bool threatened = attackThreat || incoming;
+            // A reserved escape is for the incoming attack, not for keeping its
+            // last stock forever while the native driver tries to spend it.
+            if (ultra && reserveEscape && !threatened && !previous.pressSkill3 && ArenaBotKit.ReserveUtility(body, dominant))
+                input.pressSkill3 = false;
+            if(BotTacticsRules.Adaptive(tier) || actions.HasHold)
+                actions.Combo(ai,ref input,previous,Enemy,fire,tier);
             if(body.equipmentSlot && body.inventory)
             {
                 var equipment=EquipmentCatalog.GetEquipmentDef(body.inventory.GetActiveEquipment().equipmentIndex);
@@ -591,12 +645,13 @@ namespace ArenaPvP
                 // Use the already-computed safe path vector so an enemy cannot
                 // pin an objective bot outside the zone merely by being visible.
                 input.moveVector=(Destination-body.footPosition).sqrMagnitude>2.25f ? ai.localNavigator.moveVector : Vector3.zero;
+                if(ultra)input.moveVector=DirectStep(body,input.moveVector,now,visible);
                 if(!Enemy && input.moveVector.sqrMagnitude>.01f)input.pressSprint=true;
             }
             bool addedMobility=false,wantsCombatJump=false;
             if(!plannedJump && BotTacticsRules.Adaptive(tier) && CanSteer(ai) && body.characterMotor && !body.isFlying)
             {
-                bool protectedSkill=actions.Protected(body,previous);
+                bool protectedSkill=ultra ? actions.MovementLocked(body) : actions.Protected(body,previous);
                 var intent=actions.Motion(body,input,previous,Enemy,visible,protectedSkill,player.BotOrdinal,tier,threatened,incoming);
                 if(!protectedSkill)
                 {
@@ -621,7 +676,7 @@ namespace ArenaPvP
                     {
                         bool directionAllowed=(body.bodyFlags&CharacterBody.BodyFlags.SprintAnyDirection)!=0 || SprintDirection(body,input.moveVector);
                         input.pressSprint=intent.Sprint && directionAllowed && input.moveVector.sqrMagnitude>.01f;
-                        if(intent.RestoringSprint)
+                        if(intent.RestoringSprint && !ultra)
                         { input.pressSkill1=input.pressSkill2=false;if(!previous.pressSkill3)input.pressSkill3=false;if(!previous.pressSkill4)input.pressSkill4=false; }
                     }
                     else input.pressSprint=false;

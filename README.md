@@ -70,13 +70,17 @@ Bot intelligence is under **General > Bots**:
 | **Medium** | Standard tactics and fixed builds; the default. |
 | **High** | Nearest-enemy awareness, including opposing summons, with fixed builds. |
 | **Extra High** | Adaptive builds, predictive aiming, dodging, combat jumps and sprint resets. |
-| **Ultra** | Adapts its spacing, defense, and builds to individual opponents. It can track opponent positions for navigation and reacts to visible attacks. |
+| **Ultra** | Sustained primary pressure, advancing dodges, stable pursuit and defensive builds that learn from damage and defeats. It tracks opponents for navigation and reacts to visible attacks. |
 
 **Chase mode** makes FFA bots prioritize humans. Teams and KOTH ignore it. **Decision interval** controls tactical update frequency. These shared settings apply live from the host. Bot choices use the same offered rewards, blacklists and limits as players; they receive no bonus damage or free items. Fixed builds avoid buying a void item that destroys their existing setup. Adaptive builds consider conversion costs and can bank unsuitable offers.
 
 Extra High and Ultra sprint when movement and their current skill allow it. Ultra checks line of sight before firing and dodges visible attacks or incoming projectiles with normal movement inputs. It reads its equipped skills and uses native AI for complex traversal, scope/reload, and custom survivor chains. Its builds use the normal reward pool, including eligible DLC items and equipment. [Bot build and combat rules](BOT_BUILDS.md)
 
+Ultra keeps using its primary while burst abilities recharge and continues moving as it attacks. It can fire alongside skills on independent state machines; shared-state charges and animations still finish normally. Defensive choices account for existing protection, sustain, enemy builds and recent defeats, including after respawn. It receives the same rewards and follows the same item limits as players.
+
 ### Ultra benchmarks
+
+These figures record the earlier comparison through commit `bece477`, before the 1.3.3 pressure and survival changes. They are offline tests, not player win rates or live frame-time measurements.
 
 **Ultra V1** is the bot from v1.3.1, **Ultra V2** is from v1.3.2, and **Ultra V3** is the newest generation in this comparison.
 

@@ -61,7 +61,8 @@ namespace ArenaPvP
                 var enemy = p.Master.GetBody();
                 var habit = bot.BotMemory?.Find(p.UserId);
                 float score = body && enemy ? Math.Min(3, Vector3.Distance(enemy.corePosition, body.corePosition) / 35f) : 2;
-                if (habit != null) score -= habit.Pressure(now) * 3 + habit.Familiarity(now);
+                if (habit != null) score -= habit.Pressure(now) * 3 + habit.Familiarity(now)+habit.SurvivalPressure(now)*1.5f;
+                if(p.UserId==bot.LastAttacker)score-=.75f;
                 if (p.Dead) score += .25f;
                 if(score<a) { third=second;c=b;second=first;b=a;first=p;a=score; }
                 else if(score<b) { third=second;c=b;second=p;b=score; }
@@ -83,6 +84,15 @@ namespace ArenaPvP
             if (loadout.Items.TryGetValue("ShieldBooster", out shieldBoosters))
                 context.EnemyArmor = Math.Max(context.EnemyArmor, Math.Min(60, shieldBoosters * 15));
             var habit = bot.BotMemory?.Find(player.UserId);
+            var enemyBody=player.Master.GetBody();
+            if(enemyBody)
+            {
+                context.EnemyArmor=Math.Max(context.EnemyArmor,enemyBody.armor);
+                context.EnemyMoveSpeed=Math.Max(context.EnemyMoveSpeed,enemyBody.moveSpeed);
+                var own=bot.Master.GetBody();
+                if(own)context.EnemyDamage=Math.Max(context.EnemyDamage,Math.Min(3.5f,
+                    enemyBody.damage*Math.Max(.5f,enemyBody.attackSpeed)/Math.Max(1,own.damage*Math.Max(.5f,own.attackSpeed))));
+            }
             if (habit == null) return;
             float recency = habit.Familiarity(now);
             context.EnemyMoveSpeed = Math.Max(context.EnemyMoveSpeed, habit.Speed * recency);
@@ -93,6 +103,7 @@ namespace ArenaPvP
             context.MobilityEvidence = Math.Max(context.MobilityEvidence, habit.MobilityEvidence(now) * weight);
             context.SustainEvidence = Math.Max(context.SustainEvidence, habit.SustainEvidence(now) * weight);
             context.BurstEvidence = Math.Max(context.BurstEvidence, habit.BurstEvidence(now) * weight);
+            context.SurvivalPressure=Math.Max(context.SurvivalPressure,habit.SurvivalPressure(now));
         }
         private static Definition Describe(int id)
         {
@@ -136,9 +147,10 @@ namespace ArenaPvP
                 context.SkillUse = kit.SkillUse;
                 context.CloseRange = kit.Range < 12;
             }
+            if(context.Ultra)context.SurvivalPressure=bot.BotMemory?.SurvivalPressure(Time.unscaledTime) ?? 0;
             foreach (var index in inventory.itemAcquisitionOrder)
             {
-                var item=ItemCatalog.GetItemDef(index); if(!item)continue;
+                var item=ItemCatalog.GetItemDef(index); if(!item || item.hidden)continue;
                 int count=inventory.GetItemCountTotal(index); if(count>0)context.Inventory[item.name]=count;
             }
             var location=ArenaEquipment.GrantLocation(inventory);

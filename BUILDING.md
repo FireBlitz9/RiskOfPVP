@@ -19,6 +19,8 @@ The package script checks dependency pins and the DLL/manifest version match, th
 
 These checks do not run Unity or replace multiplayer playtesting. Test changes in a separate mod-manager profile. Only one RiskOfPVP/RiskOfArena plugin copy should be enabled, and every player must use the same version.
 
+The route suite compiles production `ArenaBotRoutes` against a small graph/physics adapter. Controller tests drive skill requests, actual activation events and native recovery separately. Pressure tests cover continuous primary input, displacement-based stuck detection, route revisits, advancing dodges and defensive choices across respawns. Adapter timings exclude native physics, pathfinding, animation and network costs.
+
 ## Release versions
 
 When preparing a new release, update all three version strings in `src/Plugin.cs`, `manifest.json`, and the relevant changelog entry together. Keep upstream dependency versions unchanged unless their references and compatibility are deliberately updated. Attach playable ZIPs to GitHub Releases rather than committing compiled files.

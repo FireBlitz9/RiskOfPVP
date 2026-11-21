@@ -9,12 +9,16 @@ using UnityEngine;
 // from requested buttons, so failed requests cannot masquerade as activations.
 internal static class BotActionsTests
 {
-    private static ArenaBotActions Controller(string name, CharacterBody body, out BaseAI ai, out CharacterBody enemy)
+    private static ArenaBotActions Controller(string name, CharacterBody body, out BaseAI ai, out CharacterBody enemy,bool shared=true,Action<AISkillDriver[]> configure=null)
     {
         Time.unscaledTime=0;
         ai=new BaseAI { body=body };enemy=new CharacterBody { corePosition=new Vector3(0,0,10) };
+        if(shared)
+            body.skillLocator.secondary.stateMachine=body.skillLocator.utility.stateMachine=body.skillLocator.special.stateMachine=body.skillLocator.primary.stateMachine;
         var drivers=new AISkillDriver[4];
         for(int i=0;i<4;i++)drivers[i]=new AISkillDriver { skillSlot=(SkillSlot)i,buttonPressType=AISkillDriver.ButtonPressType.PressOnce };
+        drivers[0].buttonPressType=AISkillDriver.ButtonPressType.Hold;
+        configure?.Invoke(drivers);
         var controller=new ArenaBotActions();controller.Initialize(name,drivers,0);return controller;
     }
     private static BaseAI.BodyInputs Step(ArenaBotActions controller,BaseAI ai,CharacterBody enemy,float time,
@@ -123,6 +127,73 @@ internal static class BotActionsTests
         Time.unscaledTime=.62f;
         motion=controller.Motion(body,input,default(BaseAI.BodyInputs),enemy,true,false,0,BotIntelligence.ExtraHigh);
         check(motion.Sprint && motion.RestoringSprint,"the following input re-presses sprint after recovery");
+        controller.Dispose();
+        SustainedPressure(check);
+    }
+    private static void SustainedPressure(Action<bool,string> check)
+    {
+        BaseAI ai;CharacterBody enemy;var body=new CharacterBody();
+        var controller=Controller("CommandoBody",body,out ai,out enemy,false);
+        var input=Step(controller,ai,enemy,0);
+        check(input.pressSkill1 && input.pressSkill2,"independent primary and secondary state machines can attack together");
+        body.Activate(body.skillLocator.secondary);
+        input=Step(controller,ai,enemy,.15f);
+        check(input.pressSkill1,"primary continues during an independent secondary recovery");
+        check(!controller.MovementLocked(body),"a weapon animation does not stop walking and evasion");
+        body.skillLocator.secondary.stateMachine.Main=true;
+        body.skillLocator.primary.Ready=body.skillLocator.secondary.Ready=body.skillLocator.special.Ready=false;
+        body.skillLocator.primary.Ready=true;
+        int held=0;var previous=default(BaseAI.BodyInputs);
+        for(int i=0;i<200;i++)
+        {
+            Time.unscaledTime=1+i*.02f;
+            input=new BaseAI.BodyInputs(); // A non-primary native driver supplies no primary request.
+            controller.Combo(ai,ref input,previous,enemy,true,BotIntelligence.Ultra);
+            if(input.pressSkill1)held++;
+            previous=input;
+        }
+        check(held==200,"automatic primary pressure stays continuous across 200 ticks while burst skills recharge");
+        int shots=0;held=0;
+        for(int i=0;i<200;i++)
+        {
+            Time.unscaledTime=5+i*.02f;
+            if(i%4==0) { body.skillLocator.primary.Ready=true;body.skillLocator.primary.stateMachine.Main=true; }
+            input=new BaseAI.BodyInputs();controller.Combo(ai,ref input,previous,enemy,true,BotIntelligence.Ultra);
+            if(input.pressSkill1) { held++;if(body.skillLocator.primary.Ready) { shots++;body.Activate(body.skillLocator.primary); } }
+            previous=input;
+        }
+        check(held==200 && shots==50,"native activation/recovery cycles sustain automatic fire without resetting stock or cooldowns");
+        body.skillLocator.primary.Ready=true;body.skillLocator.primary.stateMachine.Main=true;
+        body.skillLocator.primary.mustKeyPress=true;
+        input=Step(controller,ai,enemy,10,new BaseAI.BodyInputs { pressSkill1=true });
+        var next=Step(controller,ai,enemy,10.1f,input);
+        check(!input.pressSkill1 && next.pressSkill1,"press-once primaries receive release and fresh press edges");
+        controller.Dispose();
+        body=new CharacterBody();controller=Controller("CommandoBody",body,out ai,out enemy);
+        input=Step(controller,ai,enemy,0);body.Activate(body.skillLocator.secondary);
+        input=Step(controller,ai,enemy,.1f);
+        check(!input.pressSkill1,"a primary cannot interrupt a shared-machine combo recovery");
+        controller.Dispose();
+        body=new CharacterBody();controller=Controller("MageBody",body,out ai,out enemy,false);
+        Step(controller,ai,enemy,0);body.Activate(body.skillLocator.utility);
+        check(controller.MovementLocked(body),"native traversal/body utility states keep movement ownership");
+        controller.Dispose();
+        body=new CharacterBody();controller=Controller("RailgunnerBody",body,out ai,out enemy);
+        Time.unscaledTime=0;
+        input=new BaseAI.BodyInputs { pressSkill2=true };
+        controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);
+        check(input.pressSkill2 && !input.pressSkill1,"primary pressure cannot steal a shared native scope/utility activation");
+        body.skillLocator.primary.activationState=new SerializableEntityStateType(typeof(NativeChargeBomb));
+        body.Activate(body.skillLocator.primary);Time.unscaledTime=.2f;
+        input=new BaseAI.BodyInputs();
+        controller.Combo(ai,ref input,new BaseAI.BodyInputs { pressSkill1=true },enemy,true,BotIntelligence.Ultra);
+        check(!input.pressSkill1,"a native charged primary can release instead of being held down indefinitely");
+        controller.Dispose();
+        body=new CharacterBody();
+        controller=Controller("CommandoBody",body,out ai,out enemy,true,
+            ds=>ds[1].additionalForbiddenSkills=new[]{body.skillLocator.secondary.skillDef});
+        input=Step(controller,ai,enemy,0);
+        check(!input.pressSkill2 && input.pressSkill4,"additional native loadout exclusions remain effective during attack arbitration");
         controller.Dispose();
     }
 }
