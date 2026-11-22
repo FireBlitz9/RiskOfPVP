@@ -55,6 +55,26 @@ internal static class BotActionsTests
         check(input.pressSkill1 && !input.pressSkill4,"the primary follows the confirmed burst");
         controller.Dispose();
 
+        body=new CharacterBody();
+        controller=Controller("CustomSurvivorBody",body,out ai,out enemy,false);
+        body.skillLocator.secondary.Ready=body.skillLocator.utility.Ready=body.skillLocator.special.Ready=false;
+        var weapon=ArenaCombatLearning.Model(body,0);
+        weapon.Hint("maxDistance",240);
+        enemy.corePosition=new Vector3(0,0,150);
+        input=new BaseAI.BodyInputs();
+        controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);
+        check(input.pressSkill1,"a learned long-range shot is taken before the controller reaches its preferred distance");
+        weapon.Hint("maxDistance",24);weapon.Hint("windupDuration",.4f);
+        enemy.corePosition=new Vector3(0,0,27);body.characterMotor.velocity=new Vector3(0,0,10);
+        input=new BaseAI.BodyInputs();
+        controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);
+        check(input.pressSkill1,"a closing bot starts an attack whose windup carries it into range");
+        body.characterMotor.velocity=new Vector3(0,0,-10);
+        input=new BaseAI.BodyInputs();
+        controller.Combo(ai,ref input,default(BaseAI.BodyInputs),enemy,true,BotIntelligence.Ultra);
+        check(!input.pressSkill1,"a retreating bot does not waste the same attack beyond its reach");
+        controller.Dispose();
+
         body=new CharacterBody();controller=Controller("MageBody",body,out ai,out enemy);
         body.skillLocator.secondary.activationState=new SerializableEntityStateType(typeof(NativeChargeBomb));
         body.skillLocator.secondary.skillDef.canceledFromSprinting=true;

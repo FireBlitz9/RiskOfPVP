@@ -32,12 +32,14 @@ namespace ArenaPvP
         private HullClassification hull;
         private int leg;
         private float retryAt, progressAt, bestDistance, avoidUntil;
+        private float routeStarted;
         private NodeGraph.LinkIndex avoidedLink;
         private CharacterBody requestedTarget;
         private HillView requestedHill;
         private bool unreachable;
         internal bool AtDestination => graph && !unreachable && frontier.Count == 0 && route.Count <= leg;
         internal bool SearchPending => frontier.Count > 0;
+        internal bool HasActiveRoute => SearchPending || route.Count > leg;
         internal bool NextLegNeedsJump => graph && leg < route.Count
             && graph.GetLinkNeedsJump(route[leg].Link, (HullMask)(1 << (int)hull));
 
@@ -78,8 +80,9 @@ namespace ArenaPvP
                 return;
             }
             Vector3 position = target.footPosition;
+            float offset = (position - requestedPosition).sqrMagnitude;
             if (requestedHill == null && target == requestedTarget && currentGraph == graph
-                && (position - requestedPosition).sqrMagnitude < 100
+                && (offset < 100 || HasActiveRoute && now < routeStarted + 1.6f && offset < 900)
                 && (frontier.Count > 0 || route.Count > leg || now < retryAt || AtDestination)) return;
 
             if (currentGraph != graph) avoidUntil = 0;
@@ -113,14 +116,12 @@ namespace ArenaPvP
 
         internal static bool BlocksApproach(CharacterBody body, CharacterBody enemy, Vector3 waypoint, float distance, float reach)
         {
-            if (distance <= Mathf.Max(4, body.radius + enemy.radius + 1)) return true;
-            if (distance > Mathf.Clamp(reach, 6, 24)) return false;
             var forward = waypoint - body.footPosition;
             var offset = enemy.footPosition - body.footPosition;
             forward.y = offset.y = 0;
             var direction = forward.normalized;
             float along = Vector3.Dot(direction, offset);
-            return along > 0 && (offset - direction * along).sqrMagnitude <= 36;
+            return along > 0 && distance <= Mathf.Clamp(reach, 6, 30) && (offset - direction * along).sqrMagnitude <= 36;
         }
 
         private float Remaining(Vector3 position)
@@ -142,6 +143,7 @@ namespace ArenaPvP
             progressAt = now;
             bestDistance = float.PositiveInfinity;
             retryAt = now + 1.2f;
+            routeStarted = now;
             hull = body.hullClassification;
             var start = graph.FindClosestNodeWithRaycast(body.footPosition, hull, 32, 8);
             if (requestedHill == null)

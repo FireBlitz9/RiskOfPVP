@@ -109,17 +109,23 @@ namespace ArenaPvP
             return utility == active[2] && BotSkillKnowledge.IsTravelState(state);
         }
 
-        internal bool NativeUtilityAvailable(CharacterBody body, float now)
+        internal bool TravelAvailable(CharacterBody body, int slot, float now)
         {
-            var utility = Skill(body, BotAction.Utility);
-            return utility && utility.CanExecute() && retryAfter[2] <= now
-                && (requestUntil[2] == 0 || now <= requestUntil[2]);
+            var skill = Skill(body, (BotAction)slot);
+            return skill && skill.CanExecute() && retryAfter[slot] <= now
+                && (requestUntil[slot] == 0 || now <= requestUntil[slot]);
         }
 
+        internal bool NativeUtilityAvailable(CharacterBody body, float now) => TravelAvailable(body, 2, now);
+
         internal bool TravelUtility(ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, CharacterBody body, float now)
+            => RequestTravel(ref input, previous, body, 2, now);
+
+        internal bool RequestTravel(ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, CharacterBody body, int slot, float now)
         {
-            input.pressSkill3 = true;
-            return KeepNativeRequest(ref input, previous, body, BotAction.Utility, now);
+            var action = (BotAction)slot;
+            Press(ref input, action, true);
+            return KeepNativeRequest(ref input, previous, body, action, now);
         }
 
         private void ExpireRequests(float now)
@@ -204,6 +210,25 @@ namespace ArenaPvP
             return false;
         }
         internal bool HasHold { get { return ownedHold; } }
+
+        internal void ReadyStance(CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, float distance, bool canEngage)
+        {
+            if (!canEngage || distance < 19 || distance > 350 || body.currentVehicle) return;
+            var scope = Skill(body, BotAction.Secondary);
+            if (!scope || ArenaCombatLearning.Model(body, 1)?.Scope != true) return;
+            if (Busy(scope) && BotSkillKnowledgeScope(scope) || scope.CanExecute() && !previous.pressSkill2)
+            {
+                input.pressSkill2 = true;
+                input.pressSprint = false;
+                if (!Busy(scope) && ArenaCombatLearning.Model(body, 0)?.Scope != true) input.pressSkill1 = false;
+            }
+        }
+
+        private static bool BotSkillKnowledgeScope(GenericSkill skill)
+        {
+            var state = skill.stateMachine.state;
+            return state != null && state.GetType().Name.IndexOf("scope", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
         internal void Combo(BaseAI ai,ref BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool fire,BotIntelligence level)
         {
             var body=ai.body;Observe(body);tier=level;float now=Time.unscaledTime;
@@ -261,7 +286,8 @@ namespace ArenaPvP
                 {
                     if(Shares(Skill(body,BotAction.Primary),utility))input.pressSkill1=false;
                 }
-                else if (KeepNativeRequest(ref input, previous, body, BotAction.Utility, now)) return;
+                else if (input.pressSkill1 && Shares(Skill(body, BotAction.Primary), utility)) input.pressSkill3=false;
+                else KeepNativeRequest(ref input, previous, body, BotAction.Utility, now);
             }
             var special = Skill(body, BotAction.Special);
             float finisher = special && special.CanExecute()
@@ -296,7 +322,8 @@ namespace ArenaPvP
                 if(i==2 && (!model.KnownDamage && model.Control<=0 && model.Healing<=0 || model.Movement))continue;
                 if(body.healthComponent.combinedHealthFraction<=model.HealthCost+.1f)continue;
                 bool healing=model.Healing>0 && body.healthComponent.combinedHealthFraction<.7f;
-                float value=healing ? 0 : model.Value(distance,ProcPower(body),enemy.healthComponent.combinedHealth/Mathf.Max(1,body.damage*ArenaCombatLearning.DamageScale),body.attackSpeed);
+                float effectiveDistance = Mathf.Min(distance, model.Range + model.Radius);
+                float value=healing ? 0 : model.Value(effectiveDistance,ProcPower(body),enemy.healthComponent.combinedHealth/Mathf.Max(1,body.damage*ArenaCombatLearning.DamageScale),body.attackSpeed);
                 value*=self?.Reliability(i) ?? 1;
                 if(model.Control>0 && pressure>.3f)value*=1.6f;
                 if(model.Healing>0)value+=model.Healing*Math.Max(0,1-body.healthComponent.combinedHealthFraction)*40;
@@ -307,6 +334,7 @@ namespace ArenaPvP
                 if (i == 0) primaryValue = Mathf.Max(0, value);
                 else if (value > 0 && input.pressSkill1 && !Shares(Skill(body, BotAction.Primary), Skill(body, (BotAction)i)))
                     value += primaryValue;
+                if (i > 0 && self != null && now - self.LastAttack > .5f && value > 0) value *= 1.16f;
                 if(value>best) { best=value;choice=(BotAction)i; }
             }
             if(choice==BotAction.None)return;
@@ -369,23 +397,38 @@ namespace ArenaPvP
             if(state==null || !typeof(EntityStates.EntityState).IsAssignableFrom(state) || skill.skillDef.forceSprintDuringState)return false;
             var learned=ArenaCombatLearning.Model(body,(int)action);
             bool selfHeal=learned!=null && learned.Healing>0 && body.healthComponent.combinedHealthFraction<.7f;
-            if(learned!=null && (!selfHeal && Vector3.Distance(body.corePosition,enemy.corePosition)>learned.Range+learned.Radius
+            if(learned!=null && (!selfHeal && !InReach(body,enemy,learned)
                 || action==BotAction.Utility && (learned.Movement || !learned.KnownDamage && learned.Control<=0 && !selfHeal)))return false;
+            bool hasMatchingDriver = false;
             foreach(var driver in drivers)
             {
                 if(!driver || (int)driver.skillSlot!=(int)action || driver.requiredSkill && driver.requiredSkill!=skill.skillDef
                     || driver.forbiddenSkill==skill.skillDef || driver.additionalForbiddenSkills!=null && Array.IndexOf(driver.additionalForbiddenSkills,skill.skillDef)>=0
                     || driver.maxTimesSelected>=0 && driver.timesSelected>=driver.maxTimesSelected)continue;
                 if(!selfHeal && driver.moveTargetType!=AISkillDriver.TargetType.CurrentEnemy && driver.aimType!=AISkillDriver.AimType.AtCurrentEnemy)continue;
+                hasMatchingDriver = true;
                 float health=body.healthComponent.combinedHealthFraction;
                 if(health<driver.minUserHealthFraction || health>driver.maxUserHealthFraction || driver.selectionRequiresOnGround && body.characterMotor && !body.characterMotor.isGrounded)continue;
                 if(selfHeal)return true;
-                if(learned!=null && learned.ConfiguredRange && learned.Combat && !learned.Deployable && action!=BotAction.Utility)
+                if(learned!=null && learned.ConfiguredRange && learned.Combat && !learned.Deployable)
                     return true; // Native AI preferred distance is not the attack's physical range.
                 float distance;
                 if(ai.GameObjectPassesSkillDriverFilters(ai.currentEnemy,driver,out distance))return true;
             }
-            return false;
+            // Scoped or overridden attacks can have a different SkillDef
+            // from every driver on the monster master.
+            return !hasMatchingDriver && !selfHeal && learned != null && learned.ConfiguredRange && learned.Combat
+                && !learned.Deployable && !learned.Movement && !learned.NativeSequence;
+        }
+
+        private static bool InReach(CharacterBody body, CharacterBody enemy, BotSkillKnowledge model)
+        {
+            var offset = enemy.corePosition - body.corePosition;
+            float distance = offset.magnitude;
+            if (distance <= model.Range + model.Radius || !model.ConfiguredRange) return model.Reaches(distance, 0, body.attackSpeed);
+            var ours = body.characterMotor ? body.characterMotor.velocity : Vector3.zero;
+            var theirs = enemy.characterMotor ? enemy.characterMotor.velocity : Vector3.zero;
+            return model.Reaches(distance, Vector3.Dot(ours - theirs, offset.normalized), body.attackSpeed);
         }
         internal BotMotionIntent Motion(CharacterBody body,BaseAI.BodyInputs input,BaseAI.BodyInputs previous,CharacterBody enemy,bool visible,bool protectedSkill,int identity,BotIntelligence level,
             bool ultraThreat = false, bool projectileThreat = false)

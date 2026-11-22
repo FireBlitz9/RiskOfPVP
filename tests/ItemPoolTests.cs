@@ -326,6 +326,8 @@ namespace RoR2
     {
         public readonly HealthComponent healthComponent=new HealthComponent();
         public float maxShield=0,maxHealth=100,crit=1,baseCrit=1,moveSpeed=7,armor=0,regen=1,damage=12,attackSpeed=1;
+        public float levelDamage=2.4f,baseDamage=12,levelMaxHealth=30,baseMaxHealth=100;
+        public T GetComponent<T>() where T : class { return null; }
         public UnityEngine.Vector3 corePosition;
         public bool currentVehicle=false,isSprinting=false;
         public SkillLocator skillLocator=new SkillLocator();
@@ -335,7 +337,8 @@ namespace RoR2
         public void Activate(GenericSkill skill) { skill.Ready=false;skill.stateMachine.Main=false;onSkillActivatedServer?.Invoke(skill); }
         public int GetInstanceID() { return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this); }
     }
-    public class CharacterMotor : TestObject { public bool isGrounded=true,disableAirControlUntilCollision; }
+    public class CharacterMotor : TestObject { public bool isGrounded=true,disableAirControlUntilCollision; public UnityEngine.Vector3 velocity; }
+    public class FalseSonController : TestObject { }
     public class InputBankTest : TestObject
     {
         public struct ButtonState { public bool down; }
@@ -385,12 +388,13 @@ namespace UnityEngine
         public float x,y,z;
         public Vector3(float x,float y,float z) { this.x=x;this.y=y;this.z=z; }
         public float sqrMagnitude { get { return x*x+y*y+z*z; } }
+        public float magnitude { get { return (float)Math.Sqrt(sqrMagnitude); } }
         public static Vector3 operator -(Vector3 a,Vector3 b) { return new Vector3(a.x-b.x,a.y-b.y,a.z-b.z); }
         public Vector3 normalized { get { float n=(float)Math.Sqrt(sqrMagnitude);return n>0 ? new Vector3(x/n,y/n,z/n) : new Vector3(); } }
         public static float Dot(Vector3 a,Vector3 b) { return a.x*b.x+a.y*b.y+a.z*b.z; }
         public static float Distance(Vector3 a,Vector3 b) { return (float)Math.Sqrt((a-b).sqrMagnitude); }
     }
-    public static class Mathf { public static float Max(float a,float b) { return Math.Max(a,b); }public static float Clamp(float x,float a,float b) { return Math.Max(a,Math.Min(b,x)); } }
+    public static class Mathf { public static float Min(float a,float b) { return Math.Min(a,b); }public static float Max(float a,float b) { return Math.Max(a,b); }public static float Clamp(float x,float a,float b) { return Math.Max(a,Math.Min(b,x)); } }
 }
 namespace RoR2.Skills
 {

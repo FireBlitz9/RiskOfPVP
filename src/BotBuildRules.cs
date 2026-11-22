@@ -28,6 +28,7 @@ namespace ArenaPvP
         public BotBuildItem CurrentGear;
         public float Health = 1, Shield, Crit, AttackAffinity = 1, ProcPower, MoveSpeed = 7, Armor, EnemyArmor, EnemyHealing, EnemyMoveSpeed=7, EnemyDamage = 1;
         public float SkillUse = .65f, EnemyStrafe;
+        public float WeaponTempo, TravelSkill, DeployableSupport, HealthSynergy, LevelGrowth;
         public float MobilityEvidence, SustainEvidence, BurstEvidence;
         public float SurvivalPressure;
         public float EnemySkillProc,EnemySkillBurst;
@@ -140,6 +141,7 @@ namespace ArenaPvP
             // valuable synergy or a counter can still beat it in the same offer.
             return .105f + .24f / (1 + Math.Max(0, level - 1) * .22f)
                 + Math.Min(.13f, Math.Max(0, context.EnemyDamage - 1) * .13f)
+                + Math.Min(.14f, Math.Max(0, context.LevelGrowth - .35f) * .3f)
                 + (context.Count("ExtraStatsOnLevelUp") > 0 ? .10f : 0);
         }
 
@@ -297,6 +299,10 @@ namespace ArenaPvP
                     return .27f * danger / (1 + stacks * .5f);
                 case "ExtraStatsOnLevelUp":
                     return (c.MayLevel ? .34f : .12f) / (1 + stacks * .65f);
+                case "Mushroom":
+                    return c.Shield > .85f ? .005f : (.045f + c.DeployableSupport * .62f) * (c.Hill ? 1.22f : 1f) / (1 + stacks * .42f);
+                case "FlatHealth":
+                    return (.18f + c.HealthSynergy * .32f) / (1 + stacks * .4f);
                 case "StunAndPierce":
                     return (.16f + .26f * c.AttackAffinity) / (1 + stacks * .45f);
                 case "BarrierOnCooldown":
@@ -331,7 +337,7 @@ namespace ArenaPvP
             float value;
             switch (i.Name)
             {
-                case "Syringe": value=.3f*attack/(1+.15f*n); break;
+                case "Syringe": value=(.3f*attack + .25f*c.WeaponTempo)/(1+.15f*n); break;
                 case "CritGlasses": value=c.Crit>=100 ? .002f : .35f*(1+c.Count("CritDamage"))/(1+c.Crit*.01f); break;
                 case "CritDamage": value=.65f*Math.Min(1,c.Crit*.01f)/(1+n); break;
                 case "AttackSpeedOnCrit": value=.5f*Math.Min(1,c.Crit*.03f)*attack/(1+n); break;
@@ -351,7 +357,8 @@ namespace ArenaPvP
                 case "FireRing": case "IceRing": value=.48f*(2- Math.Min(1,attack))/(1+.6f*n); break;
                 case "ElementalRingVoid": value=(c.Hill ? .32f : .16f)/(1+n); break;
                 case "AlienHead": value=.52f*(2-Math.Min(1,attack))/(1+.4f*n); break;
-                case "SecondarySkillMagazine": case "UtilitySkillMagazine": value=.45f*(2-Math.Min(1,attack))/(1+n); break;
+                case "SecondarySkillMagazine": case "UtilitySkillMagazine": value=(.45f*(2-Math.Min(1,attack))
+                    +(i.Name=="UtilitySkillMagazine" ? c.TravelSkill*.22f : 0))/(1+n); break;
                 case "Hoof": value=c.MoveSpeed<12 ? .35f/(1+.25f*n) : .06f/(1+n); break;
                 case "Feather": value=n==0 ? .28f : .035f/(1+n); break;
                 case "Bear": value=.35f*danger/(1+.15f*n); break;

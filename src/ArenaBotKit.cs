@@ -6,6 +6,12 @@ using UnityEngine;
 
 namespace ArenaPvP
 {
+    internal struct BotTravel
+    {
+        internal float Span, Speed, Lift;
+        internal bool Aim;
+    }
+
     internal static class ArenaBotKit
     {
         internal static BotKit Read(CharacterBody body, AISkillDriver[] drivers, float fallbackRange)
@@ -21,7 +27,7 @@ namespace ArenaPvP
                 var skill = body.skillLocator.GetSkill(driver.skillSlot);
                 if (!skill || !skill.skillDef || !Accepts(driver, skill.skillDef)) continue;
                 float distance = driver.maxDistance;
-                if (float.IsInfinity(distance) || distance > 140 || distance <= 0) continue;
+                if (float.IsInfinity(distance) || distance <= 0) continue;
                 if (driver.skillSlot == SkillSlot.Primary)
                 {
                     if (distance > reach) { reach = distance; minimum = driver.minDistance; }
@@ -54,7 +60,35 @@ namespace ArenaPvP
             {
                 float period=Mathf.Max(learned.Duration,primary ? primary.baseRechargeInterval/Mathf.Max(1,primary.maxStock) : 0);
                 kit.OnHit=Mathf.Clamp(learned.Proc*learned.Hits/Mathf.Max(.2f,period)*.22f,.1f,1.2f);
-                if(learned.ConfiguredRange) { kit.Range=Mathf.Min(kit.Range,Mathf.Max(2,learned.Range*.75f));kit.Reach=Mathf.Max(kit.Reach,learned.Range); }
+            }
+            float bestSpacing = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                var model = ArenaCombatLearning.Model(body, i);
+                if (model == null) continue;
+                if (model.Deployable) kit.Deployable = Mathf.Max(kit.Deployable, .75f);
+                if (model.Movement) kit.Mobility = Mathf.Max(kit.Mobility, .65f);
+                if (model.Combat && model.Duration > .08f)
+                    kit.Tempo = Mathf.Max(kit.Tempo, Mathf.Clamp01(Mathf.Max(model.Duration, model.Charge ? model.ChargeTime : 0)));
+                if (!model.ConfiguredRange || !model.Combat || model.Deployable) continue;
+                float physical = model.Range + model.Radius;
+                kit.Reach = Mathf.Max(kit.Reach, physical);
+                if (i == 0 || model.KnownDamage && model.Damage * model.Hits >= 2.5f && !model.Movement)
+                {
+                    float effective = model.FalloffStart > 0 ? Mathf.Min(physical,model.FalloffStart * 1.35f) : physical;
+                    if (model.Speed > 0) effective = Mathf.Min(effective, model.Speed * 1.15f);
+                    float spacing = Mathf.Clamp(effective * .68f, 2, 160);
+                    if (i == 0 || body.skillLocator.GetSkill((SkillSlot)i)?.CanExecute() == true) bestSpacing = Mathf.Max(bestSpacing, spacing);
+                }
+            }
+            if (bestSpacing > 0) kit.Range = bestSpacing;
+            var scope = body.skillLocator.secondary;
+            if (scope && scope.activationState.stateType != null && typeof(EntityStates.Railgunner.Scope.BaseScopeState).IsAssignableFrom(scope.activationState.stateType))
+            {
+                // The native alternate stance supplies the long-range primary.
+                // Preserve a sniping lane between scoping and reload cycles.
+                kit.Range = Mathf.Max(kit.Range, 52);
+                kit.Reach = Mathf.Max(kit.Reach, 160);
             }
             return kit;
         }
@@ -150,6 +184,35 @@ namespace ArenaPvP
 
             // Include coasting and one extra physics step in the safety probe.
             return distance > 2 && !float.IsInfinity(distance) ? distance * 1.16f + body.radius + 1f : 0;
+        }
+
+        internal static BotTravel Travel(CharacterBody body, int slot)
+        {
+            var skill = body.skillLocator.GetSkill((SkillSlot)slot);
+            var model = ArenaCombatLearning.Model(body, slot);
+            if (!skill || model == null || !model.Movement) return default(BotTravel);
+            float launchUp = model.LaunchUp, aimSpeed = model.LaunchAim, forwardSpeed = model.LaunchForward;
+            var activation = skill.activationState.stateType;
+            if (activation != null && typeof(EntityStates.Croco.BaseLeap).IsAssignableFrom(activation))
+            {
+                // These are inherited native statics. Some variants do not
+                // carry a separate configuration asset for the base fields.
+                launchUp = EntityStates.Croco.BaseLeap.upwardVelocity + Mathf.Max(0,EntityStates.Croco.BaseLeap.minimumY) * EntityStates.Croco.BaseLeap.aimVelocity * body.moveSpeed;
+                aimSpeed = EntityStates.Croco.BaseLeap.aimVelocity;
+                forwardSpeed = EntityStates.Croco.BaseLeap.forwardVelocity;
+            }
+            if (launchUp > 0 && aimSpeed + forwardSpeed > 0)
+            {
+                float speed = aimSpeed * body.moveSpeed + forwardSpeed;
+                return new BotTravel { Speed = speed, Lift = launchUp, Span = speed * 2 * launchUp / Mathf.Max(1,-Physics.gravity.y), Aim = true };
+            }
+            float span = TravelDistance(body, skill, out bool aim);
+            if (span > 0) return new BotTravel { Span=span, Aim=aim };
+            if (activation == typeof(EntityStates.FalseSon.StepBrothers))
+                return new BotTravel { Span=body.moveSpeed * EntityStates.FalseSon.StepBrothers.speedCoefficient * EntityStates.FalseSon.StepBrothers.dashDuration + body.radius, Aim=true };
+            if (model.TravelSpeed(body.moveSpeed) > body.moveSpeed * 1.25f && model.TravelDuration > 0)
+                return new BotTravel { Span=model.TravelSpeed(body.moveSpeed) * model.TravelDuration * 1.16f + body.radius, Aim=true };
+            return default(BotTravel);
         }
 
         internal static float ProjectileSpeed(CharacterBody body, AISkillDriver driver, float fallback)

@@ -47,6 +47,7 @@ internal static class RouteTests
             var isolated=new NodeGraph();isolated.Positions.Add(body.footPosition);SceneInfo.instance.groundNodes=isolated;routes.Clear();
             Check(!routes.Choose(body,enemy,true,null,player,roster,BotEngagement.Press,12,4,true,body.footPosition,out waypoint),"an isolated start node returns control to fallback navigation instead of a fake movement route");
             Locomotion();
+            SlopesAndDrops();
             CombatFootwork();
             Pursuit();
             HillPursuit();
@@ -92,6 +93,33 @@ internal static class RouteTests
         Physics.Wall = true;
         Check(!ArenaBotLocomotion.ClearBoostArc(body, body.footPosition, launch, east, null), "an obstruction along the launch arc rejects the launch");
         Physics.Wall = false;
+    }
+
+    private static void SlopesAndDrops()
+    {
+        var bot = new CharacterBody();
+        var east = new Vector3(1, 0, 0);
+        Physics.GroundHeight = p => p.x * .5f;
+        Check(ArenaBotLocomotion.Walkable(bot,east,6),"sequential probes follow an uneven rising floor above the old single-ray height");
+        Physics.GroundHeight = p => p.x < 1 ? 0 : -6;
+        Check(!ArenaBotLocomotion.Walkable(bot,east,5),"walking stops at a steep ledge until it has a separate descent plan");
+        Check(ArenaBotLocomotion.CanDrop(bot,east,new Vector3(12,-6,0),null,out var below) && below.y == -6,
+            "a clear drop with a reachable lower shelf becomes a descent route");
+        Check(!ArenaBotLocomotion.CanDrop(bot,east,new Vector3(12,-6,0),new HillView { Ready=true,To=Vector3.zero,Radius=2 },out _),
+            "a descent cannot take a capturing bot outside the hill");
+        Physics.GroundHeight = p => p.x < 1 ? 0 : -100;
+        Check(!ArenaBotLocomotion.CanDrop(bot,east,new Vector3(12,-6,0),null,out _),"a drop into the void is rejected without a supported landing");
+        Physics.GroundHeight = p => p.x < 4 ? -100 : -2;
+        Check(ArenaBotLocomotion.LandingAhead(bot,east*16,9,new Vector3(18,-2,0),null,out var landing) && landing.x > 4,
+            "the launch solver verifies that an aerial ability can land beyond a gap");
+        Physics.GroundHeight = null;
+        bot.footPosition = new Vector3(8,0,0);
+        bot.characterMotor.velocity = east*12;
+        var hill = new HillView { Ready=true,To=Vector3.zero,Radius=10 };
+        var steer = ArenaBotLocomotion.HoldHill(bot,hill,Vector3.forward,true);
+        Check(steer.x < 0 && steer.z > 0,"holding the hill corrects sideways input before outward momentum carries the bot past the ring");
+        bot.footPosition = Vector3.zero;
+        Check(ArenaBotLocomotion.HoldHill(bot,hill,Vector3.forward,true).z == 1,"the center of the hill leaves room for ordinary strafing");
     }
 
     private static void CombatFootwork()
@@ -226,6 +254,8 @@ internal static class RouteTests
         Check(!ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 15, 25), "enemies to the side do not pull bots into a fight away from the route");
         enemy.footPosition = new Vector3(0, 0, -12);
         Check(!ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 12, 25), "enemies behind the bot do not interrupt the approach");
+        enemy.footPosition = new Vector3(0, 0, -2);
+        Check(!ArenaBotPursuit.BlocksApproach(traveler, enemy, goal, 2, 25), "even a nearby opponent behind the bot does not take precedence over a KOTH approach");
 
         graph = new NodeGraph { RequiresJump = true };
         graph.Positions.Add(Vector3.zero);
@@ -307,7 +337,7 @@ namespace RoR2
     public enum HullMask { Human=1 }
     public class CharacterMotor:TestObject { public bool isGrounded=true;public Vector3 velocity=Vector3.zero; }
     public class CharacterBody:TestObject
-    { public bool isFlying=false;public float radius=.5f,moveSpeed=7,acceleration=80,jumpPower=12;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
+    { public bool isFlying=false,isSprinting;public float radius=.5f,moveSpeed=7,acceleration=80,jumpPower=12,sprintingSpeedMultiplier=1.45f;public CharacterMotor characterMotor=new CharacterMotor();public Vector3 footPosition;public Vector3 corePosition { get { return footPosition+new Vector3(0,1,0); } }public HullClassification hullClassification; }
     public class SceneInfo:TestObject { public static SceneInfo instance;public NodeGraph groundNodes; }
     public struct LayerIndex { public int mask;public static LayerIndex world=new LayerIndex { mask=1 }; }
 }
@@ -362,6 +392,7 @@ namespace UnityEngine
         public static int Queries;public static bool Wall=false,NoFloor=false;
         public static Vector3 gravity = new Vector3(0,-30,0);
         public static Func<Vector3,Vector3,bool> LineBlocked;
+        public static Func<Vector3,float> GroundHeight;
         public static bool CrossesWall(Vector3 from,Vector3 to)
         {
             if(!Wall || (from.x-.8f)*(to.x-.8f)>=0 || Math.Abs(to.x-from.x)<.0001f)return false;
@@ -371,6 +402,11 @@ namespace UnityEngine
         public static bool SphereCast(Vector3 from,float radius,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)
         { Queries++;var to=from+direction*distance;bool blocked=CrossesWall(from,to);hit=new RaycastHit { normal=new Vector3(from.x<=.8f ? -1 : 1,0,0) };return blocked; }
         public static bool Raycast(Vector3 from,Vector3 direction,out RaycastHit hit,float distance,int mask,QueryTriggerInteraction query)
-        { Queries++;hit=new RaycastHit { normal=Vector3.up,point=new Vector3(from.x,0,from.z) };return !NoFloor; }
+        {
+            Queries++;
+            float y=GroundHeight?.Invoke(from) ?? 0;
+            hit=new RaycastHit { normal=Vector3.up,point=new Vector3(from.x,y,from.z) };
+            return !NoFloor && (GroundHeight == null || direction.y < 0 && from.y >= y && from.y-y <= distance);
+        }
     }
 }

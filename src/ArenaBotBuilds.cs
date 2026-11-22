@@ -154,6 +154,16 @@ namespace ArenaPvP
                 context.AttackAffinity = kit.OnHit;
                 context.SkillUse = kit.SkillUse;
                 context.CloseRange = kit.Range < 12;
+                context.WeaponTempo = kit.Tempo;
+                context.TravelSkill = kit.Mobility;
+                context.DeployableSupport = kit.Deployable;
+            }
+            if (context.Ultra && body)
+            {
+                var growth = body.GetComponent<FalseSonController>();
+                if (growth) context.HealthSynergy = 1;
+                context.LevelGrowth = Math.Max(.05f, body.levelDamage / Math.Max(1, body.baseDamage)
+                    + body.levelMaxHealth / Math.Max(1, body.baseMaxHealth));
             }
             if(context.Ultra)context.SurvivalPressure=bot.BotMemory?.SurvivalPressure(Time.unscaledTime) ?? 0;
             foreach (var index in inventory.itemAcquisitionOrder)

@@ -2,6 +2,7 @@ using RoR2;
 using RoR2.CharacterAI;
 using RoR2.Projectile;
 using UnityEngine;
+using HarmonyLib;
 
 namespace ArenaPvP
 {
@@ -9,6 +10,15 @@ namespace ArenaPvP
     {
         private static readonly float[] turretAngles = { 0, 35, -35, 70, -70, 115, -115 };
         private static readonly System.Type ConcussionMine = typeof(EntityStates.Railgunner.Weapon.FireMineConcussive);
+        private static readonly AccessTools.FieldRef<ProjectileImpactExplosion, bool> MineImpacted = FuseField<bool>("hasImpact");
+        private static readonly AccessTools.FieldRef<ProjectileImpactExplosion, float> ImpactAge = FuseField<float>("stopwatchAfterImpact");
+        private static readonly AccessTools.FieldRef<ProjectileImpactExplosion, float> MineAge = FuseField<float>("stopwatch");
+
+        private static AccessTools.FieldRef<ProjectileImpactExplosion, T> FuseField<T>(string name)
+        {
+            var field = AccessTools.Field(typeof(ProjectileImpactExplosion),name);
+            return field?.FieldType == typeof(T) ? AccessTools.FieldRefAccess<ProjectileImpactExplosion,T>(field) : null;
+        }
         private EntityStates.EntityState blueprint;
         private int blueprintStock;
         private float blueprintUntil, nextTurret, nextTurretProbe;
@@ -18,6 +28,7 @@ namespace ArenaPvP
         private ProjectileModifyExplisionForceToAttacker launch;
         private ProjectileImpactExplosion fuse;
         private ProjectileController mine;
+        private ProjectileImpactExplosion activeFuse;
         private float nextMine, mineUntil, mineSearchAt;
         private bool seenMine;
         private Vector3 minePoint, launchHeading, runup;
@@ -29,6 +40,7 @@ namespace ArenaPvP
             turretHeading = lastMove = Vector3.zero;
             nextMine = mineUntil = mineSearchAt = 0;
             mine = null;
+            activeFuse = null;
             seenMine = false;
         }
 
@@ -44,12 +56,12 @@ namespace ArenaPvP
                 return ConfirmTurret(body, special, active, ref input, previous, enemy, destination, hill, now);
             blueprint = null;
 
+            if (now < mineUntil && GuideRunup(body, ref input, previous, hill, now)) return true;
             if (!body.characterMotor.isGrounded || body.isFlying)
             {
                 mineUntil = 0;
                 return false;
             }
-            if (now < mineUntil && GuideRunup(body, ref input, hill, now)) return true;
             if (!canTravel) return false;
             if (special && special.CanExecute() && IsTurret(special) && now >= nextTurret
                 && (enemy || hill != null && hill.Ready) && body.master
@@ -221,7 +233,7 @@ namespace ArenaPvP
             return ArenaBotLocomotion.ClearBoostArc(body, launchPoint, velocity, forward, hill);
         }
 
-        private bool GuideRunup(CharacterBody body, ref BaseAI.BodyInputs input, HillView hill, float now)
+        private bool GuideRunup(CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, HillView hill, float now)
         {
             if (!mine && seenMine)
             {
@@ -239,6 +251,7 @@ namespace ArenaPvP
                         || (projectile.transform.position - minePoint).sqrMagnitude > 16
                         || !projectile.GetComponent<ProjectileModifyExplisionForceToAttacker>()) continue;
                     mine = projectile;
+                    activeFuse = projectile.GetComponent<ProjectileImpactExplosion>();
                     seenMine = true;
                     runup = mine.transform.position + launchHeading * Mathf.Min(3.5f, launch.range * .48f);
                     if (!Forecast(body, launch, mine.transform.position, launchHeading, runup, hill))
@@ -255,6 +268,18 @@ namespace ArenaPvP
             offset.y = 0;
             Vector3 toward = offset.sqrMagnitude > 1f ? Flat(offset)
                 : Vector3.Cross(Vector3.up, launchHeading).normalized * .7f + launchHeading * .3f;
+            if (activeFuse && MineAge != null && offset.sqrMagnitude < 2.5f && body.characterMotor.isGrounded && !previous.pressJump)
+            {
+                float remaining = activeFuse.lifetime - MineAge(activeFuse);
+                if (activeFuse.timerAfterImpact && MineImpacted != null && ImpactAge != null && MineImpacted(activeFuse))
+                    remaining = Mathf.Min(remaining, activeFuse.lifetimeAfterImpact - ImpactAge(activeFuse));
+                if (remaining >= 0 && remaining <= .13f && Forecast(body,launch,mine.transform.position,launchHeading,body.footPosition,hill))
+                {
+                    input.moveVector = launchHeading * .42f;
+                    input.pressJump = true;
+                    return true;
+                }
+            }
             if (ArenaBotLocomotion.Safe(body, toward.normalized, hill))
             {
                 input.moveVector = toward.normalized * (offset.sqrMagnitude > 2 ? .78f : .38f);

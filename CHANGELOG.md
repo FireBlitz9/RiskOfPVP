@@ -1,3 +1,10 @@
+# 1.3.10
+
+- Ultra takes available shots sooner, uses measured attack reach and windup, and engages from a distance with a scoped loadout. Movement skill requests no longer take aim away from ordinary attacks.
+- Bots hold committed routes, negotiate uneven ground and take ledges with a verified landing. KOTH bots steer inward before crossing the boundary and keep advancing when opponents are behind them.
+- Ultra evaluates ready dashes, launches and air recovery against the route and landing, sprints between attacks, and times Railgunner's jump around the concussion mine fuse.
+- Ultra uses the equipped skills and survivor's actual stats to value attack speed, cooldowns, deployable support, bonus health and levels.
+
 # 1.3.9
 
 - KOTH bots commit to a reachable entry into the capture zone and sprint toward it. They can fight nearby enemies along the way while keeping the hill as their destination.

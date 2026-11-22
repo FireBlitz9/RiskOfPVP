@@ -7,7 +7,7 @@ namespace ArenaPvP
 
     public struct BotKit
     {
-        public float Range, Reach, OnHit, SkillUse;
+        public float Range, Reach, OnHit, SkillUse, Tempo, Mobility, Deployable;
     }
 
     public sealed class BotOpponent

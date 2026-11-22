@@ -15,6 +15,7 @@ namespace ArenaPvP
         {
             internal readonly BotSkillKnowledge[] Skills=new BotSkillKnowledge[4];
             internal float ProcPower=.5f;
+            internal float LastAttack => 0;
             internal float Threat(CharacterBody target,float now)=>0;
             internal float Reliability(int slot)=>1;
             internal bool Untried(int slot)=>false;

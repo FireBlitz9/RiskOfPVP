@@ -14,7 +14,9 @@ namespace ArenaPvP
         public bool Dot, NativeSequence;
         public float FalloffStart,FalloffEnd,MinimumDamage=1;
         internal float TravelDuration, TravelSpeedCoefficient, TravelStartCoefficient, TravelEndCoefficient;
-        internal bool InstantShot;
+        internal float LaunchAim, LaunchUp, LaunchForward, AirHop, RecoilForce;
+        internal float Windup;
+        internal bool InstantShot, Scope;
         public int Samples;
         private float driverRange;
         public void DriverRange(float minimum,float maximum)
@@ -30,6 +32,7 @@ namespace ArenaPvP
             if(float.IsNaN(value) || float.IsInfinity(value) || value<0)return;
             string key=field.ToLowerInvariant();
             if(key.Contains("healthcost") && value<1) { HealthCost=Math.Max(HealthCost,value);return; }
+            if(key=="selfknockbackforce") { RecoilForce=value;return; }
             if(key.Contains("self") || key.Contains("recoil"))return;
             if(Samples>0 && (key.Contains("damagecoefficient") || key.Contains("proccoefficient") || key.Contains("count")))return;
             if(key.Contains("damagecoefficient")) { Damage=Math.Max(0,value);KnownDamage=true;Combat=true; }
@@ -37,15 +40,22 @@ namespace ArenaPvP
             else if(key.Contains("proccoefficient"))Proc=Math.Min(10,value);
             else if(key=="bulletcount" || key=="shotcount" || key=="projectilecount" || key=="attackcount")Hits=Math.Max(1,Math.Min(64,value));
             else if(key.Contains("chargeduration") || key.Contains("chargeupduration")) { ChargeTime=Math.Max(.1f,value);Charge=true; }
+            else if(key == "windupduration" || key == "basewindupduration" || key == "firedelay" || key == "prefireduration") Windup = value;
             else if (key == "duration")
             {
                 Duration = Math.Max(.08f, value);
                 TravelDuration = value;
             }
-            else if (key == "baseduration") Duration = Math.Max(.08f, value);
+            else if (key == "baseduration") { Duration = Math.Max(.08f, value); if (TravelDuration <= 0) TravelDuration = value; }
+            else if (key == "dashduration" || key == "flightduration" || key == "slideduration") TravelDuration = value;
             else if (key == "speedcoefficient") TravelSpeedCoefficient = value;
+            else if (key == "dashspeedcoefficient" || key == "flightspeedcoefficient") TravelSpeedCoefficient = value;
             else if (key == "initialspeedcoefficient") TravelStartCoefficient = value;
             else if (key == "finalspeedcoefficient") TravelEndCoefficient = value;
+            else if (key == "aimvelocity") LaunchAim = value;
+            else if (key == "upwardvelocity") LaunchUp = value;
+            else if (key == "smallhopvelocity") AirHop = value;
+            else if (key == "forwardvelocity" && Movement) LaunchForward = value;
             else if(key=="maxdistance" || key=="maxrange" || key=="maxbulletdistance" || key=="bulletmaxdistance" || key=="attackrange")
             { if(value>0) { Range=Math.Max(.5f,Math.Min(1000,value));ConfiguredRange=true; } }
             else if(key=="radius" || key=="blastradius" || key=="attackradius")Radius=Math.Min(100,value);
@@ -60,12 +70,25 @@ namespace ArenaPvP
             Charge|=name.Contains("charge");
             Movement |= LooksLikeTravel(name);
             Deployable|=name.Contains("place") || name.Contains("deploy") || name.Contains("turret") || name.Contains("supply");
+            Scope|=name.Contains("scope");
             NativeSequence|=name.Contains("scope") || name.Contains("reload") || name.Contains("grapple") || name.Contains("stance");
             if(name.Contains("freeze") || name.Contains("icewall"))Control=Math.Max(Control,.8f);
         }
         private static bool LooksLikeTravel(string name) => name.Contains("blink") || name.Contains("dodge")
             || name.Contains("slide") || name.Contains("leap") || name.Contains("assaulter") || name.Contains("grapple")
-            || name.Contains("dash") || name.Contains("teleport");
+            || name.Contains("dash") || name.Contains("teleport") || name.Contains("sojourn") || name.Contains("reprieve")
+            || name.Contains("rolypoly") || name.Contains("parkour") || name.Contains("dronecarry") || name.Contains("stepbrothers");
+
+        internal bool Reaches(float distance, float closingSpeed, float attackSpeed)
+        {
+            float lead = Math.Max(Windup, Charge ? ChargeTime : 0);
+            if (Speed > 0) lead = Math.Max(lead, Math.Min(.24f, distance / Speed));
+            float travel = Math.Min(7, Math.Max(0, closingSpeed) * Math.Min(.55f, lead / Math.Max(.5f, attackSpeed)));
+            return distance >= Math.Max(0, MinimumRange - Radius) && distance - travel <= Range + Radius;
+        }
+
+        internal float TravelSpeed(float moveSpeed) => moveSpeed * Math.Max(TravelSpeedCoefficient,
+            (TravelStartCoefficient + TravelEndCoefficient) * .5f);
 
         internal static bool IsTravelState(Type type) => type != null && LooksLikeTravel(type.Name.ToLowerInvariant());
         public void Emission(float coefficient,float proc,float range,float speed,float radius,float hits=1)
@@ -131,9 +154,9 @@ namespace ArenaPvP
             speed+=(movementSpeed-speed)*w;sprint+=((sprinting ? 1 : 0)-sprint)*w;
             jumps*=1-dt*.3f;if(wasGrounded && !grounded)jumps=Math.Min(1,jumps+.22f);wasGrounded=grounded;
         }
-        public float Reaction=>.06f+(1-Skill)*.18f;
-        public float AimDamping=>.025f+(1-Skill)*.09f;
-        public float AimSpeed=>16+Skill*20;
+        public float Reaction=>.02f+(1-Skill)*.055f;
+        public float AimDamping=>.018f+(1-Skill)*.035f;
+        public float AimSpeed=>30+Skill*22;
         public float Alignment=>.94f+Skill*.04f;
     }
 

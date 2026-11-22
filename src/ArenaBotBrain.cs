@@ -70,8 +70,13 @@ namespace ArenaPvP
         private float forceApproachUntil;
         private float nextQuietReport;
         private float nextTravelProbe, probedTravelSpan;
+        private int probedTravelSlot;
+        private readonly float[] avoidTravelUntil = new float[4];
         private Vector3 probedTravelOrigin, probedTravelDirection;
         private bool travelClear;
+        private float nextDescentProbe, descendUntil;
+        private float nextRescueProbe;
+        private Vector3 descentLanding;
         internal ArenaPlayer Participant { get { return player; } }
         internal Vector3 Destination { get { return goal ? goal.transform.position : transform.position; } }
         internal bool FollowingWalkLeg => followingLeg && !pursuit.NextLegNeedsJump;
@@ -143,6 +148,8 @@ namespace ArenaPvP
                 footwork.Reset(player.BotOrdinal, now);
                 forceApproachUntil = 0;
                 nextTravelProbe = 0;
+                Array.Clear(avoidTravelUntil, 0, avoidTravelUntil.Length);
+                nextDescentProbe = descendUntil = nextRescueProbe = 0;
                 lastVisibleEnemy = null;
                 predictedTarget = null;
                 prediction.Clear();
@@ -456,6 +463,9 @@ namespace ArenaPvP
 
         private CharacterBody PursuitTarget(float now)
         {
+            if (pursuitTarget && pursuit.HasActiveRoute && !pursuit.Failed(now))
+                foreach (var candidate in candidates)
+                    if (candidate.Target.Body == pursuitTarget) return pursuitTarget;
             foreach (var candidate in candidates)
             {
                 var target = candidate.Target.Body;
@@ -500,7 +510,7 @@ namespace ArenaPvP
                 AdvancePursuit(now);
                 return true;
             }
-            if (!Enemy || !hasGoal || engagement == BotEngagement.Recover) return false;
+            if (!Enemy || !hasGoal || engagement == BotEngagement.Recover || routes != null && routes.Committed(now)) return false;
             var body = player.Master.GetBody();
             if (!body || !body.characterMotor || !body.characterMotor.isGrounded || actions.MovementLocked(body)) return false;
 
@@ -736,17 +746,14 @@ namespace ArenaPvP
             if(now>=nextDirectProbe)
             {
                 nextDirectProbe=now+.15f;directGoal=Destination;cachedDirect=Vector3.zero;
-                var direction=toward.normalized;RaycastHit hit;
+                var direction=toward.normalized;
                 if(!approachingHill && movementHill!=null && movementHill.Ready)
                 {
                     var offset=body.footPosition-movementHill.To;offset.y=0;
                     if(offset.magnitude>movementHill.Radius*.72f)direction=-offset.normalized;
                     else KeepInObjective(body,ref direction);
                 }
-                float radius=Mathf.Clamp(body.radius*.7f,.2f,.7f);
-                bool blocked=Physics.SphereCast(body.footPosition+Vector3.up*(radius+.2f),radius,direction,out hit,
-                    Mathf.Min(toward.magnitude,Mathf.Max(2,body.radius*2)),LayerIndex.world.mask,QueryTriggerInteraction.Ignore);
-                if(!blocked && SupportedAhead(body,direction,false))cachedDirect=direction;
+                if(SupportedAhead(body,direction,false))cachedDirect=direction;
             }
             return (Destination-directGoal).sqrMagnitude<9 && cachedDirect.sqrMagnitude>.01f ? cachedDirect : nativeMove;
         }
@@ -807,6 +814,8 @@ namespace ArenaPvP
             bool hostile=Enemy && enemyPlayer!=null && enemyPlayer.Connected && match.AreOpponents(player,enemyPlayer);
             bool alive=hostile && Enemy.healthComponent && Enemy.healthComponent.alive;
             bool targetVisible=alive && Enemy.GetVisibilityLevel(body)==VisibilityLevel.Visible;
+            if (approachingHill && targetVisible && !ArenaBotPursuit.BlocksApproach(body,Enemy,Destination,
+                Vector3.Distance(body.corePosition,Enemy.corePosition),ultra ? player.BotKit.Reach : range)) targetVisible = false;
             bool visible=ultra ? targetVisible && HasClearSight(body,now)
                 : targetVisible && ai.currentEnemy!=null && ai.currentEnemy.gameObject==Enemy.gameObject && ai.currentEnemy.hasLoS;
             if (ultra && visible)
@@ -861,18 +870,22 @@ namespace ArenaPvP
             }
             var learnedEnemy=ultra ? ArenaCombatLearning.Find(Enemy) : null;
             var style=learnedEnemy!=null && enemyPlayer!=null && !enemyPlayer.IsBot ? learnedEnemy.Style : null;
+            float distanceToShot = visible ? Vector3.Distance(body.inputBank.aimOrigin, Enemy.corePosition) : 0;
+            float angle = Mathf.Clamp((Enemy ? Enemy.radius + .5f : 1) / Mathf.Max(1, distanceToShot), .001f, .55f);
             if(ultra && visible && style!=null)
             {
-                float error=(1-style.Skill)*.025f;
+                float error=(1-style.Skill)*Mathf.Min(.024f,angle*.26f);
                 aim=(aim+Vector3.Cross(Vector3.up,aim)*Mathf.Sin(now*2.7f+player.BotOrdinal)*error+Vector3.up*Mathf.Sin(now*1.9f)*error*.35f).normalized;
             }
             var utilityModel=ultra ? ArenaCombatLearning.Model(body,2) : null;
             bool offensive=dominant && (dominant.aimType==AISkillDriver.AimType.AtCurrentEnemy || dominant.moveTargetType==AISkillDriver.TargetType.CurrentEnemy);
-            bool movementAim=ultra && (actions.TraversalOwnsAim(body) || !offensive && input.pressSkill3 && actions.NativeUtilityAvailable(body, now)
-                && (ArenaBotKit.EscapeReady(body) || utilityModel!=null && utilityModel.Movement || dominant && dominant.skillSlot==SkillSlot.Utility && dominant.aimType!=AISkillDriver.AimType.AtCurrentEnemy));
+            bool movementAim=ultra && actions.TraversalOwnsAim(body);
+            if (ultra && !movementAim && utilityModel?.Movement == true && !previous.pressSkill3)
+                input.pressSkill3 = false; // Routed mobility chooses its own approach and cast window below.
+            float alignment = Mathf.Max(.86f, 1f - angle * angle * .5f);
             bool fire=ultra ? ArenaBotAim.Apply(ref input,body.inputBank.aimDirection,aim,alive,hostile,visible,
                 enemyPlayer!=null && enemyPlayer.ProtectionUntil>match.Clock,movementAim,match.WarmupRemaining<=0,now-acquiredAt,
-                style?.Reaction ?? .10f,style?.Alignment ?? BotTacticsRules.AimDot(tier))
+                style?.Reaction ?? .035f,alignment)
                 : match.WarmupRemaining<=0
                 && BotTacticsRules.CanFire(alive,hostile,visible,enemyPlayer!=null && enemyPlayer.ProtectionUntil>match.Clock,
                 visible ? Vector3.Dot(body.inputBank.aimDirection,aim) : -1,tier);
@@ -888,6 +901,7 @@ namespace ArenaPvP
             }
             if(BotTacticsRules.Adaptive(tier) || actions.HasHold)
                 actions.Combo(ai,ref input,previous,Enemy,fire,tier);
+            if (ultra) actions.ReadyStance(body, ref input, previous, distanceToShot, visible && !approachingHill && match.WarmupRemaining <= 0);
             if(body.equipmentSlot && body.inventory)
             {
                 var equipment=EquipmentCatalog.GetEquipmentDef(body.inventory.GetActiveEquipment().equipmentIndex);
@@ -1006,7 +1020,7 @@ namespace ArenaPvP
                         if(SupportedAhead(body,left,input.pressSprint))avoidedMove=left;else if(SupportedAhead(body,right,input.pressSprint))avoidedMove=right;
                     }
                 }
-                if(addedMobility && Vector3.Dot(direction,previousProbeDirection)<.5f)
+                if(addedMobility && Vector3.Dot(direction,previousProbeDirection)<.5f && !SupportedAhead(body,direction,input.pressSprint))
                 { input.moveVector=Vector3.zero;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
                 if(unsafeMove && Vector3.Dot(direction,previousProbeDirection)>.5f) { input.moveVector=avoidedMove;input.pressSprint=false;input.pressJump=false;wantsCombatJump=false; }
             }
@@ -1025,12 +1039,43 @@ namespace ArenaPvP
                 else input.moveVector=repaired;
             }
             else locomotion.Pause();
+            bool descending = (ultra || approachingHill) && !plannedJump && CanSteer(ai)
+                && SteerDescent(body, ref input, previous, now);
             if (ultra && !plannedJump && match.WarmupRemaining <= 0)
             {
-                bool shot = visible && Vector3.Distance(body.corePosition, Enemy.corePosition) <= Mathf.Max(3, player.BotKit.Range * 1.15f);
+                bool shot = input.pressSkill1 || input.pressSkill2 || input.pressSkill4;
                 bool usingTech = techniques.Apply(body, ref input, previous, visible ? Enemy : null, Destination, movementHill,
-                    CanSteer(ai) && player.ProtectionUntil <= match.Clock, shot, actions, now);
-                if (!usingTech) TryTravelUtility(ai, body, ref input, previous, visible, now);
+                    CanSteer(ai) && !descending && player.ProtectionUntil <= match.Clock, shot, actions, now);
+                if (!usingTech && !descending) TryTravelUtility(ai, body, ref input, previous, fire, now);
+                if (!usingTech && body.characterMotor && !body.characterMotor.isGrounded) TryAerialRecovery(body, ref input, previous, now);
+            }
+            if (!approachingHill && movementHill != null && movementHill.Ready && body.characterMotor
+                && !actions.MovementLocked(body) && ArenaBotRoutes.InHill(movementHill,body.footPosition))
+            {
+                var safer = ArenaBotLocomotion.HoldHill(body, movementHill, input.moveVector, input.pressSprint);
+                if ((safer - input.moveVector).sqrMagnitude > .04f)
+                {
+                    input.moveVector = !body.characterMotor.isGrounded || SupportedAhead(body, safer, false) ? safer : Vector3.zero;
+                    input.pressSprint = input.pressJump = false;
+                }
+            }
+            if (ultra && !plannedJump && !descending && !actions.SprintBlocked(body) && input.moveVector.sqrMagnitude > .12f
+                && !input.pressSkill1 && !input.pressSkill2 && !input.pressSkill3 && !input.pressSkill4)
+            {
+                bool anyDirection = (body.bodyFlags & CharacterBody.BodyFlags.SprintAnyDirection) != 0;
+                // Between fights and shots, use the fastest normal movement.
+                // Keep tracking a viable shot rather than looking away each tick.
+                bool trackingShot = visible && distanceToShot <= player.BotKit.Reach && ArenaBotKit.Ready(body);
+                if (!trackingShot && !actions.TraversalOwnsAim(body)) input.desiredAimDirection = input.moveVector.normalized;
+                if (anyDirection || SprintDirection(body, input.moveVector)) input.pressSprint = true;
+            }
+            if (ultra && body.skillLocator && body.skillLocator.utility && body.skillLocator.utility.stateMachine
+                && body.skillLocator.utility.stateMachine.state is EntityStates.DroneTech.DroneCarry && movementHill?.Ready == true)
+            {
+                Vector3 heading = (approachingHill ? Destination : movementHill.To) - body.footPosition;
+                heading.y = 0;
+                input.moveVector = heading.sqrMagnitude > 1.5f ? heading.normalized : Vector3.zero;
+                if (approachingHill && input.moveVector.sqrMagnitude > .1f) input.desiredAimDirection = input.moveVector;
             }
             if(ultra && visible && match.WarmupRemaining<=0 && now>=nextQuietReport && now-acquiredAt>4)
             {
@@ -1048,57 +1093,141 @@ namespace ArenaPvP
             return input;
         }
 
-        private void TryTravelUtility(BaseAI ai, CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, bool visible, float now)
+        private bool SteerDescent(CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, float now)
         {
-            if (!CanSteer(ai) || !body.characterMotor || !body.characterMotor.isGrounded || body.isFlying
-                || input.pressSkill1 || input.pressSkill2 || input.pressSkill3 || input.pressSkill4
-                || !actions.NativeUtilityAvailable(body, now)) return;
-            if (visible && engagement != BotEngagement.Recover
-                && Vector3.Distance(body.corePosition, Enemy.corePosition) <= player.BotKit.Range * 1.25f) return;
-
-            Vector3 direction = input.moveVector;
-            direction.y = 0;
-            if (direction.sqrMagnitude < .2f) return;
-            direction.Normalize();
+            if (!body.characterMotor || body.isFlying || body.currentVehicle) return false;
             var origin = body.footPosition;
-            var utility = body.skillLocator.utility;
-            float span = ArenaBotKit.TravelDistance(body, utility, out bool needsAim);
-            if (span <= 0 || span > 72 || Vector3.Dot(direction, Destination - origin) < 1) return;
-
-            float runway = Vector3.Dot(direction, Destination - origin);
-            if (pursuitTarget || approachingHill) runway = Mathf.Max(runway, pursuit.ForwardRunway(origin, direction));
-            if (runway < span) return;
-
-            Vector3 castDirection = direction;
-            bool aligned = true;
-            if (needsAim)
+            Vector3 target = approachingHill ? movementHill.To : pursuitTarget ? pursuitTarget.footPosition : Destination;
+            bool jump = false;
+            if (now >= descendUntil && now >= nextDescentProbe && body.characterMotor.isGrounded
+                && target.y < origin.y - 2 && (approachingHill || pursuitTarget || input.moveVector.sqrMagnitude < .05f)
+                && ArenaBotLocomotion.TryTraversalProbe())
             {
-                var actualAim = body.inputBank.aimDirection;
-                aligned = Vector3.Dot(actualAim, direction) >= .9985f && Mathf.Abs(actualAim.y) < .035f;
-                if (aligned)
+                nextDescentProbe = now + .4f;
+                var forward = target - origin;
+                forward.y = 0;
+                var forwardHeading = forward.normalized;
+                if (ArenaBotLocomotion.CanDrop(body,forwardHeading,target,movementHill,out descentLanding)) descendUntil = now + 1.65f;
+                else if (!previous.pressJump && body.jumpPower > 0 && forward.sqrMagnitude > 9
+                    && !ArenaBotLocomotion.Walkable(body,forwardHeading,3)
+                    && ArenaBotLocomotion.LandingAhead(body,forwardHeading*body.moveSpeed,body.jumpPower,target,movementHill,out descentLanding)
+                    && origin.y-descentLanding.y > 1 && origin.y-descentLanding.y < 15)
                 {
-                    castDirection = actualAim;
-                    castDirection.y = 0;
-                    castDirection.Normalize();
+                    descendUntil = now + 1.85f;
+                    jump = true;
                 }
             }
+            if (now >= descendUntil || body.characterMotor.isGrounded && origin.y <= descentLanding.y + 1f)
+            { descendUntil = 0; return false; }
+            var direction = descentLanding - origin;
+            direction.y = 0;
+            input.moveVector = direction.sqrMagnitude > .5f ? direction.normalized : direction;
+            input.pressSprint = false;
+            input.pressJump = jump;
+            return true;
+        }
 
-            if (now >= nextTravelProbe || (origin - probedTravelOrigin).sqrMagnitude > 1
-                || Vector3.Dot(castDirection, probedTravelDirection) < .9995f || Mathf.Abs(span - probedTravelSpan) > .5f)
+        private void TryTravelUtility(BaseAI ai, CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, bool hasAim, float now)
+        {
+            if (!CanSteer(ai) || !body.characterMotor || body.isFlying || !body.skillLocator) return;
+            var origin = body.footPosition;
+            Vector3 toward = Destination - origin;
+            toward.y = 0;
+            if (toward.sqrMagnitude < 9) return;
+            Vector3 direction = toward.normalized;
+            float runway = toward.magnitude;
+            if (pursuitTarget || approachingHill) runway = Mathf.Max(runway, pursuit.ForwardRunway(origin, direction));
+            bool shooting = input.pressSkill1 || input.pressSkill2 || input.pressSkill4;
+            if (shooting && !approachingHill && engagement != BotEngagement.Recover) return;
+            int slot = -1;
+            BotTravel best = default(BotTravel);
+            for (int i = 0; i < 4; i++)
             {
+                if (now < avoidTravelUntil[i] || !actions.TravelAvailable(body, i, now)) continue;
+                var travel = ArenaBotKit.Travel(body, i);
+                if (travel.Span < 3 || travel.Span > 120 || travel.Span > runway + (approachingHill ? 3 : 1.5f)
+                    || travel.Span <= best.Span) continue;
+                // A shot already lined up wins if the movement skill would
+                // have to turn away from it to start.
+                if (hasAim && shooting && travel.Aim && Vector3.Dot(direction, body.inputBank.aimDirection) < .90f) continue;
+                slot = i;
+                best = travel;
+            }
+            if (slot < 0) return;
+            float span = best.Span;
+            Vector3 castDirection = direction;
+            if (now >= nextTravelProbe || (origin - probedTravelOrigin).sqrMagnitude > 1
+                || probedTravelSlot != slot || Vector3.Dot(castDirection, probedTravelDirection) < .992f || Mathf.Abs(span - probedTravelSpan) > .5f)
+            {
+                if (!ArenaBotLocomotion.TryTraversalProbe()) return;
                 nextTravelProbe = now + .15f;
                 probedTravelOrigin = origin;
                 probedTravelDirection = castDirection;
                 probedTravelSpan = span;
-                travelClear = ArenaBotLocomotion.ClearTravelCorridor(body, castDirection, span, movementHill);
+                probedTravelSlot = slot;
+                if (best.Lift > 0 || !body.characterMotor.isGrounded)
+                    travelClear = ArenaBotLocomotion.LandingAhead(body, castDirection * (best.Speed > 0 ? best.Speed : span / .4f),
+                        best.Lift > 0 ? best.Lift : Mathf.Max(-5,body.characterMotor.velocity.y), Destination, movementHill, out _);
+                else travelClear = ArenaBotLocomotion.ClearTravelCorridor(body, castDirection, span, movementHill);
             }
-            if (!travelClear) return;
-            if (needsAim) input.desiredAimDirection = direction;
-            if (!aligned) return;
-            if (actions.TravelUtility(ref input, previous, body, now))
+            if (!travelClear) { avoidTravelUntil[slot] = now + .35f; return; }
+            if (best.Aim)
+            {
+                input.desiredAimDirection = direction;
+                if (Vector3.Dot(body.inputBank.aimDirection, direction) < .998f) return;
+            }
+            if (actions.RequestTravel(ref input, previous, body, slot, now))
             {
                 input.moveVector = direction;
+                input.pressSprint = true;
                 input.pressJump = false;
+            }
+        }
+
+        private void TryAerialRecovery(CharacterBody body, ref BaseAI.BodyInputs input, BaseAI.BodyInputs previous, float now)
+        {
+            if (body.isFlying || body.currentVehicle || !body.skillLocator || body.characterMotor.velocity.y > -6 || now < nextRescueProbe
+                || actions.TraversalOwnsAim(body)) return;
+            if (!ArenaBotLocomotion.TryTraversalProbe()) return;
+            nextRescueProbe = now + .13f;
+            Vector3 target = approachingHill ? movementHill.To : Destination;
+            var toward = target - body.footPosition;
+            toward.y = 0;
+            if (toward.sqrMagnitude < 2.25f) return;
+            toward.Normalize();
+            var motorVelocity = body.characterMotor.velocity;
+            var horizontal = motorVelocity; horizontal.y = 0;
+            if (motorVelocity.y > -21 && ArenaBotLocomotion.LandingAhead(body,horizontal,motorVelocity.y,target,movementHill,out _)) return;
+            for (int slot = 0; slot < 4; slot++)
+            {
+                if (!actions.TravelAvailable(body, slot, now)) continue;
+                var model = ArenaCombatLearning.Model(body, slot);
+                if (model == null || (model.AirHop <= 0 && model.RecoilForce <= 0)) continue;
+                float lift = model.AirHop;
+                var heading = toward;
+                if (model.RecoilForce > 0)
+                {
+                    float force = model.RecoilForce / Mathf.Max(1, body.characterMotor.mass);
+                    heading = (-toward * .25f + Vector3.down).normalized;
+                    lift = motorVelocity.y - force * heading.y;
+                }
+                if (lift <= motorVelocity.y + 3 || !ArenaBotLocomotion.LandingAhead(body,
+                    toward * Mathf.Max(body.moveSpeed,Vector3.Dot(horizontal,toward)),lift,target,movementHill,out _)) continue;
+                if (model.RecoilForce > 0)
+                {
+                    input.desiredAimDirection = heading;
+                    if (Vector3.Dot(heading,body.inputBank.aimDirection) < .976f)
+                    {
+                        input.pressSkill1 = false; // The recoil shot needs its own aim and press edge.
+                        nextRescueProbe = now + .04f;
+                        return;
+                    }
+                }
+                var rescue = input;
+                rescue.pressSkill1 = rescue.pressSkill2 = rescue.pressSkill3 = rescue.pressSkill4 = false;
+                if (actions.RequestTravel(ref rescue, previous, body, slot, now))
+                { rescue.moveVector = toward; input = rescue; }
+                return;
             }
         }
         private static bool SprintDirection(CharacterBody body,Vector3 movement)
@@ -1129,8 +1258,7 @@ namespace ArenaPvP
         {
             float speed=Mathf.Max(body.moveSpeed*(sprint && !body.isSprinting ? body.sprintingSpeedMultiplier : 1),body.characterMotor.velocity.magnitude);
             float distance=BotTacticsRules.StoppingDistance(speed,body.acceleration,body.radius);
-            RaycastHit hit;
-            return Physics.Raycast(body.footPosition+direction*distance+Vector3.up*1.5f,Vector3.down,out hit,5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.45f;
+            return ArenaBotLocomotion.Walkable(body, direction, distance);
         }
     }
 }

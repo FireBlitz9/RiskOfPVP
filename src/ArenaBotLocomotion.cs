@@ -11,9 +11,18 @@ namespace ArenaPvP
         private Vector3 escape;
         private int angleIndex;
         private static int probeFrame=-1,probes;
+        private static int traversalFrame = -1, traversalProbes;
         internal int Recoveries { get; private set; }
         internal void Clear() { feedback.Clear();recoveryUntil=holdUntil=nextProbe=nextJump=0;escape=Vector3.zero;angleIndex=0;Recoveries=0; }
         internal void Pause() { feedback.Clear();recoveryUntil=0; }
+
+        internal static bool TryTraversalProbe()
+        {
+            if (traversalFrame != Time.frameCount) { traversalFrame = Time.frameCount; traversalProbes = 0; }
+            if (traversalProbes >= 6) return false;
+            traversalProbes++;
+            return true;
+        }
         internal Vector3 Resolve(CharacterBody body,Vector3 requested,Vector3 waypoint,HillView hill,float now,out bool jump)
         {
             jump=false;
@@ -56,14 +65,101 @@ namespace ArenaPvP
         internal static bool Safe(CharacterBody body,Vector3 direction,HillView hill)
         {
             if(direction.sqrMagnitude<.1f)return false;
-            RaycastHit hit;
-            if(Blocked(body,direction,out hit))return false;
             float distance=BotTacticsRules.StoppingDistance(Mathf.Max(body.moveSpeed,body.characterMotor.velocity.magnitude),body.acceleration,body.radius);
             var end=body.footPosition+direction*distance;
             if(hill!=null && hill.Ready && ArenaBotRoutes.InHill(hill,body.footPosition) && !ArenaBotRoutes.InHill(hill,end))return false;
-            return Physics.Raycast(body.footPosition+direction*.8f+Vector3.up*1.5f,Vector3.down,out hit,3.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.5f
-                && Physics.Raycast(body.footPosition+direction*(distance*.5f)+Vector3.up*1.5f,Vector3.down,out hit,3.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.5f
-                && Physics.Raycast(end+Vector3.up*1.5f,Vector3.down,out hit,3.5f,LayerIndex.world.mask,QueryTriggerInteraction.Ignore) && hit.normal.y>.5f;
+            return Walkable(body, direction, distance);
+        }
+
+        private static bool Floor(Vector3 point, float up, float down, out RaycastHit floor)
+            => Physics.Raycast(point + Vector3.up * up, Vector3.down, out floor, up + down,
+                LayerIndex.world.mask, QueryTriggerInteraction.Ignore) && floor.normal.y > .48f;
+
+        internal static bool Walkable(CharacterBody body, Vector3 direction, float distance)
+        {
+            var feet = body.footPosition;
+            float near = Mathf.Min(.85f, distance * .5f);
+            if (!Floor(feet + direction * near, 1.5f, 1.65f, out var first)) return false;
+            // Cast along the slope instead of straight into its face. A low
+            // step can still be climbed by the motor if the upper lane is clear.
+            var lift = Vector3.up * (Mathf.Clamp(body.radius * .65f, .2f, .7f) + .25f);
+            if (Physics.Linecast(feet + lift, first.point + lift, LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) return false;
+            if (Blocked(body, direction, out var obstacle) && first.point.y <= feet.y + .18f && obstacle.normal.y < .48f) return false;
+            if (!Floor(first.point + direction * (distance * .5f - near), 2.4f, 2.4f, out var middle)) return false;
+            return Floor(middle.point + direction * (distance * .5f), 2.7f, 2.7f, out _);
+        }
+
+        internal static Vector3 HoldHill(CharacterBody body, HillView hill, Vector3 requested, bool sprint)
+        {
+            var radial = body.footPosition - hill.To;
+            radial.y = 0;
+            float distance = radial.magnitude;
+            if (distance < .05f) return requested;
+            var outward = radial.normalized;
+            float speed = body.moveSpeed * (sprint || body.isSprinting ? body.sprintingSpeedMultiplier : 1f);
+            float buffer = Mathf.Min(hill.Radius * .64f, Mathf.Max(.65f, body.radius + speed * .14f));
+            float outerSpeed = body.characterMotor ? Mathf.Max(0, Vector3.Dot(body.characterMotor.velocity, outward)) : 0;
+            var projected = radial + requested * (speed * .28f) + outward * (outerSpeed * .18f);
+            if (projected.sqrMagnitude <= (hill.Radius - buffer) * (hill.Radius - buffer)) return requested;
+            float outwardMove = Mathf.Max(0, Vector3.Dot(requested, outward));
+            return (requested - outward * (outwardMove + .85f)).normalized;
+        }
+
+        internal static bool CanDrop(CharacterBody body, Vector3 direction, Vector3 goal, HillView hill, out Vector3 landing)
+        {
+            landing = body.footPosition;
+            var origin = body.footPosition;
+            var forward = goal - origin;
+            forward.y = 0;
+            float gain = Vector3.Dot(forward, direction);
+            if (gain < 1.7f || goal.y >= origin.y - 2 || Blocked(body, direction, out _)) return false;
+            float gravity = Mathf.Max(1, -Physics.gravity.y);
+            for (int i = 0; i < 3; i++)
+            {
+                float span = Mathf.Min(gain, Mathf.Max(3, body.moveSpeed * (.45f + i * .25f)));
+                if (!Floor(origin + direction * span, .5f, 16, out var floor)) continue;
+                float drop = origin.y - floor.point.y;
+                if (drop < 2 || drop > 15 || span > 2 + body.moveSpeed * Mathf.Sqrt(2 * drop / gravity)) continue;
+                if (hill != null && ArenaBotRoutes.InHill(hill, origin) && !ArenaBotRoutes.InHill(hill, floor.point)) continue;
+                if (!Floor(floor.point + direction, 1.5f, 1.4f, out _)
+                    || Physics.Linecast(origin + Vector3.up * 1.2f, floor.point + Vector3.up * 1.2f,
+                        LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) continue;
+                landing = floor.point;
+                return true;
+            }
+            return false;
+        }
+
+        internal static bool LandingAhead(CharacterBody body, Vector3 horizontal, float lift, Vector3 destination,
+            HillView hill, out Vector3 landing)
+        {
+            landing = body.footPosition;
+            var gravity = Mathf.Max(1, -Physics.gravity.y);
+            var origin = body.footPosition;
+            var last = origin;
+            for (int i = 1; i <= 8; i++)
+            {
+                float time = i * .18f;
+                var point = origin + horizontal * time + Vector3.up * (lift * time - gravity * time * time * .5f);
+                var head = Vector3.up * Mathf.Max(.8f, body.radius);
+                var checkedPoint = point;
+                RaycastHit floor = default(RaycastHit);
+                bool landed = point.y < last.y && Floor(new Vector3(point.x,last.y,point.z), .4f, last.y - point.y + .35f, out floor);
+                if (landed) checkedPoint = floor.point;
+                var segment = checkedPoint - last;
+                if (Physics.SphereCast(last + head, Mathf.Clamp(body.radius*.6f,.2f,.65f), segment.normalized, out _, segment.magnitude,
+                    LayerIndex.world.mask, QueryTriggerInteraction.Ignore)) break;
+                if (landed)
+                {
+                    if (hill != null && ArenaBotRoutes.InHill(hill, origin) && !ArenaBotRoutes.InHill(hill, floor.point)) return false;
+                    var progress = (destination - origin); progress.y = 0;
+                    if (Vector3.Dot(floor.point - origin, progress.normalized) < 1.5f) return false;
+                    landing = floor.point;
+                    return true;
+                }
+                last = point;
+            }
+            return false;
         }
 
         internal static bool ClearTravelCorridor(CharacterBody body, Vector3 direction, float distance, HillView hill)

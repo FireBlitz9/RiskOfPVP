@@ -41,6 +41,7 @@ namespace ArenaPvP
         private Vector3 committed, committedEnemy;
         private BotEngagement committedIntent;
         private float commitUntil;
+        internal bool Committed(float now) => planned && now < commitUntil;
 
         internal void Clear()
         {
@@ -139,7 +140,7 @@ namespace ArenaPvP
                 // Native broad navigation owns intermediate waypoints. Cached
                 // discovery first-hops may already be behind a moving body.
                 waypoint=selectedVisit.Position;
-                committed=waypoint;committedEnemy=enemy;committedIntent=intent;commitUntil=now+.7f;
+                committed=waypoint;committedEnemy=enemy;committedIntent=intent;commitUntil=now+Mathf.Clamp(Vector3.Distance(origin, waypoint)/Mathf.Max(2,body.moveSpeed), .85f, 2.6f);
                 planner.SetGoal(selected, now, Vector3.Distance(origin, waypoint));
             }
             return planned;

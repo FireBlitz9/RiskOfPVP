@@ -299,7 +299,7 @@ namespace ArenaPvP
                 {
                     string name=field.Name.ToLowerInvariant();
                     if((field.FieldType==typeof(float) || field.FieldType==typeof(int))
-                        && (name.Contains("coefficient") || name.Contains("duration") || name.Contains("range") || name.Contains("radius") || name.Contains("distance") || name.Contains("count") || name=="minimumdamage"))selected.Add(field);
+                        && (name.Contains("coefficient") || name.Contains("duration") || name.Contains("range") || name.Contains("radius") || name.Contains("distance") || name.Contains("count") || name.Contains("velocity") || name=="minimumdamage"))selected.Add(field);
                     if(selected.Count>=16)break;
                 }
                 fields=selected.ToArray();activeFields[type]=fields;
